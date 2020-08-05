@@ -1,0 +1,14 @@
+<!-- 
+	Archivo que contiene configuracion de Host Virtual para Tomcat 
+	Debe modificarse el docBase para reflejar la ruta de la implementacion
+-->
+
+<Context path="" docBase="/opt/tomcat-latest/symgae/ROOT" reloadable="true">
+	<Resources allowLinking="true" />
+ 	<Resource name="jdbc/flexwm" auth="Container" type="javax.sql.DataSource"
+ 		maxTotal="100" maxIdle="30" maxWaitMillis="10000"
+		username="root" password="mordor99" driverClassName="com.mysql.jdbc.Driver"
+		removeAbandonedOnBorrow="true" removeAbandonedOnMaintenance="true"
+		removeAbandonedTimeout="300" url="jdbc:mysql://localhost:3306/flexwm-loba"
+	/>
+</Context>

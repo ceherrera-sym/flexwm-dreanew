@@ -1,0 +1,103 @@
+.default{
+	font-family : Helvetica;
+	background-color : white;
+}
+.loginTable {
+	margin-left: 5px;
+	margin-right: 5px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	border-bottom: 1px solid #ccc;
+	border-top: 1px solid #ccc;
+	border-left: 1px solid #ccc;
+	border-right: 1px solid #ccc;
+	border-radius:10px;
+	padding-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	padding-right: 5px;
+	padding-left: 5px;
+	width: 30%;
+	height: 20%;
+	align: center;
+}
+.loginTitle {
+	font-size: 11pt;
+	color: navy;
+    width: 75px;
+    white-space: nowrap;
+}
+.loginLabel {
+	font-size: 9pt;
+	font-color: gray;
+	color: gray;
+    width: 40%;
+    white-space: nowrap;
+    text-align: right;
+}
+.loginError {
+	font-size: 9pt;
+	color: red;
+    width: 75px;
+    white-space: nowrap;
+    align: center;
+}
+.loginTextBox {
+    border: 1px solid #c4c4c4; 
+    height: 25px; 
+    font-size: 9pt;
+	width: 150px;
+    padding: 4px 4px 4px 4px; 
+    border-radius: 4px; 
+    -moz-border-radius: 4px; 
+    -webkit-border-radius: 4px; 
+    box-shadow: 0px 0px 8px #d9d9d9; 
+    -moz-box-shadow: 0px 0px 8px #d9d9d9; 
+    -webkit-box-shadow: 0px 0px 8px #d9d9d9; 
+}
+.loginTextBox:focus { 
+    outline: none; 
+    border: 1px solid #7bc1f7; 
+    box-shadow: 0px 0px 8px #7bc1f7; 
+    -moz-box-shadow: 0px 0px 8px #7bc1f7; 
+    -webkit-box-shadow: 0px 0px 8px #7bc1f7; 
+} 
+.loginButton {
+	color: #2652c9;
+	font-size: 13px;
+	background: white;
+	padding: 5px 10px 5px 10px;
+	text-decoration: none;
+	border: 0px solid white;
+	margin-left: 5px;
+	margin-right: 5px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	border-radius: 2px;
+	height: 35px;
+}
+
+.loginButton:hover {
+	background: #cfdffd;
+	text-decoration: none;
+	border-radius: 3px;
+	cursor: pointer;
+}
+
+.loginButton:active {
+	position: relative;
+	top: 1px;
+}
+.googleLabel {
+	font-size: 9pt;
+	font-color: gray;
+	color: gray;
+    width: 40%;
+    white-space: nowrap;
+    text-align: center;
+}
+.copyright {
+	font-size: 8pt;
+	color: gray;
+    text-align: center;
+}

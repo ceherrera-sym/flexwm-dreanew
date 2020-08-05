@@ -1,0 +1,3610 @@
+-- FLEX ALTERS, ORDEN CRONOLOGICO
+alter table users add column user_startprogramid INT;
+alter table flexconfig add column flxc_opportunityforeignprogramid INT;
+alter table flexconfig add column flxc_enablequotes INT;
+alter table wflowcategories add column wfca_effectwflowcategoryid int;
+ALTER TABLE wflowcategories  ADD FOREIGN KEY (wfca_effectwflowcategoryid) REFERENCES wflowcategories(wfca_wflowcategoryid);
+alter table modules add column modu_ispublic int;
+alter table flexconfig add column flxc_opportunityforeignprogramid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_opportunityforeignprogramid) REFERENCES modules(modu_programid);
+alter table flexconfig add column flxc_enablequotes INT;
+alter table wflowcategories add column wfca_effectwflowcategoryid int;
+ALTER TABLE wflowcategories  ADD FOREIGN KEY (wfca_effectwflowcategoryid) REFERENCES wflowcategories(wfca_wflowcategoryid);
+ALTER TABLE `sfconfig` 
+	ADD COLUMN `sfcf_stdtimezone` VARCHAR(10) NULL AFTER `sfcf_clientsecrets`,
+	ADD COLUMN `sfcf_stdstart` DATE NULL AFTER `sfcf_stdtimezone`,
+	ADD COLUMN `sfcf_daytimezone` VARCHAR(10) NULL AFTER `sfcf_stdstart`,
+	ADD COLUMN `sfcf_daystart` DATE NULL AFTER `sfcf_daytimezone`;
+ALTER TABLE `bankmovconcepts` CHANGE COLUMN `bkmc_code` `bkmc_code` VARCHAR(10) NULL ;
+
+
+-- Agregar campo de reply to en los correos
+alter table emails add column emai_replyto VARCHAR(255);
+
+
+-- Creacion de tabla para equipos en cotizaciones
+CREATE TABLE quoteequipments (
+	qoeq_quoteequipmentid INT NOT NULL AUTO_INCREMENT, 
+	qoeq_name VARCHAR(30),
+	qoeq_quantity INT NOT NULL,
+	qoeq_price DOUBLE,
+	qoeq_days FLOAT,
+	qoeq_amount DOUBLE,
+	qoeq_quoteid INT NOT NULL,
+	qoeq_equipmentid INT NOT NULL,
+	qoeq_sflog TEXT,
+	PRIMARY KEY(qoeq_quoteequipmentid),
+	FOREIGN KEY (qoeq_quoteid) REFERENCES quotes(quot_quoteid),
+	FOREIGN KEY (qoeq_equipmentid) REFERENCES equipments(equi_equipmentid)
+);
+
+-- Agregar bloqueo de usuarios de wflow
+ALTER TABLE wflowusers ADD COLUMN wflu_lockstart DATETIME;
+ALTER TABLE wflowusers ADD COLUMN wflu_lockend DATETIME;
+ALTER TABLE wflowusers ADD COLUMN wflu_islocked INT;
+
+ALTER TABLE equipments ADD COLUMN equi_price DOUBLE;
+ALTER TABLE sffiles MODIFY COLUMN file_blobkey VARCHAR(500);
+ALTER TABLE projectdetails DROP COLUMN pjde_loadenddate;
+ALTER TABLE projectdetails ADD COLUMN pjde_prepdate DATETIME;
+ALTER TABLE projectdetails ADD COLUMN pjde_exitdate DATETIME;
+ALTER TABLE projectdetails ADD COLUMN pjde_returndate DATETIME;
+
+ALTER TABLE formats ADD COLUMN frmt_publishvalidateclass VARCHAR(50);
+
+ALTER TABLE users ADD COLUMN user_signaturl VARCHAR(100);
+
+ALTER TABLE wflowusers DROP COLUMN wflu_islocked;
+ALTER TABLE projectequipments DROP COLUMN pjeq_islocked;
+ALTER TABLE wflowusers ADD COLUMN wflu_lockstatus CHAR;
+ALTER TABLE projectequipments ADD COLUMN pjeq_lockstatus CHAR;
+
+ALTER TABLE orderitems ADD COLUMN ordi_lockstatus CHAR;
+ALTER TABLE orderitems MODIFY COLUMN ordi_days DOUBLE;
+
+ALTER TABLE orders ADD COLUMN orde_lockstart DATETIME;
+ALTER TABLE orders ADD COLUMN orde_lockend DATETIME;
+ALTER TABLE orders ADD COLUMN orde_lockstatus CHAR;
+
+ALTER TABLE flexconfig ADD COLUMN flxc_enableopportunityeffect INT;
+
+ALTER TABLE paccounts ADD COLUMN pacc_balance FLOAT NULL;
+ALTER TABLE raccounts ADD COLUMN racc_balance FLOAT NULL;
+ALTER TABLE warehouses ADD COLUMN ware_type CHAR;
+
+-- 20140728
+ALTER TABLE requisitions ADD COLUMN reqi_type CHAR;
+ALTER TABLE products ADD COLUMN prod_rentalcost FLOAT;
+ALTER TABLE requisitionitems ADD COLUMN rqit_name VARCHAR(30);
+ALTER TABLE requisitionitems MODIFY COLUMN rqit_productid INT;
+
+ALTER TABLE requisitions MODIFY COLUMN reqi_warehouseid INT;
+ALTER TABLE requisitions ADD COLUMN reqi_taxapplies INT;
+
+ALTER TABLE suppliers MODIFY COLUMN supl_description VARCHAR(255);
+ALTER TABLE suppliers MODIFY COLUMN supl_legalrep VARCHAR(50);
+
+-- 20140729
+CREATE TABLE whsections (
+whse_whsectionid INT NOT NULL AUTO_INCREMENT, 
+whse_code VARCHAR(10) NOT NULL,
+whse_name VARCHAR(50) NOT NULL,
+whse_description VARCHAR(255),
+whse_warehouseid INT,
+whse_sflog TEXT,
+PRIMARY KEY (whse_whsectionid),
+FOREIGN KEY (whse_warehouseid) REFERENCES warehouses (ware_warehouseid)
+ );
+
+ALTER TABLE whmovements DROP FOREIGN KEY whmovements_ibfk_2;
+ALTER TABLE whmovements DROP FOREIGN KEY whmovements_ibfk_1;
+ALTER TABLE whmovements DROP INDEX whmv_towarehouseid;
+
+ALTER TABLE whmovements CHANGE COLUMN whmv_basewarehouseid whmv_basewhsectionid INT;
+ALTER TABLE whmovements CHANGE COLUMN whmv_towarehouseid whmv_towhsectionid INT;
+
+ALTER TABLE whmovements ADD FOREIGN KEY (whmv_basewhsectionid) REFERENCES whsections(whse_whsectionid);
+ALTER TABLE whmovements ADD FOREIGN KEY (whmv_towhsectionid) REFERENCES whsections(whse_whsectionid);
+
+DROP TABLE whstocks;
+CREATE TABLE whstocks (
+	whst_whstockid INT NOT NULL AUTO_INCREMENT, 
+	whst_whsectionid INT NOT NULL,
+	whst_productid INT NOT NULL,
+	whst_quantity INT NOT NULL,
+	whst_amount DOUBLE,
+	whst_sflog TEXT,
+	PRIMARY KEY(whst_whstockid),
+FOREIGN KEY(whst_whsectionid) REFERENCES whsections(whse_whsectionid),
+	FOREIGN KEY (whst_productid) REFERENCES products(prod_productid)
+);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_orderwarehouseid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_orderwarehouseid) REFERENCES warehouses(ware_warehouseid);
+
+-- 20140801
+ALTER TABLE modules ADD COLUMN modu_audit INT;
+
+CREATE TABLE sflogs (
+	sflg_sflogid INT NOT NULL AUTO_INCREMENT, 
+	sflg_timestamp DATETIME NOT NULL,
+	sflg_header VARCHAR(255),
+	sflg_data TEXT NOT NULL, 
+	sflg_recordid INT,
+	sflg_email VARCHAR(100),
+	sflg_userid INT NOT NULL,
+	sflg_programid INT, 
+	PRIMARY KEY(sflg_sflogid),
+ 	FOREIGN KEY (sflg_userid) REFERENCES users(user_userid),
+ 	FOREIGN KEY (sflg_programid) REFERENCES modules(modu_programid)
+);
+
+-- 20140820 cargo  y abono
+ALTER TABLE paccounts ADD COLUMN pacc_balance DOUBLE NULL;
+ALTER TABLE paccounts ADD COLUMN pacc_withdraw DOUBLE NULL, ADD COLUMN pacc_deposit DOUBLE NULL;
+ALTER TABLE paccounts CHANGE COLUMN pacc_amount pacc_amount FLOAT NULL ;
+ALTER TABLE raccounts ADD COLUMN racc_balance DOUBLE NULL;
+ALTER TABLE raccounts ADD COLUMN racc_withdraw DOUBLE NULL, ADD COLUMN racc_deposit DOUBLE NULL;
+ALTER TABLE raccounts CHANGE COLUMN racc_amount racc_amount FLOAT NULL ;
+ALTER TABLE bankmovements ADD COLUMN bkmv_withdraw DOUBLE NULL, ADD COLUMN bkmv_deposit DOUBLE NULL;
+ALTER TABLE bankmovements CHANGE COLUMN bkmv_amount bkmv_amount FLOAT NULL ;
+ALTER TABLE bankmovements MODIFY COLUMN bkmv_bankreference VARCHAR(20) NULL DEFAULT NULL;
+
+ALTER TABLE sfconfig ADD COLUMN sfcf_defaultcompanyid INT;
+ALTER TABLE sfconfig ADD FOREIGN KEY (sfcf_defaultcompanyid) REFERENCES companies(comp_companyid);
+
+ALTER TABLE orders ADD COLUMN orde_customerid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_customerid) REFERENCES customers(cust_customerid);
+
+ALTER TABLE wflows ADD COLUMN wflw_status CHAR;
+ALTER TABLE bankmovconcepts ADD COLUMN bkmc_foreignid INT;
+
+ALTER TABLE bankmovements MODIFY COLUMN bkmv_description VARCHAR(255);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_orderraccounttypeid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_orderraccounttypeid) REFERENCES raccounttypes(ract_raccounttypeid);
+
+ALTER TABLE whsections ADD COLUMN whse_type CHAR;
+ALTER TABLE whsections ADD COLUMN whse_orderid INT;
+ALTER TABLE whsections ADD FOREIGN KEY (whse_orderid) REFERENCES orders(orde_orderid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_defaultwhsectionid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_defaultwhsectionid) REFERENCES whsections(whse_whsectionid);
+
+-- Cambios 20140826 almacenes
+ALTER TABLE whmovitems DROP COLUMN whmi_whtrackid;
+ALTER TABLE whmovitems DROP FOREIGN KEY whmovitems_ibfk_3;
+
+ALTER TABLE whtracks ADD COLUMN whtr_whmovitemid INT;
+ALTER TABLE whtracks ADD FOREIGN KEY (whtr_whmovitemid) REFERENCES whmovitems(whmi_whmovitemid);
+
+ALTER TABLE wflowlogs MODIFY wflg_data MEDIUMTEXT;
+
+ALTER TABLE whtracks ADD COLUMN whtr_whsectionid INT;
+ALTER TABLE whtracks ADD FOREIGN KEY (whtr_whsectionid) REFERENCES whsections(whse_whsectionid);
+
+ALTER TABLE opportunitydetails MODIFY COLUMN opde_description TEXT;
+ALTER TABLE quoteitems MODIFY COLUMN qoit_name VARCHAR(50);
+ALTER TABLE customeraddress MODIFY COLUMN cuad_street VARCHAR(100);
+ALTER TABLE suppliers MODIFY COLUMN supl_name VARCHAR(50);
+
+ALTER TABLE quoteitems MODIFY COLUMN qoit_name VARCHAR(200);
+ALTER TABLE orderitems MODIFY COLUMN ordi_name VARCHAR(200);
+ALTER TABLE equipments MODIFY COLUMN equi_name VARCHAR(50);
+
+ALTER TABLE customers MODIFY COLUMN cust_legalname VARCHAR(100);
+
+ALTER TABLE wflowsteptypes CHANGE COLUMN wfst_validateclass wfst_actionclass VARCHAR(100);
+ALTER TABLE wflowsteps CHANGE COLUMN wfsp_validateclass wfsp_actionclass VARCHAR(100);
+ALTER TABLE wflowsteptypes ADD COLUMN wfst_validateclass VARCHAR(100);
+ALTER TABLE wflowsteps ADD COLUMN wfsp_validateclass VARCHAR(100);
+
+DROP TABLE projectequipments;
+
+CREATE TABLE orderequipments (
+	ordq_orderequipmentid INT NOT NULL AUTO_INCREMENT, 
+	ordq_name VARCHAR(30),
+	ordq_quantity INT NOT NULL,
+	ordq_price DOUBLE,
+	ordq_days FLOAT,
+	ordq_amount DOUBLE,
+	ordq_lockstart DATETIME,
+	ordq_lockend DATETIME,
+	ordq_lockstatus CHAR,
+	ordq_hasconflict INT,
+	ordq_orderid INT NOT NULL,
+	ordq_equipmentid INT NOT NULL,
+	ordq_sflog TEXT,
+	PRIMARY KEY(ordq_orderequipmentid),
+	FOREIGN KEY (ordq_orderid) REFERENCES orders(orde_orderid),
+	FOREIGN KEY (ordq_equipmentid) REFERENCES equipments(equi_equipmentid)
+);
+
+ALTER TABLE quotes ADD COLUMN quot_showequipmentquantity INT;
+ALTER TABLE quotes ADD COLUMN quot_showequipmentprice INT;
+
+CREATE TABLE quotestaff (
+	qost_quotestaffid INT NOT NULL AUTO_INCREMENT, 
+	qost_description VARCHAR(255),
+	qost_quantity INT NOT NULL,
+	qost_days FLOAT,
+	qost_price DOUBLE,
+	qost_amount DOUBLE,
+	qost_quoteid INT NOT NULL,
+	qost_profileid INT NOT NULL,
+	qost_sflog TEXT,
+	PRIMARY KEY(qost_quotestaffid),
+	FOREIGN KEY (qost_quoteid) REFERENCES quotes(quot_quoteid),
+	FOREIGN KEY (qost_profileid) REFERENCES groups(prof_profileid)
+);
+
+ALTER TABLE groups ADD COLUMN grup_price DOUBLE;
+
+
+CREATE TABLE orderstaff (
+	ords_orderstaffid INT NOT NULL AUTO_INCREMENT, 
+	ords_description VARCHAR(255),
+	ords_price DOUBLE,
+	ords_days FLOAT,
+	ords_amount DOUBLE,
+	ords_lockstart DATETIME,
+	ords_lockend DATETIME,
+	ords_lockstatus CHAR,
+	ords_hasconflict INT,
+	ords_orderid INT NOT NULL,
+	ords_usergroupid INT NOT NULL,
+	ords_sflog TEXT,
+	PRIMARY KEY(ords_orderstaffid),
+	FOREIGN KEY (ords_orderid) REFERENCES orders(orde_orderid),
+	FOREIGN KEY (ords_usergroupid) REFERENCES programprofiles(pfus_usergroupid)
+);
+
+CREATE TABLE paccountitems (
+	pait_paccountitemid INT NOT NULL AUTO_INCREMENT, 
+	pait_name VARCHAR(30),
+	pait_quantity INT NOT NULL,
+	pait_price FLOAT NOT NULL,
+	pait_amount FLOAT NOT NULL,
+	pait_paccountid INT NOT NULL,
+	pait_sflog TEXT,
+	PRIMARY KEY(pait_paccountitemid),
+	FOREIGN KEY (pait_paccountid) REFERENCES paccounts(pacc_paccountid)
+);
+
+ALTER TABLE whboxtracks ADD COLUMN whbt_quantity INT;
+
+ALTER TABLE quoteitems ADD COLUMN qoit_description VARCHAR(500);
+ALTER TABLE orderitems ADD COLUMN ordi_description VARCHAR(500);
+
+ALTER TABLE bankmovconcepts MODIFY COLUMN bkmc_code VARCHAR(10);
+
+ALTER TABLE suppliers ADD COLUMN supl_legalname VARCHAR(200);
+ALTER TABLE whboxes MODIFY COLUMN whbx_code VARCHAR(30);
+
+CREATE TABLE sfcomponents (
+	sfcm_sfcomponentid INT NOT NULL AUTO_INCREMENT, 
+	sfcm_code VARCHAR(10), 
+	sfcm_name VARCHAR(30), 
+	sfcm_description VARCHAR(255),
+	sfcm_ispublic INT,
+	sfcm_sflog TEXT,
+	PRIMARY KEY(sfcm_sfcomponentid) 
+);
+
+ALTER TABLE modules DROP FOREIGN KEY modules_ibfk_1;
+ALTER TABLE modules DROP COLUMN modu_componentid;
+DROP TABLE components;
+ALTER TABLE modules ADD COLUMN modu_sfcomponentid INT;
+ALTER TABLE modules ADD FOREIGN KEY (modu_sfcomponentid) REFERENCES sfcomponents(sfcm_sfcomponentid);
+
+
+CREATE TABLE sfcomponentaccess (
+	sfca_sfcomponentaccessid INT NOT NULL AUTO_INCREMENT, 
+	sfca_read INT, 
+	sfca_write INT, 
+	sfca_delete INT, 
+	sfca_print INT,
+	sfca_disclosure CHAR,
+	sfca_profileid INT NOT NULL, 
+	sfca_sfcomponentid INT,
+	sfca_sflog TEXT, 
+	PRIMARY KEY(sfca_sfcomponentaccessid), 
+	FOREIGN KEY (sfca_profileid) REFERENCES groups(prof_profileid), 
+	FOREIGN KEY (sfca_sfcomponentid) REFERENCES sfcomponents(sfcm_sfcomponentid)
+);
+
+CREATE TABLE sfcomponentspecials (
+	sfcs_sfcomponentspecialid INT NOT NULL AUTO_INCREMENT, 
+	sfcs_code VARCHAR(10) NOT NULL, 
+	sfcs_name VARCHAR(30) NOT NULL, 
+	sfcs_description VARCHAR(255), 
+	sfcs_sfcomponentid INT NOT NULL,
+	sfcs_sflog TEXT,
+	PRIMARY KEY(sfcs_sfcomponentspecialid),
+ 	FOREIGN KEY (sfcs_sfcomponentid) REFERENCES sfcomponents(sfcm_sfcomponentid)
+);
+
+CREATE TABLE sfcomponentspecialaccess (
+	sfce_sfcomponentspecialaccessid INT NOT NULL AUTO_INCREMENT, 
+	sfce_sfcomponentaccessid INT NOT NULL, 
+	sfce_sfcomponentspecialid INT NOT NULL,
+	sfce_sflog TEXT, 
+	PRIMARY KEY(sfce_sfcomponentspecialaccessid), 
+	FOREIGN KEY (sfce_sfcomponentaccessid) REFERENCES sfcomponentaccess(sfca_sfcomponentaccessid), 
+	FOREIGN KEY (sfce_sfcomponentspecialid) REFERENCES sfcomponentspecials(sfcs_sfcomponentspecialid)
+);
+
+ALTER TABLE modules DROP COLUMN ispublic;
+
+ALTER TABLE raccounts ADD COLUMN racc_paymentstatus CHAR NULL AFTER racc_deposit;
+ALTER TABLE paccounts ADD COLUMN pacc_paymentstatus CHAR NULL AFTER pacc_deposit;
+
+
+
+CREATE TABLE projectguidelines (
+pjgi_projectguidelineid INT NOT NULL AUTO_INCREMENT,
+	pjgi_guidelines TEXT,
+	pjgi_projectid INT NOT NULL,
+	pjgi_sflog TEXT,
+	PRIMARY KEY(pjgi_projectguidelineid),
+	FOREIGN KEY (pjgi_projectid) REFERENCES projects(proj_projectid)
+);
+
+ALTER TABLE whmovements ADD COLUMN whmv_status CHAR;
+
+ALTER TABLE bankmovements MODIFY COLUMN bkmv_code VARCHAR(10);
+
+
+CREATE TABLE wflowactions (
+	wfac_wflowactionid INT NOT NULL AUTO_INCREMENT, 
+	wfac_code VARCHAR(10), 
+	wfac_name VARCHAR(30), 
+	wfac_description VARCHAR(255), 
+	wfac_classname VARCHAR(255), 
+	wfac_sflog TEXT,
+	PRIMARY KEY(wfac_wflowactionid)
+);
+
+CREATE TABLE wflowvalidations (
+	wfva_wflowvalidationid INT NOT NULL AUTO_INCREMENT, 
+	wfva_code VARCHAR(10), 
+	wfva_name VARCHAR(30), 
+	wfva_description VARCHAR(255), 
+	wfva_classname VARCHAR(255), 
+	wfva_sflog TEXT,
+	PRIMARY KEY(wfva_wflowvalidationid)
+);
+
+ALTER TABLE wflowsteptypes DROP COLUMN wfst_validateclass;
+ALTER TABLE wflowsteptypes DROP COLUMN wfst_actionclass;
+ALTER TABLE wflowsteps DROP COLUMN wfsp_validateclass;
+ALTER TABLE wflowsteps DROP COLUMN wfsp_actionclass;
+
+ALTER TABLE wflowsteptypes ADD COLUMN wfst_wflowvalidationid INT;
+ALTER TABLE wflowsteptypes ADD FOREIGN KEY (wfst_wflowvalidationid) REFERENCES wflowvalidations(wfva_wflowvalidationid);
+ALTER TABLE wflowsteptypes ADD COLUMN wfst_wflowactionid INT;
+ALTER TABLE wflowsteptypes ADD FOREIGN KEY (wfst_wflowactionid) REFERENCES wflowactions(wfac_wflowactionid);
+
+ALTER TABLE wflowsteps ADD COLUMN wfsp_wflowvalidationid INT;
+ALTER TABLE wflowsteps ADD FOREIGN KEY (wfsp_wflowvalidationid) REFERENCES wflowvalidations(wfva_wflowvalidationid);
+ALTER TABLE wflowsteps ADD COLUMN wfsp_wflowactionid INT;
+ALTER TABLE wflowsteps ADD FOREIGN KEY (wfsp_wflowactionid) REFERENCES wflowactions(wfac_wflowactionid);
+
+
+ALTER TABLE requisitions ADD COLUMN reqi_userid INT NULL AFTER reqi_taxapplies;
+ALTER TABLE paccounts ADD COLUMN pacc_userid INT NULL AFTER pacc_paymentstatus;
+ALTER TABLE bankmovements ADD COLUMN bkmv_userid INT NULL AFTER bkmv_sflog;
+
+
+ALTER TABLE equipmentuses ADD COLUMN eqis_whtrackid INT;
+ALTER TABLE equipmentuses ADD FOREIGN KEY (eqis_whtrackid) REFERENCES whtracks(whtr_whtrackid);
+ALTER TABLE equipmentservices ADD COLUMN eqsv_whtrackid INT;
+ALTER TABLE equipmentservices ADD FOREIGN KEY (eqsv_whtrackid) REFERENCES whtracks(whtr_whtrackid);
+ALTER TABLE equipmentuses MODIFY COLUMN eqis_equipmentid INT;
+ALTER TABLE equipmentservices MODIFY COLUMN eqsv_equipmentid INT;
+
+ALTER TABLE quotestaff MODIFY COLUMN qost_profileid INT;
+ALTER TABLE orderstaff MODIFY COLUMN ords_usergroupid INT;
+ALTER TABLE orderstaff ADD COLUMN ords_quantity INT;
+
+ALTER TABLE groups ADD COLUMN grup_cost double;
+ALTER TABLE wflows ADD COLUMN wflw_userid INT;
+ALTER TABLE wflows ADD FOREIGN KEY (wflw_userid) REFERENCES users(user_userid);
+
+ALTER TABLE orderequipments MODIFY COLUMN ordq_equipmentid INT;
+
+ALTER TABLE bankmovtypes ADD COLUMN bkmt_bankmovtypechildid INT;
+ALTER TABLE bankmovements ADD COLUMN bkmv_bankaccotransid INT;
+
+ALTER TABLE orderstaff ADD COLUMN ords_name VARCHAR(50);
+ALTER TABLE orderequipments ADD COLUMN ordq_description VARCHAR(255);
+
+ALTER TABLE quotes ADD COLUMN quot_taxapplies INT;
+
+CREATE TABLE customerpolls (
+	cupo_cupoid INT NOT NULL AUTO_INCREMENT, 
+	cupo_projectid INT NOT NULL,	
+	cupo_polldate DATE,
+	cupo_service INT,
+	cupo_image INT,
+	cupo_performance INT,
+	cupo_quality INT,
+	cupo_recommendation INT,
+	cupo_observations VARCHAR(1024),
+	cupo_sflog TEXT,
+	PRIMARY KEY(cupo_cupoid),
+	FOREIGN KEY (cupo_projectid) REFERENCES projects(proj_projectid)
+);
+
+
+ALTER TABLE quotestaff ADD COLUMN qost_name VARCHAR(50);
+
+ALTER TABLE quoteequipments ADD COLUMN qoeq_description VARCHAR(255);
+ALTER TABLE quoteequipments MODIFY COLUMN qoeq_equipmentid INT;
+
+ALTER TABLE opportunities ADD COLUMN oppo_saledate DATE;
+ALTER TABLE opportunities ADD COLUMN oppo_customfield1 VARCHAR(500);
+ALTER TABLE opportunities ADD COLUMN oppo_customfield2 VARCHAR(500);
+ALTER TABLE opportunities ADD COLUMN oppo_customfield3 VARCHAR(500);
+ALTER TABLE opportunities ADD COLUMN oppo_customfield4 VARCHAR(500);
+
+ALTER TABLE customeraddress ADD COLUMN cuad_description VARCHAR(500);
+
+ALTER TABLE requisitionitems ADD COLUMN rqit_days INT;
+ALTER TABLE raccounts ADD COLUMN racc_folio VARCHAR(30);
+
+CREATE TABLE ordergroups (
+	ordg_ordergroupid INT NOT NULL AUTO_INCREMENT, 
+	ordg_code VARCHAR(10),
+	ordg_name VARCHAR(100),
+	ordg_description VARCHAR(255),
+	ordg_amount DOUBLE,
+	ordg_iskit INT,
+	ordg_showquantity INT,
+	ordg_showprice INT,
+	ordg_orderid INT NOT NULL,
+	ordg_sequence INT,
+	ordg_sflog TEXT,
+	PRIMARY KEY(ordg_ordergroupid),
+	FOREIGN KEY (ordg_orderid) REFERENCES orders(orde_orderid)
+);
+
+CREATE TABLE currencies (
+  	cure_currencyid INT NOT NULL AUTO_INCREMENT,
+  	cure_code VARCHAR(10),
+  	cure_name VARCHAR(30),
+  	cure_description VARCHAR(255),  
+  	cure_parity FLOAT,
+  	cure_isbasecurrency INT,
+  	cure_sflog TEXT,
+  	PRIMARY KEY (cure_currencyid)
+);
+
+
+ALTER TABLE orderitems ADD COLUMN ordi_ordergroupid INT;
+ALTER TABLE orderitems ADD FOREIGN KEY (ordi_ordergroupid) REFERENCES ordergroups(ordg_ordergroupid);
+ALTER TABLE orderitems DROP FOREIGN KEY orderitems_ibfk_1;
+ALTER TABLE orderitems DROP COLUMN ordi_orderid;
+
+ALTER TABLE opportunities ADD COLUMN oppo_currencyid INT;
+ALTER TABLE opportunities ADD FOREIGN KEY (oppo_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE quotes ADD COLUMN quot_currencyid INT;
+ALTER TABLE quotes ADD FOREIGN KEY (quot_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE orders ADD COLUMN orde_currencyid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_currencyid) REFERENCES currencies(cure_currencyid);
+
+-- Agregar alias y comentarios al contacto
+
+ALTER TABLE customercontacts ADD COLUMN cuco_alias VARCHAR(50);
+ALTER TABLE customercontacts ADD COLUMN cuco_commentalias VARCHAR(255);
+
+-- tabla para los sitios web --
+CREATE TABLE customerwebs (
+  cuwb_customerwebid INT NOT NULL AUTO_INCREMENT,
+  cuwb_website VARCHAR(100) NOT NULL,
+  cuwb_customerid INT NOT NULL,
+  cuwb_sflog TEXT NULL,  
+  PRIMARY KEY (cuwb_customerwebid),
+  FOREIGN KEY (cuwb_customerid) REFERENCES customers(cust_customerid)
+);
+
+ALTER TABLE equipmentuses ADD COLUMN eqis_orderid INT;
+ALTER TABLE equipmentuses ADD FOREIGN KEY (eqis_orderid) REFERENCES orders(orde_orderid);
+ALTER TABLE equipmentuses DROP FOREIGN KEY equipmentuses_ibfk_2;
+ALTER TABLE equipmentuses DROP COLUMN eqis_projectid;
+
+ALTER TABLE flexconfig ADD COLUMN flxc_currencyid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE wflowcategories ADD COLUMN wfca_emailreminders INT;
+
+ALTER TABLE bankmovtypes ADD COLUMN bkmt_visible CHAR(1);
+
+ALTER TABLE whmovements ADD COLUMN whmv_autocreateitems INT;
+
+ALTER TABLE projects ADD COLUMN proj_customeraddressid INT;
+ALTER TABLE projects ADD FOREIGN KEY (proj_customeraddressid) REFERENCES customeraddress(cuad_customeraddressid);
+
+ALTER TABLE sfconfig MODIFY COLUMN sfcf_apptitle VARCHAR(50);
+
+ALTER TABLE users ADD COLUMN user_uitemplate CHAR;
+
+CREATE TABLE currencyrates (
+  	cura_currencyrateid INT NOT NULL AUTO_INCREMENT,
+  	cura_rate DOUBLE,
+  	cura_datetime DATETIME,
+	cura_currencyid INT NOT NULL,
+  	cura_sflog TEXT,
+  	PRIMARY KEY (cura_currencyrateid),
+	FOREIGN KEY (cura_currencyid) REFERENCES currencies(cure_currencyid)
+);
+
+ALTER TABLE currencies ADD COLUMN cure_updatetime DATETIME;
+
+ALTER TABLE wflowtypes ADD COLUMN wfty_comments TEXT;
+
+ALTER TABLE customers ADD COLUMN cust_currencyid INT;
+ALTER TABLE customers ADD FOREIGN KEY (cust_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE paccounts MODIFY COLUMN pacc_description VARCHAR(255);
+
+ALTER TABLE bankaccounts ADD COLUMN bkac_profileid INT;
+ALTER TABLE bankaccounts ADD FOREIGN KEY (bkac_profileid) REFERENCES groups(prof_profileid);
+
+ALTER TABLE bankmovements ADD COLUMN bkmv_requisitionid INT;
+ALTER TABLE bankmovements ADD FOREIGN KEY (bkmv_requisitionid) REFERENCES requisitions(reqi_requisitionid);
+
+ALTER TABLE sfconfig ADD COLUMN sfcf_logo VARCHAR(255);
+ALTER TABLE customers ADD COLUMN cust_logo VARCHAR(255);
+ALTER TABLE users ADD COLUMN user_photo VARCHAR(255);
+
+CREATE TABLE tags (
+	tags_tagid INT NOT NULL AUTO_INCREMENT, 
+	tags_code VARCHAR(10), 
+	tags_name VARCHAR(30), 
+	tags_description VARCHAR(255),
+	tags_sflog TEXT,
+	PRIMARY KEY(tags_tagid) 
+);
+
+ALTER TABLE users ADD COLUMN user_tags VARCHAR(255);
+ALTER TABLE opportunities ADD COLUMN oppo_tags VARCHAR(255);
+ALTER TABLE projects ADD COLUMN proj_tags VARCHAR(255);
+
+ALTER TABLE users ADD COLUMN user_password VARCHAR(255);
+
+ALTER TABLE raccounts MODIFY COLUMN racc_folio VARCHAR(60);
+
+CREATE TABLE wflowuserselect (
+	wfus_wflowuserselectid INT NOT NULL AUTO_INCREMENT,
+	wfus_areaid INT,
+	wfus_profileid INT NOT NULL,
+	wfus_sflog TEXT,
+	PRIMARY KEY(wfus_wflowuserselectid),
+	FOREIGN KEY (wfus_areaid) REFERENCES areas(area_areaid),
+	FOREIGN KEY (wfus_profileid) REFERENCES groups(prof_profileid)
+);
+
+CREATE TABLE requisitionreceipts (
+	rerc_requisitionreceiptid INT NOT NULL AUTO_INCREMENT, 
+	rerc_code VARCHAR(10), 
+	rerc_name VARCHAR(60), 
+	rerc_receiptdate DATE NOT NULL,
+	rerc_status CHAR,
+	rerc_payment CHAR,
+	rerc_amount FLOAT, 
+	rerc_discount FLOAT,	
+	rerc_tax FLOAT,
+	rerc_total FLOAT,	
+	rerc_sflog TEXT,
+	rerc_requisitionid INT NOT NULL,
+	rerc_supplierId INT NOT NULL,
+	PRIMARY KEY(rerc_requisitionreceiptid) ,
+	FOREIGN KEY (rerc_requisitionid) REFERENCES requisitions(reqi_requisitionid),
+	FOREIGN KEY (rerc_supplierid) REFERENCES suppliers(supl_supplierid)
+);
+
+CREATE TABLE requisitionreceiptitems (
+	reit_requisitionreceiptitemid INT NOT NULL AUTO_INCREMENT, 
+	reit_name VARCHAR(30),
+	reit_quantity INT,
+	reit_price FLOAT NOT NULL,
+	reit_amount FLOAT NOT NULL,
+	reit_requisitionreceiptid INT NOT NULL,
+	reit_requisitionitemid INT,
+	reit_sflog TEXT,
+	PRIMARY KEY(reit_requisitionreceiptitemid),
+	FOREIGN KEY (reit_requisitionreceiptid) REFERENCES requisitionreceipts(rerc_requisitionreceiptid)
+);
+
+ALTER TABLE paccounts ADD COLUMN pacc_requisitionreceiptid INT;
+ALTER TABLE paccounts ADD FOREIGN KEY (pacc_requisitionreceiptid) REFERENCES requisitionreceipts(rerc_requisitionreceiptid);
+
+ALTER TABLE customers ADD COLUMN cust_establishmentdate DATE;
+
+ALTER TABLE paccounts ADD COLUMN pacc_depositId INT;
+
+-- CAMBIOS 2015/02/26
+
+ALTER TABLE opportunitydetails ADD COLUMN opde_showincontract INT NULL;
+
+ALTER TABLE wflowusers ADD COLUMN wflu_geventid VARCHAR(100);
+
+ALTER TABLE paccounts ADD COLUMN pacc_payments FLOAT;
+ALTER TABLE raccounts ADD COLUMN racc_payments FLOAT;
+
+ALTER TABLE raccounts ADD COLUMN racc_depositId INT;
+ALTER TABLE paccounttypes ADD COLUMN pact_visible CHAR(1);
+ALTER TABLE raccounttypes ADD COLUMN ract_visible CHAR(1);
+
+ALTER TABLE requisitions ADD COLUMN reqi_receptionstatus CHAR(1);
+
+ALTER TABLE paccounts ADD COLUMN pacc_amount FLOAT;
+ALTER TABLE raccounts ADD COLUMN racc_amount FLOAT;
+
+ALTER TABLE requisitions ADD COLUMN reqi_receptionstatus CHAR(1);
+ALTER TABLE bankmovconcepts ADD COLUMN bkmc_total FLOAT;
+
+ALTER TABLE whmovements ADD COLUMN whmv_type CHAR;
+ALTER TABLE whmovements DROP FOREIGN KEY whmovements_ibfk_3;
+ALTER TABLE whmovements DROP COLUMN whmv_whmovtypeid;
+DROP TABLE whmovtypes;
+
+ALTER TABLE sflogs ADD COLUMN sflg_sflog TEXT;
+
+ALTER TABLE policies DROP FOREIGN KEY policies_ibfk_4;
+ALTER TABLE policies DROP COLUMN poli_productid;
+
+ALTER TABLE requisitionitems ADD COLUMN rqit_quantityreceipt INTEGER;
+ALTER TABLE requisitionreceiptitems ADD COLUMN reit_days DOUBLE;
+ALTER TABLE requisitionreceiptitems ADD COLUMN reit_quantitybalance INTEGER;
+
+ALTER TABLE whmovements ADD COLUMN whmv_requisitionreceiptid INT;
+ALTER TABLE whmovements ADD FOREIGN KEY (whmv_requisitionreceiptid) REFERENCES requisitionreceipts(rerc_requisitionreceiptid);
+
+ALTER TABLE whmovements DROP FOREIGN KEY whmovements_ibfk_4;
+ALTER TABLE whmovements DROP COLUMN whmv_requisitionid;
+
+ALTER TABLE whmovitems ADD COLUMN whmi_requisitionreceiptitemid INT;
+ALTER TABLE whmovitems ADD FOREIGN KEY (whmi_requisitionreceiptitemid) REFERENCES requisitionreceiptitems(reit_requisitionreceiptitemid);
+
+ALTER TABLE requisitionreceiptitems ADD COLUMN reit_serial VARCHAR(40);
+
+ALTER TABLE requisitionreceipts ADD COLUMN rerc_whsectionid INT;
+ALTER TABLE requisitionreceipts ADD FOREIGN KEY (rerc_whsectionid) REFERENCES whsections(whse_whsectionid);
+
+ALTER TABLE requisitionreceipts MODIFY COLUMN rerc_receiptdate DATETIME;
+
+ALTER TABLE whmovements DROP FOREIGN KEY whmovements_ibfk_5;
+ALTER TABLE whmovements DROP COLUMN whmv_orderid;
+
+CREATE TABLE orderdeliveries (
+	odly_orderdeliveryid INT NOT NULL AUTO_INCREMENT, 
+	odly_code VARCHAR(10), 
+	odly_name VARCHAR(60), 
+	odly_deliverydate DATETIME NOT NULL,
+	odly_status CHAR,
+	odly_payment CHAR,
+	odly_amount FLOAT, 
+	odly_discount FLOAT,	
+	odly_tax FLOAT,
+	odly_total FLOAT,	
+	odly_sflog TEXT,
+	odly_fromwhsectionid INT,
+	odly_towhsectionid INT,
+	odly_orderid INT NOT NULL,
+	odly_customerid INT NOT NULL,
+	PRIMARY KEY(odly_orderdeliveryid),
+	FOREIGN KEY (odly_fromwhsectionid) REFERENCES whsections(whse_whsectionid),
+	FOREIGN KEY (odly_towhsectionid) REFERENCES whsections(whse_whsectionid),
+	FOREIGN KEY (odly_orderid) REFERENCES orders(orde_orderid),
+	FOREIGN KEY (odly_customerid) REFERENCES customers(cust_customerid)
+);
+
+CREATE TABLE orderdeliveryitems (
+	odyi_orderdeliveryitemid INT NOT NULL AUTO_INCREMENT, 
+	odyi_name VARCHAR(30),
+	odyi_quantity INT,
+	odyi_price FLOAT NOT NULL,
+	odyi_amount FLOAT NOT NULL,
+	odyi_days DOUBLE,
+	odyi_quantitybalance INTEGER,
+	odyi_serial VARCHAR(40),
+	odyi_orderdeliveryid INT NOT NULL,
+	odyi_orderitemid INT,
+	odyi_productid INT,
+	odyi_sflog TEXT,
+	PRIMARY KEY(odyi_orderdeliveryitemid),
+	FOREIGN KEY (odyi_productid) REFERENCES products(prod_productid),
+	FOREIGN KEY (odyi_orderdeliveryid) REFERENCES orderdeliveries(odly_orderdeliveryid),
+	FOREIGN KEY (odyi_orderitemid) REFERENCES orderitems(ordi_orderitemid)
+);
+
+ALTER TABLE whmovements ADD COLUMN whmv_orderdeliveryid INT;
+ALTER TABLE whmovements ADD FOREIGN KEY (whmv_orderdeliveryid) REFERENCES orderdeliveries(odly_orderdeliveryid);
+
+ALTER TABLE requisitions CHANGE reqi_receptionstatus reqi_activestatus CHAR;
+
+ALTER TABLE orders ADD COLUMN orde_activestatus CHAR;
+ALTER TABLE orders ADD COLUMN orde_type CHAR;
+
+ALTER TABLE whmovitems ADD COLUMN whmi_orderdeliveryitemid INT;
+ALTER TABLE whmovitems ADD FOREIGN KEY (whmi_orderdeliveryitemid) REFERENCES orderdeliveryitems(odyi_orderdeliveryitemid);
+
+ALTER TABLE orderitems ADD COLUMN ordi_quantitydelivered INTEGER;
+
+ALTER TABLE orderdeliveries ADD COLUMN odly_type CHAR;
+
+ALTER TABLE orderdeliveryitems ADD COLUMN odyi_quantityreturned INT;
+
+ALTER TABLE orderitems ADD COLUMN ordi_quantityreturned INT;
+
+ALTER TABLE requisitionreceiptitems ADD COLUMN reit_quantityreturned INT;
+
+ALTER TABLE requisitionitems ADD COLUMN rqit_quantityreturned INT;
+
+ALTER TABLE requisitionreceipts ADD COLUMN rerc_type CHAR;
+
+ALTER TABLE requisitionreceiptitems CHANGE COLUMN reit_reqiitemid reit_requisitionitemid INT;
+ALTER TABLE requisitionreceiptitems ADD FOREIGN KEY (reit_requisitionitemid) REFERENCES requisitionitems(rqit_requisitionitemid);
+
+ALTER TABLE requisitionreceipts MODIFY COLUMN rerc_name VARCHAR(60);
+
+ALTER TABLE orderitems ADD COLUMN ordi_quantitybalance INT;
+
+ALTER TABLE requisitionitems ADD COLUMN rqit_quantitybalance INT;
+
+ALTER TABLE sfconfig ADD COLUMN sfcf_wflowcalendaruserid INT;
+
+ALTER TABLE wflowusers ADD COLUMN wflu_publicgeventid VARCHAR(100);
+
+ALTER TABLE wflowusers ADD COLUMN wflu_userpublicgeventid VARCHAR(100);
+
+ALTER TABLE areas ADD COLUMN area_gcalendarid VARCHAR(100);
+
+ALTER TABLE users ADD COLUMN user_publicgcalendarid VARCHAR(100);
+
+-- 11 mar 2015
+
+-- Status de Actividad --
+ALTER TABLE paccounts ADD COLUMN pacc_activestatus CHAR;
+ALTER TABLE raccounts ADD COLUMN racc_activestatus CHAR;
+ALTER TABLE bankmovements ADD COLUMN bkmv_activestatus CHAR;
+
+ALTER TABLE paccountitems ADD COLUMN pait_requisitionreceiptitemid INT;
+ALTER TABLE paccountitems ADD FOREIGN KEY (pait_requisitionreceiptitemid) REFERENCES requisitionreceiptitems(reit_requisitionreceiptitemid);
+
+CREATE TABLE raccountitems (
+	rait_raccountitemid INT NOT NULL AUTO_INCREMENT,
+	rait_name VARCHAR(30),
+	rait_quantity INT NOT NULL,
+	rait_price FLOAT NOT NULL,
+	rait_amount FLOAT NOT NULL,
+	rait_raccountid INT NOT NULL,
+	rait_orderitemid INT,
+	rait_orderequipmentid INT,
+	rait_orderstaffid INT,
+	rait_sflog TEXT,
+	PRIMARY KEY(rait_raccountitemid),
+	FOREIGN KEY (rait_raccountid) REFERENCES raccounts(racc_raccountid),
+	FOREIGN KEY (rait_orderitemid) REFERENCES orderitems(ordi_orderitemid),
+	FOREIGN KEY (rait_orderequipmentid) REFERENCES orderequipments(ordq_orderequipmentid),
+	FOREIGN KEY (rait_orderstaffid) REFERENCES orderstaff(ords_orderstaffid)
+);
+
+ALTER TABLE customers ADD COLUMN cust_tags VARCHAR(255);
+
+ALTER TABLE tags MODIFY COLUMN tags_code VARCHAR(30);
+
+ALTER TABLE projects ADD COLUMN proj_orderid INT;
+ALTER TABLE projects ADD FOREIGN KEY (proj_orderid) REFERENCES orders(orde_orderid);
+
+ALTER TABLE orders ADD COLUMN orde_quoteid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_quoteid) REFERENCES quotes(quot_quoteid);
+
+ALTER TABLE requisitions ADD COLUMN reqi_orderid INT;
+ALTER TABLE requisitions ADD FOREIGN KEY (reqi_orderid) REFERENCES orders(orde_orderid);
+
+ALTER TABLE quotes ADD COLUMN quot_customerid INT;
+ALTER TABLE quotes ADD FOREIGN KEY (quot_customerid) REFERENCES customers(cust_customerid);
+
+ALTER TABLE opportunities ADD COLUMN oppo_quoteid INT;
+ALTER TABLE opportunities ADD FOREIGN KEY (oppo_quoteid) REFERENCES quotes(quot_quoteid);
+
+ALTER TABLE quotes ADD COLUMN quot_userid INT;
+ALTER TABLE quotes ADD FOREIGN KEY (quot_userid) REFERENCES users(user_userid);
+
+ALTER TABLE quotes ADD COLUMN quot_wflowid INT;
+ALTER TABLE quotes ADD FOREIGN KEY (quot_wflowid) REFERENCES wflows(wflw_wflowid);
+
+ALTER TABLE orders ADD COLUMN orde_wflowid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_wflowid) REFERENCES wflows(wflw_wflowid);
+
+ALTER TABLE quotes ADD COLUMN quot_type CHAR;
+
+ALTER TABLE orders ADD COLUMN orde_userid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_userid) REFERENCES users(user_userid);
+
+ALTER TABLE opportunities ADD COLUMN oppo_type CHAR;
+ALTER TABLE flexconfig ADD COLUMN flxc_defaultordertype CHAR;
+
+ALTER TABLE quotes ADD COLUMN quot_startdate DATETIME;
+ALTER TABLE quotes ADD COLUMN quot_enddate DATETIME;
+
+ALTER TABLE customercontacts ADD COLUMN cuco_position VARCHAR(50);
+ALTER TABLE customers ADD COLUMN cust_position VARCHAR(50);
+
+ALTER TABLE customers MODIFY COLUMN cust_displayname VARCHAR(100);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_defaultreqpaytypeid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_defaultreqpaytypeid) REFERENCES reqpaytypes(rqpt_reqpaytypeid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_defaultwarehouseid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_defaultwarehouseid) REFERENCES warehouses(ware_warehouseid);
+
+ALTER TABLE orders DROP FOREIGN KEY orders_ibfk_1;
+ALTER TABLE orders DROP COLUMN orde_projectid;
+
+ALTER TABLE requisitions DROP FOREIGN KEY requisitions_ibfk_3;
+ALTER TABLE requisitions DROP COLUMN reqi_projectid;
+
+ALTER TABLE quotes DROP FOREIGN KEY quotes_ibfk_1;
+ALTER TABLE quotes DROP COLUMN quot_opportunityid;
+
+CREATE TABLE areacostcenters (
+  	arcc_areacostcenterid INT NOT NULL AUTO_INCREMENT,
+  	arcc_code VARCHAR(10),
+  	arcc_name VARCHAR(30),
+  	arcc_description VARCHAR(255),  
+  	arcc_isgroup INT,
+	arcc_parentid INT,
+  	arcc_sflog TEXT,
+  	PRIMARY KEY (arcc_areacostcenterid),
+FOREIGN KEY (arcc_parentid) REFERENCES areacostcenters(arcc_areacostcenterid)
+);
+
+CREATE TABLE typecostcenters (
+  	tycc_typecostcenterid INT NOT NULL AUTO_INCREMENT,
+  	tycc_code VARCHAR(10),
+  	tycc_name VARCHAR(30),
+  	tycc_description VARCHAR(255),  
+  	tycc_isgroup INT,
+	tycc_parentid INT,
+  	tycc_sflog TEXT,
+  	PRIMARY KEY (tycc_typecostcenterid),
+FOREIGN KEY (tycc_parentid) REFERENCES typecostcenters(tycc_typecostcenterid)
+);
+
+CREATE TABLE venturecostcenters (
+  	vecc_venturecostcenterid INT NOT NULL AUTO_INCREMENT,
+  	vecc_code VARCHAR(10),
+  	vecc_name VARCHAR(30),
+  	vecc_description VARCHAR(255),  
+  	vecc_isgroup INT,
+	vecc_parentid INT,
+  	vecc_sflog TEXT,
+  	PRIMARY KEY (vecc_venturecostcenterid),
+FOREIGN KEY (vecc_parentid) REFERENCES venturecostcenters(vecc_venturecostcenterid)
+);
+
+ALTER TABLE orders ADD COLUMN orde_venturecostcenterid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_venturecostcenterid) REFERENCES venturecostcenters(vecc_venturecostcenterid);
+
+ALTER TABLE modules DROP COLUMN modu_audit;
+
+ALTER TABLE modules ADD COLUMN modu_enableformats int;
+ALTER TABLE modules ADD COLUMN modu_enablefiles int;
+ALTER TABLE modules ADD COLUMN modu_enableaudit int;
+
+-- cambios 23 de marzo 2015
+
+ALTER TABLE raccountitems MODIFY COLUMN rait_price DOUBLE;
+ALTER TABLE raccountitems MODIFY COLUMN rait_amount DOUBLE;
+
+ALTER TABLE raccounts MODIFY COLUMN racc_amount DOUBLE;
+ALTER TABLE raccounts MODIFY COLUMN racc_payments DOUBLE;
+ALTER TABLE raccounts MODIFY COLUMN racc_balance DOUBLE;
+
+ALTER TABLE paccountitems MODIFY COLUMN pait_price DOUBLE;
+ALTER TABLE paccountitems MODIFY COLUMN pait_amount DOUBLE;
+
+ALTER TABLE paccounts MODIFY COLUMN pacc_amount DOUBLE;
+ALTER TABLE paccounts MODIFY COLUMN pacc_payments DOUBLE;
+ALTER TABLE paccounts MODIFY COLUMN pacc_balance DOUBLE;
+
+ALTER TABLE requisitionreceiptitems MODIFY COLUMN reit_price DOUBLE;
+ALTER TABLE requisitionreceiptitems MODIFY COLUMN reit_amount DOUBLE;
+
+--
+UPDATE quotes INNER JOIN opportunities ON (oppo_quoteid = quot_quoteid) SET quot_userid = oppo_userid;
+
+UPDATE orders INNER JOIN projects ON (proj_orderid = orde_orderid) SET orde_userid = proj_userid;
+
+ALTER TABLE requisitions MODIFY COLUMN reqi_amount DOUBLE;
+ALTER TABLE requisitions MODIFY COLUMN reqi_discount DOUBLE;
+ALTER TABLE requisitions MODIFY COLUMN reqi_tax DOUBLE;
+ALTER TABLE requisitions MODIFY COLUMN reqi_total DOUBLE;
+
+ALTER TABLE requisitionitems MODIFY COLUMN rqit_price DOUBLE;
+ALTER TABLE requisitionitems MODIFY COLUMN rqit_amount DOUBLE;
+ALTER TABLE requisitionitems MODIFY COLUMN rqit_days DOUBLE;
+
+ALTER TABLE requisitionreceipts MODIFY COLUMN rerc_amount DOUBLE;
+ALTER TABLE requisitionreceipts MODIFY COLUMN rerc_discount DOUBLE;
+ALTER TABLE requisitionreceipts MODIFY COLUMN rerc_tax DOUBLE;
+ALTER TABLE requisitionreceipts MODIFY COLUMN rerc_total DOUBLE;
+
+ALTER TABLE quoteitems MODIFY COLUMN qoit_days DOUBLE;
+ALTER TABLE quoteequipments MODIFY COLUMN qoeq_days DOUBLE;
+ALTER TABLE quotestaff MODIFY COLUMN qost_days DOUBLE;
+
+ALTER TABLE orderequipments MODIFY COLUMN ordq_days DOUBLE;
+ALTER TABLE orderstaff MODIFY COLUMN ords_days DOUBLE;
+
+ALTER TABLE orderdeliveryitems MODIFY COLUMN odyi_price DOUBLE;
+ALTER TABLE orderdeliveryitems MODIFY COLUMN odyi_amount DOUBLE;
+
+ALTER TABLE orderdeliveries MODIFY COLUMN odly_amount DOUBLE;
+ALTER TABLE orderdeliveries MODIFY COLUMN odly_discount DOUBLE;
+ALTER TABLE orderdeliveries MODIFY COLUMN odly_tax DOUBLE;
+ALTER TABLE orderdeliveries MODIFY COLUMN odly_total DOUBLE;
+
+ALTER TABLE opportunitydetails MODIFY COLUMN opde_deposit DOUBLE;
+ALTER TABLE opportunitydetails MODIFY COLUMN opde_extrahour DOUBLE;
+
+ALTER TABLE bankmovements MODIFY COLUMN bkmv_amount DOUBLE;
+
+ALTER TABLE bankmovconcepts MODIFY COLUMN bkmc_amount DOUBLE;
+ALTER TABLE bankmovconcepts MODIFY COLUMN bkmc_total DOUBLE;
+ALTER TABLE bankaccounts MODIFY COLUMN bkac_balance DOUBLE;
+ALTER TABLE bankaccounts MODIFY COLUMN bkac_initialbalance DOUBLE;
+
+ALTER TABLE productkititems MODIFY COLUMN prki_days DOUBLE;
+ALTER TABLE productkits MODIFY COLUMN prkt_amount DOUBLE;
+ALTER TABLE products MODIFY COLUMN prod_price DOUBLE;
+ALTER TABLE products MODIFY COLUMN prod_cost DOUBLE;
+ALTER TABLE products MODIFY COLUMN prod_rentalcost DOUBLE;
+
+ALTER TABLE whmovements MODIFY COLUMN whmv_amount DOUBLE;
+ALTER TABLE whmovitems MODIFY COLUMN whmi_amount DOUBLE;
+
+UPDATE raccounts SET racc_activestatus = 'O';
+
+
+
+ALTER TABLE wflows MODIFY COLUMN wflw_code VARCHAR(10);
+ALTER TABLE wflowtypes MODIFY COLUMN wfty_code VARCHAR(10);
+ALTER TABLE wflowcategories MODIFY COLUMN wfca_code VARCHAR(10);
+ALTER TABLE wflowsteps MODIFY COLUMN wfsp_code VARCHAR(10);
+ALTER TABLE wflowsteptypes MODIFY COLUMN wfst_code VARCHAR(10);
+
+CREATE TABLE uicolors (
+  	uico_uicolorid INT NOT NULL AUTO_INCREMENT,
+  	uico_name VARCHAR(30),
+  	uico_css VARCHAR(30),
+	uico_color VARCHAR(30),
+  	uico_sflog TEXT,
+  	PRIMARY KEY (uico_uicolorid)
+);
+
+ALTER TABLE tags ADD COLUMN tags_uicolorid INT;
+ALTER TABLE tags ADD FOREIGN KEY (tags_uicolorid) REFERENCES uicolors(uico_uicolorid);
+
+ALTER TABLE orderitems ADD COLUMN ordi_lockedquantity INT;
+ALTER TABLE orderitems ADD COLUMN ordi_conflictquantity INT;
+
+ALTER TABLE sfcomponents ADD COLUMN sfcm_wflowid INT;
+ALTER TABLE sfcomponents ADD FOREIGN KEY (sfcm_wflowid) REFERENCES wflows(wflw_wflowid);
+
+ALTER TABLE sfcomponents ADD COLUMN sfcm_wflowtypeid INT;
+ALTER TABLE sfcomponents ADD FOREIGN KEY (sfcm_wflowtypeid) REFERENCES wflowtypes(wfty_wflowtypeid);
+
+CREATE TABLE orderlocks (
+	orlk_orderlockid INT NOT NULL AUTO_INCREMENT,
+	orlk_type CHAR,
+	orlk_quantity INT NOT NULL,
+	orlk_orderid INT NOT NULL,
+	orlk_productid INT NOT NULL,
+	orlk_requisitionid INT,
+	orlk_whsectionid INT,
+	orlk_sflog TEXT,
+	PRIMARY KEY(orlk_orderlockid),
+	FOREIGN KEY (orlk_orderid) REFERENCES orders(orde_orderid),
+	FOREIGN KEY (orlk_productid) REFERENCES products(prod_productid),
+	FOREIGN KEY (orlk_requisitionid) REFERENCES requisitions(reqi_requisitionid),
+	FOREIGN KEY (orlk_whsectionid) REFERENCES whsections(whse_whsectionid)
+);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_enableorderlock INT;
+
+ALTER TABLE wflows ADD COLUMN wflw_googleeventid VARCHAR(100);
+
+ALTER TABLE wflowcategories ADD COLUMN wfca_gcalendarid VARCHAR(100);
+
+ALTER TABLE sfcomponents ADD COLUMN sfcm_startdate DATETIME;
+ALTER TABLE sfcomponents ADD COLUMN sfcm_enddate DATETIME;
+
+-- 24 abril 2015
+
+ALTER TABLE orderstaff ADD COLUMN ords_profileid INT;
+ALTER TABLE orderstaff ADD FOREIGN KEY (ords_profileid) REFERENCES groups(prof_profileid);
+
+ALTER TABLE properties ADD COLUMN prty_lot VARCHAR(15);
+ALTER TABLE properties ADD COLUMN prty_extraprice DOUBLE;
+
+CREATE TABLE quoteproperties (
+	qupy_quotepropertyid INT NOT NULL AUTO_INCREMENT, 
+	qupy_price DOUBLE,
+	qupy_extraland DOUBLE,
+	qupy_extraconstruction DOUBLE,
+	qupy_extraother DOUBLE,
+	qupy_amount DOUBLE,
+qupy_quoteid INT NOT NULL,
+	qupy_propertyid INT,
+	qupy_sflog TEXT,
+	PRIMARY KEY(qupy_quotepropertyid),
+	FOREIGN KEY (qupy_quoteid) REFERENCES quotes(quot_quoteid),
+	FOREIGN KEY (qupy_propertyid) REFERENCES properties(prty_propertyid)
+);
+
+CREATE TABLE quotepropertymodelextras (
+	qupx_quotepropertymodelextraid INT NOT NULL AUTO_INCREMENT, 
+	qupx_price DOUBLE,
+	qupx_quantity INT,
+	qupx_amount DOUBLE,
+	qupx_comments VARCHAR(255),
+	qupx_quoteid INT NOT NULL,
+	qupx_propertymodelextraid INT,
+	qupx_sflog TEXT,
+	PRIMARY KEY(qupx_quotepropertymodelextraid),
+	FOREIGN KEY (qupx_quoteid) REFERENCES quotes(quot_quoteid),
+	FOREIGN KEY (qupx_propertymodelextraid) REFERENCES propertymodelextras(prmx_propertymodelextraid)
+);
+
+
+ALTER TABLE wflowcategories ADD COLUMN wfca_expires INT;
+ALTER TABLE wflowcategories ADD COLUMN wfca_expiredays INT;
+ALTER TABLE users ADD COLUMN user_code VARCHAR(50);
+
+
+ALTER TABLE opportunitydetails ADD COLUMN opde_guests INT;
+ALTER TABLE opportunitydetails ADD COLUMN opde_venueid INT;
+ALTER TABLE opportunitydetails ADD FOREIGN KEY (opde_venueid) REFERENCES venues(venu_venueid);
+ALTER TABLE opportunities ADD COLUMN oppo_expiredate DATE;
+
+CREATE TABLE wflowdocumenttypes (
+	wfdt_wflowdocumenttypeid INT NOT NULL AUTO_INCREMENT, 
+	wfdt_name VARCHAR(30), 
+	wfdt_required INT NOT NULL,
+	wfdt_wflowtypeid INT NOT NULL,
+	wfdt_sflog TEXT,
+	PRIMARY KEY(wfdt_wflowdocumenttypeid), 
+	FOREIGN KEY (wfdt_wflowtypeid) REFERENCES wflowtypes(wfty_wflowtypeid)
+);
+
+CREATE TABLE wflowdocuments (
+	wfdo_wflowdocumentid INT NOT NULL AUTO_INCREMENT, 
+	wfdo_name VARCHAR(30), 
+	wfdo_file VARCHAR(255),
+	wfdo_isup INT,
+	wfdo_required INT,
+	wfdo_wflowid INT NOT NULL,
+	wfdo_sflog TEXT,
+	PRIMARY KEY(wfdo_wflowdocumentid),
+ 	FOREIGN KEY (wfdo_wflowid) REFERENCES wflows(wflw_wflowid)
+);
+
+ALTER TABLE wflows ADD COLUMN wflw_hasdocuments INT;
+
+CREATE TABLE ordercomplainttypes(
+	orct_ordercomplainttypeid INT NOT NULL AUTO_INCREMENT,
+	orct_code VARCHAR(10) NOT NULL,
+	orct_name VARCHAR(50),
+	orct_description VARCHAR(255),
+	orct_userid INT, 	
+	orct_sflog TEXT,
+	PRIMARY KEY (orct_ordercomplainttypeid),
+	FOREIGN KEY (orct_userid) 
+	REFERENCES users(user_userid)	
+);
+
+CREATE TABLE ordercomplaints(
+	ordc_ordercomplaintid INT NOT NULL AUTO_INCREMENT,
+	ordc_code VARCHAR(10),
+	ordc_name VARCHAR(50),
+	ordc_description VARCHAR(255),
+	ordc_ordercomplainttypeid INT NOT NULL,
+	ordc_orderid INT NOT NULL,
+	ordc_solution VARCHAR(500),
+	ordc_status CHAR(1),
+	ordc_active INT(11),
+	ordc_registrationdate DATE,
+	ordc_committaldate DATE,
+	ordc_solutiondate DATE,
+	ordc_sflog TEXT,
+	PRIMARY KEY (ordc_ordercomplaintid),
+	FOREIGN KEY (ordc_orderid) REFERENCES orders(orde_orderid)
+);
+
+CREATE TABLE ordercomplaintfollowups(
+	orcf_ordercomplaintfollowupid INT NOT NULL AUTO_INCREMENT,
+	orcf_ordercomplaintid INT NOT NULL,
+	orcf_description VARCHAR(255),
+	orcf_userid INT, 	
+	orcf_followupdate DATETIME, 	
+	orcf_sflog TEXT,
+	PRIMARY KEY (orcf_ordercomplaintfollowupid),
+	FOREIGN KEY (orcf_ordercomplaintid) REFERENCES ordercomplaints(ordc_ordercomplaintid),
+	FOREIGN KEY (orcf_userid) REFERENCES users(user_userid)
+);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_enableordersale INT;
+ALTER TABLE flexconfig ADD COLUMN flxc_enableorderrental INT;
+ALTER TABLE flexconfig ADD COLUMN flxc_enableorderproperty INT;
+
+
+-- el siguiente es para copiar los datos de la oportunidad al detalle
+UPDATE opportunitydetails 
+LEFT JOIN opportunities ON (opde_opportunityid = oppo_opportunityid)
+SET opde_guests = oppo_guests, opde_venueid = oppo_venueid
+WHERE opde_opportunityid = oppo_opportunityid;
+
+
+UPDATE users 
+SET user_code = left(user_email, locate('@', user_email)-1)
+WHERE user_userid > 0;
+
+-- IMPORTANTE: MIGRAR LOS DOCUMENTOS DE SFFILES A WFLOWDOCUMENTS, MEDIANTE JSP!!!!!
+
+-- SOLO CUANDO ESTE BIEN REVISADO, BORRAR
+ALTER TABLE opportunities DROP COLUMN oppo_guests;
+ALTER TABLE opportunities DROP FOREIGN KEY opportunities_ibfk_6;
+ALTER TABLE opportunities DROP COLUMN oppo_venueid;
+
+ALTER TABLE quotes ADD COLUMN quot_showstaffquantity INT;
+ALTER TABLE quotes ADD COLUMN quot_showstaffprice INT;
+
+ALTER TABLE orders ADD COLUMN orde_showequipmentquantity INT;
+ALTER TABLE orders ADD COLUMN orde_showequipmentprice INT;
+ALTER TABLE orders ADD COLUMN orde_showstaffquantity INT;
+ALTER TABLE orders ADD COLUMN orde_showstaffprice INT;
+
+ALTER TABLE orders MODIFY COLUMN orde_description VARCHAR(500);
+
+ALTER TABLE orders ADD COLUMN orde_wflowtypeid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_wflowtypeid) REFERENCES wflowtypes(wfty_wflowtypeid);
+ALTER TABLE orders ADD COLUMN orde_tags VARCHAR(255);
+
+CREATE TABLE ordertypes (
+	ortp_ordertypeid INT NOT NULL AUTO_INCREMENT, 
+	ortp_code VARCHAR(10) NOT NULL, 
+	ortp_name VARCHAR(30), 
+	ortp_description VARCHAR(255), 
+	ortp_type CHAR,
+	ortp_sflog TEXT,
+	PRIMARY KEY(ortp_ordertypeid) 
+);
+
+ALTER TABLE orders ADD COLUMN orde_ordertypeid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid);
+
+ALTER TABLE flexconfig DROP COLUMN flxc_defaultordertype;
+ALTER TABLE flexconfig DROP COLUMN flxc_enableordersale;
+ALTER TABLE flexconfig DROP COLUMN flxc_enableorderrental;
+ALTER TABLE flexconfig DROP COLUMN flxc_enableorderproperty;
+ALTER TABLE flexconfig ADD COLUMN flxc_defaultordertypeid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_defaultordertypeid) REFERENCES ordertypes(ortp_ordertypeid);
+
+ALTER TABLE quotes ADD COLUMN quot_ordertypeid INT;
+ALTER TABLE quotes ADD FOREIGN KEY (quot_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid);
+
+ALTER TABLE opportunities ADD COLUMN oppo_ordertypeid INT;
+ALTER TABLE opportunities ADD FOREIGN KEY (oppo_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid);
+
+ALTER TABLE projects ADD COLUMN proj_ordertypeid INT;
+ALTER TABLE projects ADD FOREIGN KEY (proj_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid);
+
+UPDATE orders SET orde_ordertypeid = 1;
+UPDATE opportunities SET oppo_ordertypeid = 1;
+UPDATE quotes SET quot_ordertypeid = 1;
+UPDATE projects SET proj_ordertypeid = 1;
+
+CREATE TABLE wflowgroups (
+	wfgp_wflowgroupid INT NOT NULL AUTO_INCREMENT, 
+	wfgp_required INT NOT NULL,
+	wfgp_profileid INT NOT NULL,
+	wfgp_wflowcategoryid INT NOT NULL,
+	wfgp_sflog TEXT,
+	PRIMARY KEY(wfgp_wflowgroupid), 
+	FOREIGN KEY (wfgp_profileid) REFERENCES groups(prof_profileid),
+	FOREIGN KEY (wfgp_wflowcategoryid) REFERENCES wflowcategories(wfca_wflowcategoryid)
+);
+
+ALTER TABLE wflowgroups ADD COLUMN wfgp_autodate INT;
+ALTER TABLE wflowusers ADD COLUMN wflu_required INT;
+ALTER TABLE wflowusers ADD COLUMN wflu_autodate INT;
+ALTER TABLE wflowusers ADD COLUMN wflu_profileid INT;
+ALTER TABLE wflowusers ADD FOREIGN KEY (wflu_profileid) REFERENCES groups(prof_profileid);
+
+CREATE TABLE  supplierusers (
+	spus_supplieruserid INT NOT NULL AUTO_INCREMENT, 
+	spus_userid INT NOT NULL,
+	spus_supplierid INT NOT NULL,
+	spus_sflog TEXT,
+	PRIMARY KEY(spus_supplieruserid),
+	FOREIGN KEY (spus_userid) REFERENCES users(user_userid),
+	FOREIGN KEY (spus_supplierid) REFERENCES suppliers(supl_supplierid)
+);
+
+
+-- SE REQUIERE CREAR PROCESO DE ASIGNAR USUARIO CORRECTO wflu_wflowusers_update.jsp
+-- update wflowusers set wflu_profileid = 27;
+
+
+CREATE TABLE ordercommissions (
+	orcm_ordercommissionid INT NOT NULL AUTO_INCREMENT, 
+	orcm_code VARCHAR(10),
+	orcm_name VARCHAR(100),
+	orcm_description VARCHAR(255),
+	orcm_ordertypeid INT,
+	orcm_reqpaytypeid INT,
+	orcm_sflog TEXT,
+	PRIMARY KEY(orcm_ordercommissionid),
+	FOREIGN KEY (orcm_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid),
+FOREIGN KEY (orcm_reqpaytypeid) REFERENCES reqpaytypes(rqpt_reqpaytypeid)
+);
+
+CREATE TABLE ordercommissionamounts (
+	orca_ordercommissionamountid INT NOT NULL AUTO_INCREMENT, 
+	orca_name VARCHAR(30),
+	orca_type CHAR,
+	orca_value DOUBLE,
+	orca_trigger CHAR,
+	orca_userassignrequired INT,
+	orca_ispartial INT,
+	orca_profileid INT NOT NULL,
+	orca_parentid INT,
+	orca_ordercommissionid INT NOT NULL,
+	orca_sflog TEXT,
+	PRIMARY KEY(orca_ordercommissionamountid),
+	FOREIGN KEY (orca_ordercommissionid) REFERENCES ordercommissions(orcm_ordercommissionid)
+);
+
+
+ALTER TABLE orders ADD COLUMN orde_ordercommissionid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_ordercommissionid) REFERENCES ordercommissions(orcm_ordercommissionid);
+
+ALTER TABLE requisitions ADD COLUMN reqi_ordercommissionamountid INT;
+ALTER TABLE requisitions ADD FOREIGN KEY (reqi_ordercommissionamountid) REFERENCES ordercommissionamounts(orca_ordercommissionamountid);
+
+ALTER TABLE ordercommissions ADD COLUMN orcm_reqpaytypeid INT;
+ALTER TABLE ordercommissions ADD FOREIGN KEY (orcm_reqpaytypeid) REFERENCES reqpaytypes(rqpt_reqpaytypeid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_defaultvirtualwhsectionid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_defaultvirtualwhsectionid) REFERENCES whsections(whse_whsectionid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_defaultvirtualwarehouseid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_defaultvirtualwarehouseid) REFERENCES warehouses(ware_warehouseid);
+
+ALTER TABLE whsections DROP COLUMN whse_type;
+
+ALTER TABLE developmentphases ADD COLUMN dvph_ordercommissionid INT;
+ALTER TABLE developmentphases ADD FOREIGN KEY (dvph_ordercommissionid) REFERENCES ordercommissions(orcm_ordercommissionid);
+
+ALTER TABLE orders ADD COLUMN orde_companyid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_companyid) REFERENCES companies(comp_companyid);
+
+ALTER TABLE requisitions ADD COLUMN reqi_companyid INT;
+ALTER TABLE requisitions ADD FOREIGN KEY (reqi_companyid) REFERENCES companies(comp_companyid);
+
+ALTER TABLE developmentphases ADD COLUMN dvph_companyid INT;
+ALTER TABLE developmentphases ADD FOREIGN KEY (dvph_companyid) REFERENCES companies(comp_companyid);
+
+
+-- Asignaciones en CXP
+CREATE TABLE paccountassignments (
+	pass_paccountassignmentid INT NOT NULL AUTO_INCREMENT, 
+	pass_code VARCHAR(10),
+	pass_invoiceno VARCHAR(50),
+	pass_paccountid INT NOT NULL,
+	pass_foreignpaccountid INT,
+	pass_amount FLOAT NOT NULL,
+	pass_sflog TEXT,
+	PRIMARY KEY(pass_paccountassignmentid),
+	FOREIGN KEY (pass_paccountid) REFERENCES paccounts(pacc_paccountid)
+);
+
+CREATE TABLE raccountassignments (
+	rass_raccountassignmentid INT NOT NULL AUTO_INCREMENT, 
+	rass_code VARCHAR(10),
+	rass_invoiceno VARCHAR(50),
+	rass_raccountid INT NOT NULL,
+	rass_foreignraccountid INT,
+	rass_amount FLOAT NOT NULL,
+	rass_sflog TEXT,
+	PRIMARY KEY(rass_raccountassignmentid),
+	FOREIGN KEY (rass_raccountid) REFERENCES raccounts(racc_raccountid)
+);
+
+ALTER TABLE whstocks ADD COLUMN whst_whtrackid INT;
+ALTER TABLE whstocks ADD FOREIGN KEY (whst_whtrackid) REFERENCES whtracks(whtr_whtrackid);
+
+ALTER TABLE customers ADD COLUMN cust_curp VARCHAR(25);
+ALTER TABLE customers ADD COLUMN cust_nss VARCHAR(25);
+ALTER TABLE customers ADD COLUMN cust_maritalstatus CHAR;
+ALTER TABLE customers ADD COLUMN cust_income DOUBLE;
+
+ALTER TABLE customers ADD COLUMN cust_parentid INT;
+ALTER TABLE customers ADD FOREIGN KEY (cust_parentid) REFERENCES customers(cust_customerid);
+
+
+CREATE TABLE `customerrelatives` (
+  `curl_customerrelativeid` int(11) NOT NULL AUTO_INCREMENT,
+  `curl_type` char(1) DEFAULT NULL,
+  `curl_fullname` varchar(50) DEFAULT NULL,
+  `curl_email` varchar(50) DEFAULT NULL,
+  `curl_number` varchar(15) DEFAULT NULL,
+  `curl_extension` varchar(5) DEFAULT NULL,
+  `curl_customerid` int(11) NOT NULL,
+  `curl_sflog` text,
+  PRIMARY KEY (`curl_customerrelativeid`),
+  CONSTRAINT `curlrelatives_ibfk_1` FOREIGN KEY (`curl_customerid`) REFERENCES `customers` (`cust_customerid`)
+);
+
+ALTER TABLE propertysales ADD COLUMN prsa_ordertypeid INT; 
+ALTER TABLE propertysales ADD FOREIGN KEY (prsa_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid);
+
+ALTER TABLE flexconfig DROP FOREIGN KEY flexconfig_ibfk_10;
+ALTER TABLE flexconfig DROP FOREIGN KEY flexconfig_ibfk_11;
+ALTER TABLE flexconfig DROP COLUMN flxc_defaultvirtualwhsectionid;
+ALTER TABLE flexconfig DROP COLUMN flxc_defaultvirtualwarehouseid;
+
+ALTER TABLE wflowusers CHANGE COLUMN wflu_geventid wflu_usergeventid VARCHAR(100);
+ALTER TABLE wflowusers CHANGE COLUMN wflu_userpublicgeventid wflu_areageventid VARCHAR(100);
+
+ALTER TABLE requisitions MODIFY COLUMN reqi_code VARCHAR(10);
+
+ALTER TABLE developmentphases ADD COLUMN dvph_venturecostcenterid INT; 
+ALTER TABLE developmentphases ADD FOREIGN KEY (dvph_venturecostcenterid) REFERENCES venturecostcenters(vecc_venturecostcenterid);
+
+ALTER TABLE paccountassignments ADD COLUMN pass_bankmovconceptid INT;
+ALTER TABLE paccountassignments ADD FOREIGN KEY (pass_bankmovconceptid) REFERENCES bankmovconcepts(bkmc_bankmovconceptid);
+
+ALTER TABLE raccountassignments ADD COLUMN rass_bankmovconceptid INT;
+ALTER TABLE raccountassignments ADD FOREIGN KEY (rass_bankmovconceptid) REFERENCES bankmovconcepts(bkmc_bankmovconceptid);
+
+
+ALTER TABLE bankmovconcepts ADD COLUMN bkmc_depositpaccountitemid INT;
+ALTER TABLE bankmovconcepts ADD FOREIGN KEY (bkmc_depositpaccountitemid) REFERENCES paccountitems(pait_paccountitemid);
+
+ALTER TABLE bankmovconcepts ADD COLUMN bkmc_depositraccountitemid INT;
+ALTER TABLE bankmovconcepts ADD FOREIGN KEY (bkmc_depositraccountitemid) REFERENCES raccountitems(rait_raccountitemid);
+
+
+ALTER TABLE paccounts ADD COLUMN pacc_code VARCHAR(10);
+
+CREATE TABLE loans(
+	 loan_loanid INT NOT NULL AUTO_INCREMENT,
+	 loan_code VARCHAR(10),
+	 loan_name VARCHAR(50),
+	 loan_description VARCHAR(255),
+	 loan_amount DOUBLE,
+	 loan_rate DOUBLE,
+	 loan_downpayment DOUBLE,
+	 loan_commission DOUBLE,
+	 loan_startdate DATE,
+	 loan_enddate DATE,
+	 loan_disbursed DOUBLE,
+	 loan_progress INT,
+	 loan_supplierid INT,
+	 loan_developmentphaseid INT,
+	 loan_sflog TEXT,
+	 PRIMARY KEY (loan_loanid),
+	 FOREIGN KEY (loan_supplierid) REFERENCES suppliers (supl_supplierid), 
+	 FOREIGN KEY (loan_developmentphaseid) REFERENCES developmentphases (dvph_developmentphaseid)
+);
+
+CREATE TABLE loandisbursements(
+	lodi_loandisbursementid INT NOT NULL AUTO_INCREMENT,
+	lodi_date DATE,
+	lodi_amount DOUBLE,
+	lodi_progress INT,
+	lodi_loanid INT,
+	lodi_sflog TEXT,
+	PRIMARY KEY (lodi_loandisbursementid),
+	FOREIGN KEY (lodi_loanid) REFERENCES loans (loan_loanid)
+);
+
+CREATE TABLE loanpayments(
+	lopa_loanpaymentid INT NOT NULL AUTO_INCREMENT,
+	lopa_date DATE,
+	lopa_amount DOUBLE,
+	lopa_propertyid INT, 
+	lopa_loanid INT,
+	lopa_sflog TEXT,
+	PRIMARY KEY (lopa_loanpaymentid),
+	FOREIGN KEY (lopa_propertyid) REFERENCES properties (prty_propertyid),
+	FOREIGN KEY (lopa_loanid) REFERENCES loans (loan_loanid)
+);
+
+ALTER TABLE loandisbursements ADD COLUMN lodi_balance DOUBLE;
+
+ALTER TABLE paccountassignments CHANGE COLUMN pass_amount pass_amount DOUBLE;
+ALTER TABLE raccountassignments CHANGE COLUMN rass_amount rass_amount DOUBLE;
+
+
+ALTER TABLE requisitions ADD COLUMN reqi_venturecostcenterid INT;
+ALTER TABLE requisitions ADD FOREIGN KEY (reqi_venturecostcenterid) REFERENCES venturecostcenters(vecc_venturecostcenterid);
+
+-- REGRESAR ESQUEMA A LO ANTERIOR
+-- ALTER TABLE projects ADD COLUMN proj_venturecostcenterid INT;
+-- ALTER TABLE projects ADD FOREIGN KEY (proj_venturecostcenterid) REFERENCES venturecostcenters(vecc_venturecostcenterid);
+
+ALTER TABLE bankmovconcepts CHANGE COLUMN bkmc_code bkmc_code VARCHAR(40);
+
+ALTER TABLE equipments ADD FOREIGN KEY (equi_userid) REFERENCES users(user_userid);
+
+ALTER TABLE wflowsteps ADD COLUMN wfsp_emailreminders INT;
+ALTER TABLE wflowsteps ADD COLUMN wfsp_file VARCHAR(255);
+ALTER TABLE wflowsteptypes ADD COLUMN wfst_emailreminders INT;
+
+ALTER TABLE wflowdocumenttypes ADD COLUMN wfdt_code VARCHAR(10);
+ALTER TABLE wflowdocuments ADD COLUMN wfdo_code VARCHAR(10);
+
+ALTER TABLE companies ADD COLUMN comp_deeddate DATE;
+ALTER TABLE companies ADD COLUMN comp_deednumber VARCHAR(20);
+ALTER TABLE companies ADD COLUMN comp_deednotarynumber VARCHAR(10);
+ALTER TABLE companies MODIFY COLUMN comp_code VARCHAR(10);
+
+ALTER TABLE opportunities ADD COLUMN oppo_foreignwflowtypeid INT;
+
+ALTER TABLE propertysales ADD COLUMN prsa_type CHAR;
+
+ALTER TABLE developmentphases ADD COLUMN dvph_electronicfolio VARCHAR(40); -- Número Folio Mercantil Eletrónico	
+ALTER TABLE developmentphases ADD COLUMN dvph_fideicomisonumber VARCHAR(40); -- Número de Fideicomiso
+
+DROP TABLE modulespecialaccess;
+DROP TABLE modulespecial;
+DROP TABLE moduleaccess;
+
+ALTER TABLE flexconfig ADD COLUMN flxc_discountlimit double;
+
+ALTER TABLE bankmovtypes ADD COLUMN bkmt_visible CHAR(1);
+
+CREATE TABLE requisitiontypes (
+	rqtp_requisitiontypeid INT NOT NULL AUTO_INCREMENT, 
+	rqtp_code VARCHAR(10) NOT NULL, 
+	rqtp_name VARCHAR(30), 
+	rqtp_description VARCHAR(255), 
+	rqtp_type CHAR,
+	rqtp_sflog TEXT,
+	PRIMARY KEY(rqtp_requisitiontypeid) 
+);
+
+ALTER TABLE requisitions ADD COLUMN reqi_requisitiontypeid INT;
+ALTER TABLE requisitions ADD FOREIGN KEY (reqi_requisitiontypeid) REFERENCES requisitiontypes(rqtp_requisitiontypeid);
+
+ALTER TABLE requisitions ADD COLUMN reqi_contractestimationid INT;
+ALTER TABLE requisitions ADD FOREIGN KEY (reqi_contractestimationid) REFERENCES contractestimations(coes_contractestimationid);
+
+CREATE TABLE works (
+	work_workid INT NOT NULL AUTO_INCREMENT,
+	work_code VARCHAR(10),
+	work_name VARCHAR(200),
+	work_description VARCHAR(255),
+	work_developmentphaseid INT,
+	work_type CHAR(1) NOT NULL,
+	work_ismaster INT,
+	work_userid INT NOT NULL,
+	work_status CHAR(1),
+	work_indirects DOUBLE NOT NULL,
+	work_companyid INT,
+	work_sflog TEXT,
+	work_total DOUBLE, 
+	PRIMARY KEY (work_workid),
+	FOREIGN KEY (work_companyid) REFERENCES companies (comp_companyid)
+);
+
+CREATE TABLE unitprices (
+unpr_unitpriceid INT NOT NULL AUTO_INCREMENT,
+unpr_code VARCHAR(30) NOT NULL,
+unpr_name VARCHAR(768) NOT NULL,
+unpr_description VARCHAR(768),
+unpr_date DATE,
+unpr_type CHAR(1) NOT NULL,
+unpr_category CHAR(1) NOT NULL,
+unpr_price DOUBLE,
+unpr_basefsr DOUBLE,
+unpr_supplierid INT,
+unpr_materialtypeid INT,
+unpr_genrequisition INT,
+unpr_deletehistory INT,
+unpr_origin CHAR(1),
+unpr_subcontract INT,
+unpr_quantitybyhouse DOUBLE,
+unpr_status CHAR(1),
+unpr_workid INT NOT NULL,
+unpr_unitid INT NOT NULL,
+unpr_currencyid INT,
+unpr_sflog TEXT,
+PRIMARY KEY (unpr_unitpriceid),
+FOREIGN KEY (unpr_workid) REFERENCES works (work_workid),
+FOREIGN KEY (unpr_unitid) REFERENCES units (unit_unitid),
+FOREIGN KEY (unpr_currencyid) REFERENCES currencies (cure_currencyid),
+FOREIGN KEY (unpr_supplierid) REFERENCES suppliers (supl_supplierid) 
+);
+
+CREATE TABLE unitpriceitems (
+unpi_unitpriceitemid INT NOT NULL AUTO_INCREMENT,
+unpi_code VARCHAR(30) NOT NULL,
+unpi_quantity DOUBLE NOT NULL,
+unpi_price FLOAT NOT NULL,
+unpi_amount FLOAT NOT NULL,
+unpi_unitpriceid INT NOT NULL,
+unpi_unitpriceParentid INT NOT NULL,
+unpi_sflog TEXT,
+PRIMARY KEY(unpi_unitpriceitemid),
+FOREIGN KEY (unpi_unitpriceparentid) REFERENCES unitprices(unpr_unitpriceid)
+);
+
+CREATE TABLE conceptgroups (
+cpgp_conceptgroupid INT NOT NULL AUTO_INCREMENT,
+cpgp_code VARCHAR(10),
+cpgp_name VARCHAR(30),
+cpgp_description VARCHAR(255),
+cpgp_sflog TEXT,
+PRIMARY KEY (cpgp_conceptgroupid)
+);
+
+CREATE TABLE conceptheadings (
+cphd_conceptheadingid INT NOT NULL AUTO_INCREMENT,
+cphd_code VARCHAR(20),
+cphd_name VARCHAR(30),
+cphd_description VARCHAR(255),
+cphd_conceptgroupid INT,
+cphd_sflog TEXT,
+PRIMARY KEY (cphd_conceptheadingid)
+);
+
+CREATE TABLE concepts(
+cncp_conceptid INT NOT NULL AUTO_INCREMENT,
+cncp_code VARCHAR(10) NOT NULL,
+cncp_name VARCHAR(30) NOT NULL,
+cncp_total DOUBLE,
+cncp_workid INT NOT NULL,
+cncp_description VARCHAR(200),
+cncp_sflog TEXT,
+PRIMARY KEY (cncp_conceptid),
+FOREIGN KEY (cncp_workid) REFERENCES works (work_workid)
+);
+
+CREATE TABLE conceptitems (
+cnci_conceptitemid INT NOT NULL AUTO_INCREMENT, 
+cnci_code VARCHAR(10) NOT NULL,
+cnci_type VARCHAR(30),
+cnci_unitpriceid INT NOT NULL,
+cnci_amount DOUBLE,
+cnci_price DOUBLE,
+cnci_conceptheadingid INT NOT NULL,
+cnci_quantity DOUBLE NOT NULL,
+cnci_conceptid INT NOT NULL,
+cnci_sflog TEXT,
+PRIMARY KEY(cnci_conceptitemid),
+FOREIGN KEY (cnci_conceptid) REFERENCES concepts(cncp_conceptid),
+FOREIGN KEY (cnci_unitpriceid) REFERENCES unitprices(unpr_unitpriceid),
+FOREIGN KEY (cnci_conceptheadingid) REFERENCES conceptheadings(cphd_conceptheadingid)
+);
+
+CREATE TABLE workcontracts(
+woco_workcontractid INT NOT NULL AUTO_INCREMENT,
+woco_workid INT NOT NULL,
+woco_supplierid INT NOT NULL,
+woco_code VARCHAR(12),
+woco_name VARCHAR(30) NOT NULL,
+woco_description VARCHAR(255),
+woco_startdate DATE,
+woco_enddate DATE,
+woco_downpayment DOUBLE,
+woco_percentdownpayment DOUBLE,
+woco_hastax INT,
+woco_tax DOUBLE,
+woco_dailysanction DOUBLE,
+woco_observations VARCHAR(500),
+woco_quantity DOUBLE,
+woco_subtotal DOUBLE,
+woco_totalconcepts DOUBLE,
+woco_total DOUBLE,
+woco_companyid INT NOT NULL,
+woco_paymentdate DATE,
+woco_status CHAR(1),
+woco_paymentstatus CHAR(1),
+woco_estimationtype CHAR(1),
+woco_guaranteefund DOUBLE,
+woco_percentguaranteefund DOUBLE,
+woco_downpaymentstatus CHAR(1),
+woco_comments VARCHAR(500),
+woco_datecontract DATE,
+woco_auxstatus CHAR(1),
+woco_isclosed BOOLEAN DEFAULT false,
+woco_history VARCHAR(1000),
+woco_descriptionisclosed VARCHAR(250),
+woco_worktype INT,
+woco_lotdescription VARCHAR(50),
+woco_finished INT DEFAULT false,
+woco_totalwarranty DOUBLE,
+woco_sflog TEXT,
+PRIMARY KEY (woco_workcontractid),
+FOREIGN KEY (woco_workid)
+REFERENCES works (work_workid),
+FOREIGN KEY (woco_supplierid) REFERENCES suppliers (supl_supplierid),
+FOREIGN KEY (woco_worktype) REFERENCES conceptgroups (cpgp_conceptgroupid) 
+);
+
+CREATE TABLE contractconcepts(
+coco_contractconceptid INT NOT NULL AUTO_INCREMENT,
+coco_workcontractid INT NOT NULL,
+coco_conceptid INT NOT NULL,
+coco_sflog TEXT,
+PRIMARY KEY (coco_contractconceptid),
+FOREIGN KEY (coco_workcontractid) REFERENCES workcontracts (woco_workcontractid),
+FOREIGN KEY (coco_conceptid) REFERENCES concepts (cncp_conceptid) 
+);
+
+CREATE TABLE contractestimations(
+coes_contractestimationid INT NOT NULL AUTO_INCREMENT,
+coes_workcontractid INT NOT NULL,
+coes_consecutive INT NOT NULL,
+coes_code VARCHAR(10),
+coes_startdate DATE NOT NULL,
+coes_enddate DATE NOT NULL,
+coes_amount DOUBLE,
+coes_tax DOUBLE,
+coes_downpayment DOUBLE,
+coes_warrantyfund DOUBLE,
+coes_total DOUBLE,
+coes_status CHAR(1) NOT NULL,
+coes_othersexpenses DOUBLE,
+coes_paymentstatus CHAR(1),
+coes_descriptionotherexpenses VARCHAR(250),
+coes_sflog TEXT,
+PRIMARY KEY (coes_contractestimationid),
+FOREIGN KEY (coes_workcontractid) REFERENCES workcontracts (woco_workcontractid) 
+);
+
+CREATE TABLE contractconceptitems (
+ccit_contractconceptitemid INT NOT NULL AUTO_INCREMENT, 
+ccit_code VARCHAR(10) NOT NULL,
+ccit_name VARCHAR(30) NOT NULL,
+ccit_conceptid INT NOT NULL,
+ccit_amount DOUBLE,
+ccit_price DOUBLE,
+ccit_quantity DOUBLE NOT NULL,
+ccit_workcontractid INT NOT NULL,
+ccit_sflog TEXT,
+PRIMARY KEY(ccit_contractconceptitemid),
+FOREIGN KEY (ccit_workcontractid) REFERENCES workcontracts(woco_workcontractid),
+FOREIGN KEY (ccit_conceptid) REFERENCES concepts(cncp_conceptid)	
+);
+
+CREATE TABLE materialtype (
+mtty_materialtypeid INT NOT NULL AUTO_INCREMENT, 
+mtty_code VARCHAR(10) NOT NULL,
+mtty_name VARCHAR(30) NOT NULL,
+mtty_description VARCHAR(60),
+mtty_sflog TEXT,
+PRIMARY KEY(mtty_materialtypeid)
+);
+
+CREATE TABLE estimationitems(
+esti_estimationitemid INT NOT NULL AUTO_INCREMENT,
+esti_contractestimationid INT NOT NULL,
+esti_contractconceptitemid INT NOT NULL,
+esti_quantityreceipt DOUBLE,
+esti_quantitytotal DOUBLE,
+esti_quantity DOUBLE,
+esti_price DOUBLE,
+esti_subtotal DOUBLE,
+esti_consecutive INT,
+esti_sflog TEXT,
+PRIMARY KEY (esti_estimationitemid)
+);
+
+ALTER TABLE estimationitems ADD FOREIGN KEY (esti_contractestimationid) REFERENCES contractestimations (coes_contractestimationid);
+ALTER TABLE estimationitems ADD	FOREIGN KEY (esti_contractconceptitemid) REFERENCES contractconceptitems (ccit_contractconceptitemid);
+
+ALTER TABLE requisitionitems ADD COLUMN rqit_estimationitemid INT;
+ALTER TABLE requisitionitems ADD FOREIGN KEY (rqit_estimationitemid) REFERENCES estimationitems(esti_estimationitemid);
+
+CREATE TABLE orderblockdates (
+	orbl_orderblockdateid INT NOT NULL AUTO_INCREMENT, 
+	orbl_startdate DATETIME, 
+	orbl_enddate DATETIME, 
+	orbl_comments VARCHAR(255), 
+	orbl_sflog TEXT,
+	PRIMARY KEY(orbl_orderblockdateid) 
+);
+
+-- 20150715
+
+ALTER TABLE products CHANGE COLUMN prod_price prod_rentalprice DOUBLE;
+ALTER TABLE products ADD COLUMN prod_saleprice DOUBLE;
+ALTER TABLE products ADD COLUMN prod_enabled INT;
+
+ALTER TABLE quoteitems ADD COLUMN qoit_baseprice DOUBLE;
+UPDATE quoteitems SET qoit_baseprice = qoit_price;
+
+ALTER TABLE quoteequipments ADD COLUMN qoeq_baseprice DOUBLE;
+UPDATE quoteequipments SET qoeq_baseprice = qoeq_price;
+
+ALTER TABLE quotestaff ADD COLUMN qost_baseprice DOUBLE;
+UPDATE quotestaff SET qost_baseprice = qost_price;
+
+ALTER TABLE orderitems ADD COLUMN ordi_baseprice DOUBLE;
+UPDATE orderitems SET ordi_baseprice = ordi_price;
+ALTER TABLE orderitems ADD COLUMN ordi_basecost DOUBLE;
+
+ALTER TABLE orderequipments ADD COLUMN ordq_baseprice DOUBLE;
+UPDATE orderequipments SET ordq_baseprice = ordq_price;
+
+ALTER TABLE orderstaff ADD COLUMN ords_baseprice DOUBLE;
+UPDATE orderstaff SET ords_baseprice = ords_price;
+
+ALTER TABLE orderstaff ADD COLUMN ords_basecost DOUBLE;
+
+UPDATE products SET prod_enabled = 1;
+
+
+-- CAMBIOS ALMACENES 20150824
+
+ALTER TABLE whmovitems ADD COLUMN whmi_fromwhsectionid INT;
+ALTER TABLE whmovitems ADD FOREIGN KEY (whmi_fromwhsectionid) REFERENCES whsections(whse_whsectionid);
+
+ALTER TABLE orderdeliveryitems ADD COLUMN odyi_fromwhsectionid INT;
+ALTER TABLE orderdeliveryitems ADD FOREIGN KEY (odyi_fromwhsectionid) REFERENCES whsections(whse_whsectionid);
+
+ALTER TABLE orderdeliveryitems ADD COLUMN odyi_towhsectionid INT;
+ALTER TABLE orderdeliveryitems ADD FOREIGN KEY (odyi_towhsectionid) REFERENCES whsections(whse_whsectionid);
+
+UPDATE whmovements SET whmv_towhsectionid = whmv_basewhsectionid;
+
+ALTER TABLE whmovitems ADD COLUMN whmi_towhsectionid INT;
+ALTER TABLE whmovitems ADD FOREIGN KEY (whmi_towhsectionid) REFERENCES whsections(whse_whsectionid);
+
+
+-- OBRAS
+
+-- Fecha Creación obra
+ALTER TABLE works ADD COLUMN work_datecreate DATE;
+
+-- Tipo Obra
+CREATE TABLE worktypes (
+	wkty_worktypeid INT NOT NULL AUTO_INCREMENT, 
+	wkty_code VARCHAR(10) NOT NULL,
+	wkty_name VARCHAR(30) NOT NULL,
+	wkty_description VARCHAR(60),
+	wkty_sflog TEXT,
+	PRIMARY KEY(wkty_worktypeid)
+);
+
+
+
+ALTER TABLE works ADD COLUMN work_worktypeid INT;
+ALTER TABLE works ADD FOREIGN KEY (work_worktypeid) REFERENCES worktypes(wkty_worktypeid);
+
+
+ALTER TABLE unitprices
+CHANGE COLUMN unpr_price unpr_subtotal DOUBLE NULL DEFAULT NULL ,
+ADD COLUMN unpr_indirects DOUBLE NULL AFTER unpr_sflog,
+ADD COLUMN unpr_total DOUBLE NULL AFTER unpr_indirects;
+
+ALTER TABLE unitprices ADD COLUMN unpr_totalindirects DOUBLE;
+
+update unitprices set unpr_total = unpr_subtotal;
+
+ALTER TABLE concepts ADD COLUMN cncp_conceptheadingid INT;
+ALTER TABLE concepts ADD FOREIGN KEY (cncp_conceptheadingid) REFERENCES conceptheadings(cphd_conceptheadingid);
+-- Eliminar la partida en items de conceptos
+ALTER TABLE conceptitems DROP FOREIGN KEY conceptitems_ibfk_3;
+
+
+ALTER TABLE works ADD COLUMN work_indirectsamount DOUBLE;
+ALTER TABLE works ADD COLUMN work_subtotal DOUBLE;
+
+
+ALTER TABLE worktypes ADD COLUMN wkty_type CHAR;
+
+ALTER TABLE concepts ADD COLUMN cncp_quantity DOUBLE;
+ALTER TABLE concepts ADD COLUMN cncp_subtotal DOUBLE;
+
+ALTER TABLE contractconceptitems ADD COLUMN ccit_conceptitemid INT;
+ALTER TABLE contractconceptitems ADD FOREIGN KEY (ccit_conceptitemid) REFERENCES conceptitems(cnci_conceptitemid);
+
+ALTER TABLE contractconceptitems
+DROP FOREIGN KEY contractconceptitems_ibfk_2;
+ALTER TABLE contractconceptitems 
+DROP COLUMN ccit_conceptid,
+DROP INDEX ccit_conceptid ;
+
+ALTER TABLE unitprices CHANGE COLUMN unpr_description unpr_description VARCHAR(1500) NULL DEFAULT NULL ;
+
+-- Estos los alters de Obra
+
+ALTER TABLE flexconfig ADD COLUMN flxc_enableworkbudgetitem INT;
+
+
+ALTER TABLE unitprices DROP FOREIGN KEY unitprices_ibfk_1;
+ALTER TABLE unitprices CHANGE COLUMN unpr_workid unpr_workid INT(11) NULL ;
+ALTER TABLE unitprices ADD CONSTRAINT unitprices_ibfk_1 FOREIGN KEY (unpr_workid) REFERENCES works (work_workid);
+
+
+-- ALTER TABLE workbudgetitems ADD COLUMN wkbi_amount DOUBLE;
+
+-- update workbudgetitems set wkbi_amount = wkbi_total;
+
+
+CREATE TABLE budgets (
+	budg_budgetid INT NOT NULL AUTO_INCREMENT, 
+	budg_code VARCHAR(10) NOT NULL,
+	budg_name VARCHAR(60) NOT NULL,
+	budg_description VARCHAR(512),
+	budg_status CHAR,
+	budg_total DOUBLE,
+	budg_sflog TEXT,
+	PRIMARY KEY(budg_budgetid)
+);
+
+CREATE TABLE budgetitems (
+	bgit_budgetitemid INT NOT NULL AUTO_INCREMENT, 
+	bgit_code VARCHAR(10) NOT NULL,
+	bgit_name VARCHAR(30) NOT NULL,
+	bgit_description VARCHAR(512),
+	bgit_amount DOUBLE,
+	bgit_budgetid INT,
+	bgit_sflog TEXT,
+	PRIMARY KEY(bgit_budgetitemid),
+	FOREIGN KEY (bgit_budgetid) REFERENCES budgets(budg_budgetid)
+);
+
+ALTER TABLE developmentphases ADD COLUMN dvph_budgetid INT;
+ALTER TABLE developmentphases ADD FOREIGN KEY (dvph_budgetid) REFERENCES budgets(budg_budgetid);
+
+-- workBudgetItem en Ordenes de Compra
+ALTER TABLE requisitions ADD COLUMN reqi_budgetitemid INT;
+ALTER TABLE requisitions ADD FOREIGN KEY (reqi_budgetitemid) REFERENCES budgetitems(bgit_budgetitemid);
+
+-- workBudgetItem en Obra
+ALTER TABLE works ADD COLUMN work_budgetitemid INT;
+ALTER TABLE works ADD FOREIGN KEY (work_budgetitemid) REFERENCES budgetitems(bgit_budgetitemid);
+
+CREATE TABLE budgetitemtypes (
+	bdty_budgetitemtypeid INT NOT NULL AUTO_INCREMENT, 
+	bdty_code VARCHAR(10) NOT NULL,
+	bdty_name VARCHAR(30) NOT NULL,
+	bdty_description VARCHAR(512),	
+	bdty_sflog TEXT,
+	PRIMARY KEY(bdty_budgetitemtypeid)
+);
+
+ALTER TABLE budgetitems ADD COLUMN bgit_budgetitemtypeid INT;
+ALTER TABLE budgetitems ADD FOREIGN KEY (bgit_budgetitemtypeid) REFERENCES budgetitemtypes(bdty_budgetitemtypeid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_enableworkbudgetitem INT;
+
+-- CAMBIOS A IMAGENES DE PRODUCTOS
+
+ALTER TABLE products ADD COLUMN prod_image VARCHAR(255);
+ALTER TABLE products ADD COLUMN prod_displayname VARCHAR(255);
+
+ALTER TABLE productkits ADD COLUMN prkt_image VARCHAR(255);
+ALTER TABLE quotegroups ADD COLUMN qogr_image VARCHAR(255);
+
+ALTER TABLE quotegroups ADD COLUMN qogr_showgroupimage INT;
+ALTER TABLE quotegroups ADD COLUMN qogr_showproductimage INT;
+
+UPDATE products SET prod_displayname = concat(prod_name, ' ', prod_brand);
+
+ALTER TABLE products ADD COLUMN prod_typecostcenterid INT;
+ALTER TABLE products ADD FOREIGN KEY (prod_typecostcenterid) REFERENCES typecostcenters (tycc_typecostcenterid);
+
+
+-- BORRADO DE CENTROS DE COSTOS DE PROYECTO
+ALTER TABLE orders DROP FOREIGN KEY orders_ibfk_7;
+ALTER TABLE orders DROP COLUMN orde_venturecostcenterid;
+ALTER TABLE requisitions DROP FOREIGN KEY requisitions_ibfk_9;
+ALTER TABLE requisitions DROP COLUMN reqi_venturecostcenterid;
+-- ALTER TABLE developmentphases DROP FOREIGN KEY 
+
+DROP TABLE venturecostcenters;
+
+ALTER TABLE properties ADD COLUMN prty_habitability INT;
+
+-- ARREGLOS CENTROS DE COSTOS
+
+ALTER TABLE budgetitems ADD COLUMN bgit_typecostcenterid INT;
+ALTER TABLE budgetitems ADD FOREIGN KEY (bgit_typecostcenterid) REFERENCES typecostcenters (typecostcenterid);
+ALTER TABLE budgetitems DROP COLUMN bgit_budgetitemtypeid;
+DROP TABLE budgetitemtypes;
+
+ALTER TABLE budgets ADD COLUMN budg_startdate DATE;
+ALTER TABLE budgets ADD COLUMN budg_enddate DATE;
+
+
+ALTER TABLE customers ADD COLUMN cust_recommendedby INT;
+ALTER TABLE customers ADD FOREIGN KEY (cust_recommendedby) REFERENCES customers(cust_customerid);
+
+
+-- Imagenes en hoja de pedido
+ALTER TABLE ordergroups ADD COLUMN ordg_image VARCHAR(255);
+ALTER TABLE ordergroups ADD COLUMN ordg_showgroupimage INT;
+ALTER TABLE ordergroups ADD COLUMN ordg_showproductimage INT;
+
+
+-- Cambios obra 20151013
+
+CREATE TABLE workitems (
+	wkit_workitemid INT NOT NULL AUTO_INCREMENT, 
+	wkit_code VARCHAR(10) NOT NULL,
+	wkit_type VARCHAR(30),
+	wkit_unitpriceid INT NOT NULL,
+	wkit_amount DOUBLE,
+	wkit_price DOUBLE,
+	wkit_quantity DOUBLE NOT NULL,
+	wkit_workid INT NOT NULL,
+	wkit_sflog TEXT,
+	PRIMARY KEY(wkit_workitemid),
+	FOREIGN KEY (wkit_workid) REFERENCES works(work_workid),
+	FOREIGN KEY (wkit_unitpriceid) REFERENCES unitprices(unpr_unitpriceid)
+);
+
+ALTER TABLE contractconceptitems ADD COLUMN ccit_workitemid INT;
+ALTER TABLE contractconceptitems ADD FOREIGN KEY (ccit_workitemid) REFERENCES workitems(wkit_workitemid);
+
+ALTER TABLE works ADD COLUMN work_typecostcenterid INT;
+ALTER TABLE works ADD FOREIGN KEY (work_typecostcenterid) REFERENCES typecostcenters(tycc_typecostcenterid);
+
+ALTER TABLE opportunities ADD COLUMN oppo_propertymodelid INT;
+ALTER TABLE opportunities ADD FOREIGN KEY (oppo_propertymodelid) REFERENCES propertymodels(ptym_propertymodelid);
+
+ALTER TABLE propertymodels ADD COLUMN ptym_image VARCHAR(255);
+
+ALTER TABLE wflowsteps MODIFY COLUMN wfsp_comments VARCHAR(1048);
+
+-- Reloj Checador
+DROP TABLE usertimeclock;
+
+CREATE TABLE usertimeclock (
+	ustc_usertimeclockid INT NOT NULL AUTO_INCREMENT, 
+	ustc_type CHAR,
+	ustc_comments VARCHAR(255),
+	ustc_remoteip VARCHAR(50),
+	ustc_hostname VARCHAR(50),
+	ustc_gpslocation INT,
+	ustc_gpslongitude VARCHAR(50),
+	ustc_gpslatitude VARCHAR(50),
+	ustc_gpsaccuracy DOUBLE,
+	ustc_datetime TIMESTAMP,
+	ustc_userid INT,
+	ustc_sflog TEXT,
+	PRIMARY KEY(ustc_usertimeclockid),
+	FOREIGN KEY (ustc_userid) REFERENCES users(user_userid)
+);
+
+DROP TABLE usertimeclock;
+
+ALTER TABLE sfconfig ADD COLUMN sfcf_enableusertimeclock INT;
+
+ALTER TABLE customers MODIFY COLUMN cust_displayname VARCHAR(200);
+
+-- Colindancias en Inmueble
+ALTER TABLE properties ADD COLUMN prty_adjoins VARCHAR(1500);
+
+-- Numero de propiedades en fase desarrollo
+ALTER TABLE developmentphases ADD COLUMN dvph_numberproperties INT;
+
+-- Cantidad Recibida
+ALTER TABLE estimationitems ADD COLUMN esti_quantitylast DOUBLE;
+
+ALTER TABLE contractestimations ADD COLUMN coes_subtotal DOUBLE;
+ALTER TABLE contractestimations ADD COLUMN coes_subtotal DOUBLE;
+
+-- Cambio a tareas
+ALTER TABLE wflowsteps MODIFY COLUMN wfsp_comments VARCHAR(1024);
+ALTER TABLE wflowsteps ADD COLUMN wfsp_commentlog TEXT;
+
+CREATE TABLE meetings (
+	meet_meetingid INT NOT NULL AUTO_INCREMENT, 
+	meet_code VARCHAR(10),
+	meet_name VARCHAR(50),
+	meet_description VARCHAR(255),
+	meet_startdate DATETIME,
+	meet_enddate DATETIME,
+	meet_wflowtypeid INT,
+	meet_wflowid INT,
+	meet_userid INT,
+	meet_sflog TEXT,
+	PRIMARY KEY(meet_meetingid),
+	FOREIGN KEY (meet_userid) REFERENCES users(user_userid),
+	FOREIGN KEY (meet_wflowtypeid) REFERENCES wflowtypes(wfty_wflowtypeid),
+	FOREIGN KEY (meet_wflowid) REFERENCES wflows(wflw_wflowid)
+);
+
+
+ALTER TABLE wflowlogs MODIFY COLUMN wflg_comments VARCHAR(2048);
+
+
+ALTER TABLE requisitionreceipts ADD COLUMN rerc_service INT;
+ALTER TABLE requisitionreceipts ADD COLUMN rerc_quality INT;
+ALTER TABLE requisitionreceipts ADD COLUMN rerc_punctuality INT;
+
+
+-- CAMBIO DE PRECIOS UNITARIOS A AMOUNT TOTAL EN LUGAR DE PRICE AMOUNT
+ALTER TABLE unitpriceitems CHANGE COLUMN unpi_amount unpi_total DOUBLE;
+ALTER TABLE unitpriceitems CHANGE COLUMN unpi_price unpi_amount DOUBLE;
+
+ALTER TABLE flexconfig ADD COLUMN flxc_negativebankbalance INT;
+
+ALTER TABLE orders ADD COLUMN orde_opportunityid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_opportunityid) REFERENCES opportunities(oppo_opportunityid);
+
+ALTER TABLE socials MODIFY COLUMN soci_icon VARCHAR(500);
+
+-- static desarrollos
+ALTER TABLE developments ADD COLUMN deve_satic VARCHAR(40);
+
+-- DAtos del notario en el proveedor
+ALTER TABLE suppliers ADD COLUMN supl_lawyername VARCHAR(40);
+ALTER TABLE suppliers ADD COLUMN supl_lawyerdeed VARCHAR(40);
+ALTER TABLE suppliers ADD COLUMN supl_lawyerdeeddate VARCHAR(40);
+ALTER TABLE suppliers ADD COLUMN supl_citydeedid INT;
+
+-- Manejo de max y min en productos
+ALTER TABLE products ADD COLUMN prod_stockmax INT;
+ALTER TABLE products ADD COLUMN prod_stockmin INT;
+
+ALTER TABLE equipments ADD COLUMN equi_enabled CHAR;
+
+-- SE AGREGA EMPRESA A OPORTUNIDADES Y A COTIZACIONES
+ALTER TABLE opportunities ADD COLUMN oppo_companyid INT;
+ALTER TABLE opportunities ADD FOREIGN KEY (oppo_companyid) REFERENCES companies(comp_companyid);
+
+ALTER TABLE quotes ADD COLUMN quot_companyid INT;
+ALTER TABLE quotes ADD FOREIGN KEY (quot_companyid) REFERENCES companies(comp_companyid);
+
+ALTER TABLE developments ADD COLUMN deve_companyid INT;
+ALTER TABLE developments ADD FOREIGN KEY (deve_companyid) REFERENCES companies(comp_companyid);
+
+ALTER TABLE companies ADD COLUMN comp_deednotaryname VARCHAR(100);
+
+ALTER TABLE projects ADD COLUMN proj_companyid INT;
+ALTER TABLE projects ADD FOREIGN KEY (proj_companyid) REFERENCES companies (comp_companyid);
+
+-- 27 NOV 2015
+ALTER TABLE locations ADD COLUMN loct_gpslongitude VARCHAR(100);
+ALTER TABLE locations ADD COLUMN loct_gpslatitude VARCHAR(100);
+
+ALTER TABLE requisitiontypes ADD COLUMN rqtp_createreceipt INT;
+
+-- ajustes de prespuestos
+ALTER TABLE budgets ADD COLUMN budg_payments DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_balance DOUBLE;
+
+ALTER TABLE budgetitems ADD COLUMN bgit_payments DOUBLE;
+ALTER TABLE budgetitems ADD COLUMN bgit_balance DOUBLE;
+
+ALTER TABLE flexconfig ADD COLUMN flxc_ensureprocesscxc INT;
+
+ALTER TABLE raccounts ADD COLUMN racc_autocreate INT;
+
+ALTER TABLE requisitions ADD COLUMN reqi_holdback DOUBLE;
+
+ALTER TABLE wflows MODIFY COLUMN wflw_description VARCHAR(500);
+
+ALTER TABLE propertymodelextras ADD COLUMN prmx_fixedprice INT;
+
+UPDATE propertymodelextras SET prmx_fixedprice = 1;
+
+-- Cambios 2 febrero 2016
+
+ALTER TABLE wflowcategories ADD COLUMN wfca_gcalendarsync INT;
+
+ALTER TABLE wflowsteps ADD COLUMN wfsp_pending INT;
+
+-- 15 de febrero 2016, arreglo bancos
+ALTER TABLE workcontracts ADD COLUMN woco_hassanction INT default 1; 
+ALTER TABLE opportunities ADD COLUMN oppo_datecreate DATETIME;
+
+ALTER TABLE requisitions ADD COLUMN reqi_payments double;
+ALTER TABLE requisitions ADD COLUMN reqi_balance double;
+
+ALTER TABLE areas ADD COLUMN area_userid INT;
+ALTER TABLE areas ADD FOREIGN KEY (area_userid) REFERENCES users(user_userid);
+
+ALTER TABLE properties MODIFY COLUMN prty_lot INTEGER;
+
+ALTER TABLE sflogs CHANGE COLUMN sflg_email sflg_username VARCHAR(40);
+ALTER TABLE sflogs ADD COLUMN sflg_action CHAR;
+
+ALTER TABLE users ADD COLUMN user_companyid INT;
+ALTER TABLE users ADD FOREIGN KEY (user_companyid) REFERENCES companies(comp_companyid);
+
+ALTER TABLE requisitionreceipts ADD COLUMN rerc_handling INT;
+ALTER TABLE requisitionreceipts ADD COLUMN rerc_reliability INT;
+
+-- ELIMINAR WORKBUDGETS
+ALTER TABLE developmentphases DROP FOREIGN KEY developmentphases_ibfk_8;
+ALTER TABLE developmentphases DROP COLUMN dvph_workbudgetid;
+ALTER TABLE requisitions DROP FOREIGN KEY requisitions_ibfk_12;
+ALTER TABLE requisitions DROP COLUMN reqi_workbudgetid;
+ALTER TABLE works DROP FOREIGN KEY works_ibfk_3;
+ALTER TABLE works DROP COLUMN work_workbudgetitemid;
+DELETE FROM workbudgetitems;
+DROP TABLE workbudgetitems;
+DELETE FROM workbudgets;
+DROP TABLE workbudgets;
+
+-- ARREGLOS BUDGET EN DISTINTAS TABLAS
+ALTER TABLE requisitionreceipts ADD COLUMN rerc_budgetitemid INT;
+ALTER TABLE requisitionreceipts ADD FOREIGN KEY (rerc_budgetitemid) REFERENCES budgetitems(bgit_budgetitemid);
+
+ALTER TABLE paccounts ADD COLUMN pacc_budgetitemid INT;
+ALTER TABLE paccounts ADD FOREIGN KEY (pacc_budgetitemid) REFERENCES budgetitems(bgit_budgetitemid);
+
+ALTER TABLE bankmovements ADD COLUMN bkmv_budgetitemid INT;
+ALTER TABLE bankmovements ADD FOREIGN KEY (bkmv_budgetitemid) REFERENCES budgetitems(bgit_budgetitemid);
+
+-- MENUS DINAMICOS
+CREATE TABLE menus (
+	menu_menuid INT NOT NULL AUTO_INCREMENT, 
+	menu_code VARCHAR(10),
+	menu_name VARCHAR(50),
+	menu_description VARCHAR(255),
+	menu_index INT,
+	menu_parentid INT,
+	menu_usercreateid INT,
+	menu_usermodifyid INT,
+	menu_datecreate DATETIME,
+	menu_datemodify DATETIME,
+	PRIMARY KEY(menu_menuid),
+	FOREIGN KEY (menu_parentid) REFERENCES menus(menu_menuid),
+	FOREIGN KEY (menu_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (menu_usermodifyid) REFERENCES users(user_userid)
+);
+
+ALTER TABLE modules ADD COLUMN modu_menuid INT;
+ALTER TABLE modules ADD FOREIGN KEY (modu_menuid) REFERENCES menus(menu_menuid);
+ALTER TABLE modules ADD COLUMN modu_index INT;
+ALTER TABLE sfcomponentaccess ADD COLUMN sfca_menu INT;
+UPDATE sfcomponentaccess SET sfca_menu = 1;
+  
+-- SISTEMA DE SESSIONES / CURSOS
+CREATE TABLE sessiondisciplines (
+	sedi_sessiondisciplineid INT NOT NULL AUTO_INCREMENT, 
+	sedi_code VARCHAR(10),
+	sedi_name VARCHAR(50),
+	sedi_description VARCHAR(255),
+	sedi_usercreateid INT,
+	sedi_usermodifyid INT,
+	sedi_datecreate DATETIME,
+	sedi_datemodify DATETIME,
+	PRIMARY KEY(sedi_sessiondisciplineid),
+	FOREIGN KEY (sedi_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (sedi_usermodifyid) REFERENCES users(user_userid)
+);
+
+CREATE TABLE sessiontypes (
+	sety_sessiontypeid INT NOT NULL AUTO_INCREMENT, 
+	sety_code VARCHAR(10),
+	sety_name VARCHAR(50),
+	sety_description VARCHAR(255),
+	sety_duration INT,
+	sety_capacity INT,
+	sety_sessiondisciplineid INT,
+	sety_usercreateid INT,
+	sety_usermodifyid INT,
+	sety_datecreate DATETIME,
+	sety_datemodify DATETIME,
+	PRIMARY KEY(sety_sessiontypeid),
+	FOREIGN KEY (sety_sessiondisciplineid) REFERENCES sessiondisciplines(sedi_sessiondisciplineid),
+	FOREIGN KEY (sety_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (sety_usermodifyid) REFERENCES users(user_userid)
+);
+ 
+-- ELIMINA TABLAS CREADAS QUE DEBEN MODIFICARSE
+DROP TABLE usersessions;
+DROP TABLE customersessions;
+DROP TABLE sessions;
+
+CREATE TABLE sessions (
+	sess_sessionid INT NOT NULL AUTO_INCREMENT, 
+	sess_code VARCHAR(10),
+	sess_name VARCHAR(50),
+	sess_description VARCHAR(255),
+	sess_startdate DATETIME,
+	sess_enddate DATETIME,
+	sess_reservations INT,
+	sess_userid INT,
+	sess_sessiontypeid INT,
+	sess_usercreateid INT,
+	sess_usermodifyid INT,
+	sess_datecreate DATETIME,
+	sess_datemodify DATETIME,
+	PRIMARY KEY(sess_sessionid),
+	FOREIGN KEY (sess_sessiontypeid) REFERENCES sessiontypes(sety_sessiontypeid),
+	FOREIGN KEY (sess_userid) REFERENCES users(user_userid),
+	FOREIGN KEY (sess_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (sess_usermodifyid) REFERENCES users(user_userid)
+);
+
+drop table ordersessions;
+CREATE TABLE ordersessions (
+	orss_ordersessionid INT NOT NULL AUTO_INCREMENT, 
+	orss_attended INT,
+	orss_sessionid INT,
+	orss_orderid INT,
+	orss_usercreateid INT,
+	orss_usermodifyid INT,
+	orss_datecreate DATETIME,
+	orss_datemodify DATETIME,
+	PRIMARY KEY(orss_ordersessionid),
+	FOREIGN KEY (orss_sessionid) REFERENCES sessions(sess_sessionid),
+	FOREIGN KEY (orss_orderid) REFERENCES orders(orde_orderid),
+	FOREIGN KEY (orss_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (orss_usermodifyid) REFERENCES users(user_userid)
+);
+
+DROP TABLE sessionsales;
+
+CREATE TABLE sessionsales (
+	sesa_sessionsaleid INT NOT NULL AUTO_INCREMENT, 
+	sesa_status CHAR NOT NULL,
+	sesa_type CHAR,
+	sesa_code VARCHAR(10),
+	sesa_name VARCHAR(30),
+	sesa_description VARCHAR(500),
+	sesa_startdate DATETIME,
+	sesa_enddate DATETIME,
+	sesa_progress INT,
+	sesa_tags VARCHAR(255),
+	sesa_orderid INT,
+	sesa_customerid INT NOT NULL,
+	sesa_salesuserid INT,
+	sesa_wflowtypeid INT,
+	sesa_wflowid INT,
+	sesa_opportunityid INT,
+	sesa_ordertypeid INT,
+	sesa_sessiontypepackageid INT,
+	sesa_usercreateid INT,
+	sesa_usermodifyid INT,
+	sesa_datecreate DATETIME,
+	sesa_datemodify DATETIME,
+	PRIMARY KEY (sesa_sessionsaleid),
+	FOREIGN KEY (sesa_customerid) REFERENCES customers(cust_customerid),
+	FOREIGN KEY (sesa_salesuserid) REFERENCES users(user_userid),
+	FOREIGN KEY (sesa_orderid) REFERENCES orders(orde_orderid),
+	FOREIGN KEY (sesa_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid),
+	FOREIGN KEY (sesa_wflowid) REFERENCES wflows(wflw_wflowid),
+	FOREIGN KEY (sesa_wflowtypeid) REFERENCES wflowtypes(wfty_wflowtypeid),
+	FOREIGN KEY (sesa_sessiontypepackageid) REFERENCES sessiontypepackages(setp_sessiontypepackageid),
+	FOREIGN KEY (sesa_opportunityid) REFERENCES opportunities(oppo_opportunityid),
+	FOREIGN KEY (sesa_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (sesa_usermodifyid) REFERENCES users(user_userid)
+);
+
+CREATE TABLE sessiontypepackages (
+	setp_sessiontypepackageid INT NOT NULL AUTO_INCREMENT, 
+	setp_code VARCHAR(10),
+	setp_name VARCHAR(50),
+	setp_description VARCHAR(255),
+	setp_type CHAR,
+	setp_sessions INT,
+	setp_startdate DATETIME,
+	setp_enddate DATETIME,
+	setp_saleprice DOUBLE,
+	setp_sessiontypeid INT,
+	setp_usercreateid INT,
+	setp_usermodifyid INT,
+	setp_datecreate DATE,
+	setp_datemodify DATE,
+	PRIMARY KEY(setp_sessiontypepackageid),
+	FOREIGN KEY (setp_sessiontypeid) REFERENCES sessiontypes(sety_sessiontypeid),
+	FOREIGN KEY (setp_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (setp_usermodifyid) REFERENCES users(user_userid)
+);
+
+drop table ordersessiontypepackages;
+
+CREATE TABLE ordersessiontypepackages (
+	orsp_ordersessiontypepackageid INT NOT NULL AUTO_INCREMENT, 
+	orsp_name VARCHAR(50),
+	orsp_description VARCHAR(255),
+	orsp_quantity INT,
+	orsp_baseprice DOUBLE,
+	orsp_price DOUBLE,
+	orsp_amount DOUBLE,
+	orsp_sessiontypepackageid INT,
+	orsp_orderid INT,
+	orsp_usercreateid INT,
+	orsp_usermodifyid INT,
+	orsp_datecreate DATETIME,
+	orsp_datemodify DATETIME,
+	PRIMARY KEY(orsp_ordersessiontypepackageid),
+	FOREIGN KEY (orsp_sessiontypepackageid) REFERENCES sessiontypepackages(setp_sessiontypepackageid),
+	FOREIGN KEY (orsp_orderid) REFERENCES orders(orde_orderid),
+	FOREIGN KEY (orsp_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (orsp_usermodifyid) REFERENCES users(user_userid)
+);
+  
+-- alters 20 abril 2016 
+ALTER TABLE propertysales ADD COLUMN prsa_losemotiveid INT;
+ALTER TABLE propertysales ADD COLUMN prsa_losecomments VARCHAR(255);
+ALTER TABLE propertysales ADD COLUMN prsa_cancelldate DATETIME;
+
+ALTER TABLE bankmovconcepts ADD COLUMN bkmc_budgetitemid INT;
+ALTER TABLE bankmovconcepts ADD FOREIGN KEY (bkmc_budgetitemid) REFERENCES budgetitems(bgit_budgetitemid);
+
+ALTER TABLE sessiontypepackages MODIFY COLUMN setp_startdate DATE;
+ALTER TABLE sessiontypepackages MODIFY COLUMN setp_enddate DATE;
+
+ALTER TABLE sessions ADD COLUMN sess_available INT;
+
+ALTER TABLE flexconfig ADD COLUMN flxc_negativebudget INT;
+
+ALTER TABLE products ADD COLUMN prod_currencyid INT;
+
+CREATE TABLE industries (
+indu_industryid INT NOT NULL AUTO_INCREMENT,
+indu_code VARCHAR(10),
+indu_name VARCHAR(50),
+indu_description VARCHAR (512),
+indu_usercreateid INT,
+indu_usermodifyid INT,
+indu_datecreate DATETIME,
+indu_datemodify DATETIME,
+PRIMARY KEY (indu_industryid),
+FOREIGN KEY (indu_usercreateid) REFERENCES users (user_userid),
+FOREIGN KEY (indu_usermodifyid) REFERENCES users (user_userid)
+);
+
+ALTER TABLE customers ADD COLUMN cust_industryid INT;
+ALTER TABLE customers ADD COLUMN cust_phone VARCHAR(20);
+ALTER TABLE customers ADD COLUMN cust_email VARCHAR(50);
+
+-- 16 de mayo 2016, manejo de monedas
+ALTER TABLE bankaccounts ADD COLUMN bkac_currencyid INT;
+ALTER TABLE bankaccounts ADD FOREIGN KEY (bkac_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE requisitions ADD COLUMN reqi_currencyid INT;
+ALTER TABLE requisitions ADD FOREIGN KEY (reqi_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE requisitions ADD COLUMN reqi_currencyparity VARCHAR(10);
+
+ALTER TABLE requisitionreceipts ADD COLUMN rerc_currencyid INT;
+ALTER TABLE requisitionreceipts ADD FOREIGN KEY (rerc_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE requisitionreceipts ADD COLUMN rerc_currencyparity VARCHAR(10);
+
+ALTER TABLE paccounts ADD COLUMN pacc_currencyid INT;
+ALTER TABLE paccounts ADD FOREIGN KEY (pacc_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE paccounts ADD COLUMN pacc_currencyparity DOUBLE;
+
+ALTER TABLE raccounts ADD COLUMN racc_currencyid INT;
+ALTER TABLE raccounts ADD FOREIGN KEY (racc_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE raccounts ADD COLUMN racc_currencyparity DOUBLE;
+
+ALTER TABLE bankmovements ADD COLUMN bkmv_currencyid INT;
+ALTER TABLE bankmovements ADD FOREIGN KEY (bkmv_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE bankmovements ADD COLUMN bkmv_currencyparity DOUBLE;
+
+ALTER TABLE orderdeliveries ADD COLUMN odly_currencyid INT;
+ALTER TABLE orderdeliveries ADD FOREIGN KEY (odly_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE orderdeliveries ADD COLUMN odly_currencyparity DOUBLE;
+
+ALTER TABLE bankmovconcepts ADD COLUMN bkmc_currencyparity DOUBLE;
+ALTER TABLE bankmovconcepts ADD COLUMN bkmc_amountconverted DOUBLE;
+
+ALTER TABLE flexconfig ADD COLUMN flxc_customerprotection INT;
+
+ALTER TABLE opportunitydetails ADD COLUMN opde_downpayment DOUBLE;
+
+ALTER TABLE typecostcenters ADD COLUMN tycc_type CHAR;
+
+ALTER TABLE bankmovements ADD COLUMN bkmv_budgetitemid INT;
+ALTER TABLE bankmovements ADD FOREIGN KEY (bkmv_budgetitemid) REFERENCES budgetitems(bgit_budgetitemid);
+
+
+ALTER TABLE loans ADD COLUMN loan_companyid INT;
+ALTER TABLE loans ADD FOREIGN KEY (loan_companyid) REFERENCES companies(comp_companyid);
+
+ALTER TABLE requisitions ADD COLUMN reqi_loanid INT;
+ALTER TABLE requisitions ADD FOREIGN KEY (reqi_loanid) REFERENCES loans(loan_loanid);
+
+ALTER TABLE bankmovements ADD COLUMN bkmv_loanid INT;
+ALTER TABLE bankmovements ADD FOREIGN KEY (bkmv_loanid) REFERENCES loans(loan_loanid);
+
+ALTER TABLE loanpayments ADD COLUMN lopa_bankmovconceptid INT;
+ALTER TABLE loanpayments ADD FOREIGN KEY (lopa_bankmovconceptid) REFERENCES bankmovconcepts(bkmc_bankmovconceptid);
+
+ALTER TABLE loandisbursements ADD COLUMN lodi_bankmovconceptid INT;
+ALTER TABLE loandisbursements ADD FOREIGN KEY (lodi_bankmovconceptid) REFERENCES bankmovconcepts(bkmc_bankmovconceptid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_comissionbudgetitemid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_comissionbudgetitemid) REFERENCES budgetitems(bgit_budgetitemid);
+
+-- 2016 06 22
+ALTER TABLE requisitionreceiptitems MODIFY COLUMN reit_serial VARCHAR(40);
+ALTER TABLE loans ADD COLUMN loan_disbursedamount DOUBLE;
+ALTER TABLE loans ADD COLUMN loan_capitalpayment DOUBLE;
+ALTER TABLE loans ADD COLUMN loan_capitalbalance DOUBLE;
+
+ALTER TABLE budgets ADD COLUMN budg_userid INT;
+ALTER TABLE budgets ADD FOREIGN KEY (budg_userid) REFERENCES users(user_userid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_typecostcenterid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_typecostcenterid) REFERENCES typecostcenters(tycc_typecostcenterid);
+
+ALTER TABLE budgets ADD COLUMN budg_companyid INT;
+ALTER TABLE budgets ADD FOREIGN KEY (budg_companyid) REFERENCES companies(comp_companyid);
+
+ALTER TABLE raccounts ADD COLUMN racc_budgetitemid INT;
+ALTER TABLE raccounts ADD FOREIGN KEY (racc_budgetitemid) REFERENCES budgetitems(bgit_budgetitemid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_comissionbudgetitemid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_comissionbudgetitemid) REFERENCES budgetitems(bgit_budgetitemid);
+
+-- CAMBIO NOMBRE TABLA TIPOS DE PARTIDAS PRESUPUESTALES, SOLO PARA MYSQL 5.6
+ALTER TABLE typecostcenters CHANGE COLUMN tycc_typecostcenterid bgty_budgetitemtypeid INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE typecostcenters CHANGE COLUMN tycc_code bgty_code VARCHAR(10);
+ALTER TABLE typecostcenters CHANGE COLUMN tycc_name bgty_name VARCHAR(30);
+ALTER TABLE typecostcenters CHANGE COLUMN tycc_description bgty_description VARCHAR(255);
+ALTER TABLE typecostcenters CHANGE COLUMN tycc_isgroup bgty_isgroup INT;
+ALTER TABLE typecostcenters CHANGE COLUMN tycc_parentid bgty_parentid INT;
+ALTER TABLE typecostcenters CHANGE COLUMN tycc_type bgty_type CHAR;
+ALTER TABLE typecostcenters CHANGE COLUMN tycc_usercreateid bgty_usercreateid INT;
+ALTER TABLE typecostcenters CHANGE COLUMN tycc_usermodifyid bgty_usermodifyid INT;
+ALTER TABLE typecostcenters CHANGE COLUMN tycc_datecreate bgty_datecreate DATETIME;
+ALTER TABLE typecostcenters CHANGE COLUMN tycc_datemodify bgty_datemodify DATETIME;
+ALTER TABLE budgetitems DROP FOREIGN KEY budgetitems_ibfk_2;
+ALTER TABLE budgetitems DROP COLUMN bgit_budgetitemtypeid;
+ALTER TABLE flexconfig DROP FOREIGN KEY flexconfig_ibfk_12;
+DROP TABLE budgetitemtypes;
+ALTER TABLE typecostcenters RENAME budgetitemtypes;
+ALTER TABLE budgetitems CHANGE COLUMN bgit_typecostcenterid bgit_budgetitemtypeid INT;
+ALTER TABLE budgetitems DROP COLUMN bgit_code;
+ALTER TABLE budgetitems DROP COLUMN bgit_name;
+ALTER TABLE budgetitems DROP COLUMN bgit_description;
+ALTER TABLE budgetitems ADD COLUMN bgit_comments VARCHAR(255);
+ALTER TABLE flexconfig CHANGE COLUMN flxc_typecostcenterid flxc_depositbudgetitemtypeid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_depositbudgetitemtypeid) REFERENCES budgetitemtypes(bgty_budgetitemtypeid);
+ALTER TABLE budgetitemtypes ADD COLUMN bgty_type CHAR;
+ALTER TABLE budgetitems ADD COLUMN bgit_provisioned DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_provisioned DOUBLE;
+
+ALTER TABLE bankmovements ADD COLUMN bkmv_nocheck VARCHAR(20);
+
+-- MOVIMIENTOS SESIONES CAPACITACION, 20160701
+ALTER TABLE sessions ADD COLUMN sess_isseries INT;
+ALTER TABLE sessions ADD COLUMN sess_seriesstart DATE;
+ALTER TABLE sessions ADD COLUMN sess_seriesend DATE;
+ALTER TABLE sessions ADD COLUMN sess_seriesapplyall INT;
+ALTER TABLE sessions ADD COLUMN sess_seriesparentid INT;
+ALTER TABLE sessions ADD COLUMN sess_seriesmonday INT;
+ALTER TABLE sessions ADD COLUMN sess_seriestuesday INT;
+ALTER TABLE sessions ADD COLUMN sess_serieswednesday INT;
+ALTER TABLE sessions ADD COLUMN sess_seriesthursday INT;
+ALTER TABLE sessions ADD COLUMN sess_seriesfriday INT;
+ALTER TABLE sessions ADD COLUMN sess_seriessaturday INT;
+ALTER TABLE sessions ADD COLUMN sess_seriessunday INT;
+ALTER TABLE ordersessions ADD COLUMN orss_seriesapplyall INT;
+ALTER TABLE ordersessions ADD COLUMN orss_seriesmonday INT;
+ALTER TABLE ordersessions ADD COLUMN orss_seriestuesday INT;
+ALTER TABLE ordersessions ADD COLUMN orss_serieswednesday INT;
+ALTER TABLE ordersessions ADD COLUMN orss_seriesthursday INT;
+ALTER TABLE ordersessions ADD COLUMN orss_seriesfriday INT;
+ALTER TABLE ordersessions ADD COLUMN orss_seriessaturday INT;
+ALTER TABLE ordersessions ADD COLUMN orss_seriessunday INT;
+
+
+-- 20160705
+ALTER TABLE loans ADD COLUMN loan_revolving INT;
+
+CREATE TABLE invoices (
+ 	invo_invoiceid INT NOT NULL AUTO_INCREMENT,
+ 	invo_code VARCHAR(10),
+ 	invo_name VARCHAR(30),
+ 	invo_description VARCHAR(255),  
+ 	invo_duedate DATE,
+invo_stampdatetime DATETIME,
+invo_amount DOUBLE,
+invo_tax DOUBLE,
+invo_total DOUBLE,
+invo_userid INT,
+invo_customerid INT,
+invo_currencyid INT,
+invo_folio VARCHAR(100),
+invo_certstring VARCHAR(255),
+invo_cfdiseal VARCHAR(255),
+invo_satseal VARCHAR(255),
+invo_orderid INT,
+invo_status CHAR,
+invo_paymentstatus CHAR,
+invo_usercreateid INT,
+invo_usermodifyid INT,
+invo_datecreate DATETIME,
+invo_datemodify DATETIME,
+ 	PRIMARY KEY (invo_invoiceid),
+FOREIGN KEY (invo_orderid) REFERENCES orders(orde_orderid),
+FOREIGN KEY (invo_userid) REFERENCES users(user_userid),
+FOREIGN KEY (invo_customerid) REFERENCES customers(cust_customerid),
+FOREIGN KEY (invo_currencyid) REFERENCES currencies(cure_currencyid)
+);
+
+
+CREATE TABLE invoiceorderdeliveries (
+inod_invoiceorderdeliveryid INT NOT NULL AUTO_INCREMENT,
+inod_code VARCHAR(10),
+inod_invoiceid INT NOT NULL,
+inod_orderdeliveryid INT NOT NULL,
+inod_amount DOUBLE,
+inod_usercreateid INT,
+inod_usermodifyid INT,
+inod_datecreate DATETIME,
+inod_datemodify DATETIME,
+PRIMARY KEY (inod_invoiceorderdeliveryid),
+FOREIGN KEY (inod_invoiceid) REFERENCES invoices(invo_invoiceid),
+FOREIGN KEY (inod_orderdeliveryid) REFERENCES orderdeliveries(odly_orderdeliveryid)	
+);
+
+ALTER TABLE ordergroups ADD COLUMN ordg_showamount INT;
+ALTER TABLE quotegroups ADD COLUMN qogr_showamount INT;
+
+ALTER TABLE equipmentservices ADD COLUMN eqsv_status CHAR(1);
+ALTER TABLE equipmentuses ADD COLUMN eqis_meterin FLOAT;
+ALTER TABLE equipmentuses ADD COLUMN eqis_fuelin FLOAT;
+ALTER TABLE equipmentuses ADD COLUMN eqis_fuelprice DOUBLE;
+
+ALTER TABLE socials MODIFY COLUMN soci_icon VARCHAR(500);
+
+-- 20160722
+ALTER TABLE sfconfig ADD COLUMN sfcf_listtype CHAR;
+
+ALTER TABLE projects ADD COLUMN proj_comments VARCHAR(255);
+ALTER TABLE requisitions MODIFY COLUMN reqi_description VARCHAR(1000);
+ALTER TABLE projects ADD COLUMN proj_datecreateproject DATETIME;
+
+ALTER TABLE ordercomplaints ADD COLUMN ordc_userid INT;
+ALTER TABLE ordercomplaints ADD FOREIGN KEY (ordc_userid) REFERENCES users(user_userid);
+
+ALTER TABLE budgets ADD COLUMN budg_provisionedwithdraw DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_paymentwithdraw DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_totalwithdraw DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_balancewithdraw DOUBLE;
+
+
+ALTER TABLE budgets ADD COLUMN budg_provisioneddeposit DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_paymentdeposit DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_totaldeposit DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_balancedeposit DOUBLE;
+
+-- 20160811
+ALTER TABLE works DROP FOREIGN KEY works_ibfk_3;
+ALTER TABLE works DROP COLUMN work_workbudgetitemid;
+ALTER TABLE requisitions DROP FOREIGN KEY requisitions_ibfk_12;
+ALTER TABLE requisitions DROP COLUMN reqi_workbudgetid;
+ALTER TABLE developmentphases DROP FOREIGN KEY developmentphases_ibfk_8;
+ALTER TABLE developmentphases DROP COLUMN dvph_workbudgetid;
+
+DROP TABLE eosconfig;
+DROP TABLE workbudgetitems;
+DROP TABLE workbudgetitemtypes;
+DROP TABLE workbudgets;
+
+ALTER TABLE customers ADD COLUMN cust_mobile VARCHAR(15);
+
+CREATE TABLE filetypes (
+ 	fity_filetypeid INT NOT NULL AUTO_INCREMENT,
+ 	fity_code VARCHAR(10),
+ 	fity_name VARCHAR(30),
+ 	fity_description VARCHAR(255),  
+	fity_usercreateid INT,
+	fity_usermodifyid INT,
+	fity_datecreate DATETIME,
+	fity_datemodify DATETIME,
+ 	PRIMARY KEY (fity_filetypeid)
+);
+
+ALTER TABLE wflowdocumenttypes ADD COLUMN wfdt_filetypeid INT;
+ALTER TABLE wflowdocumenttypes ADD FOREIGN KEY (wfdt_filetypeid) REFERENCES filetypes(fity_filetypeid);
+
+ALTER TABLE wflowdocuments ADD COLUMN wfdo_filetypeid INT;
+ALTER TABLE wflowdocuments ADD FOREIGN KEY (wfdo_filetypeid) REFERENCES filetypes(fity_filetypeid);
+
+CREATE TABLE usercompanies (
+  uscp_usercompanyid INT NOT NULL AUTO_INCREMENT,
+  uscp_userid INT NOT NULL,
+  uscp_companyid INT NOT NULL,
+	uscp_usercreateid INT,
+	uscp_usermodifyid INT,
+	uscp_datecreate DATETIME,
+	uscp_datemodify DATETIME,
+  PRIMARY KEY (uscp_usercompanyid),
+  FOREIGN KEY (uscp_userid) REFERENCES users(user_userid),
+  FOREIGN KEY (uscp_companyid) REFERENCES companies(comp_companyid)
+);
+
+CREATE TABLE territories (
+ 	terr_territoryid INT NOT NULL AUTO_INCREMENT,
+ 	terr_code VARCHAR(10),
+ 	terr_name VARCHAR(30),
+ 	terr_description VARCHAR(255),  
+	terr_usercreateid INT,
+	terr_usermodifyid INT,
+	terr_datecreate DATETIME,
+	terr_datemodify DATETIME,
+ 	PRIMARY KEY (terr_territoryid)
+);
+
+ALTER TABLE customers ADD COLUMN cust_territoryid INT;
+ALTER TABLE customers ADD FOREIGN KEY (cust_territoryid) REFERENCES territories(terr_territoryid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_defaulttypecustomer CHAR;
+
+ALTER TABLE budgets ADD COLUMN budg_provisionedwithdraw DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_paymentwithdraw DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_totalwithdraw DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_balancewithdraw DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_provisioneddeposit DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_paymentdeposit DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_totaldeposit DOUBLE;
+ALTER TABLE budgets ADD COLUMN budg_balancedeposit DOUBLE;
+
+ALTER TABLE sfcaptions ADD COLUMN sfcp_enabled INT;
+UPDATE sfcaptions SET sfcp_enabled = 1;
+
+ALTER TABLE socials MODIFY COLUMN soci_icon VARCHAR(200);
+
+-- CAMBIOS DE AGREGAR SINC GOOGLE SESIONES
+ALTER TABLE sessiontypes ADD COLUMN sety_gcalendarsync INT;
+ALTER TABLE sessiontypes ADD COLUMN sety_gcalendarid VARCHAR(100);
+ALTER TABLE sessions ADD COLUMN sess_googleeventid VARCHAR(100);
+ALTER TABLE sessions ADD COLUMN sess_usergoogleeventid VARCHAR(100);
+
+ALTER TABLE customerrelatives ADD COLUMN curl_responsible INT;
+
+-- CAMBIOS 20160827
+ALTER TABLE ordertypes ADD COLUMN ortp_autorenew INT;
+
+UPDATE customers SET cust_status = 'A' WHERE cust_status = 'C';
+
+ALTER TABLE loans CHANGE COLUMN loan_downpayment loan_commissionpayment DOUBLE NULL DEFAULT NULL ;
+
+ALTER TABLE loans CHANGE COLUMN loan_downpayment loan_commissionpayment DOUBLE NULL DEFAULT NULL ;
+
+-- 20160909
+-- MicroCreditos
+CREATE TABLE terms (
+term_termid INT NOT NULL AUTO_INCREMENT,
+term_code VARCHAR(10) NOT NULL,
+term_name VARCHAR(30) NOT NULL,
+term_description VARCHAR(255),  
+       term_deadline INT NOT NULL,
+       term_interest DOUBLE NOT NULL,
+       term_type CHAR NOT NULL,
+term_usercreateid INT,
+term_usermodifyid INT,
+term_datecreate DATETIME,
+term_datemodify DATETIME,
+PRIMARY KEY (term_termid)
+);
+
+CREATE TABLE ordercredits (
+orcr_ordercreditid INT NOT NULL AUTO_INCREMENT, 
+orcr_name VARCHAR(50),
+orcr_description VARCHAR(255),
+orcr_quantity INT,
+orcr_baseprice DOUBLE,
+orcr_price DOUBLE,
+       orcr_interest DOUBLE,
+orcr_amount DOUBLE,	
+orcr_orderid INT,
+orcr_usercreateid INT,
+orcr_usermodifyid INT,
+orcr_datecreate DATETIME,
+orcr_datemodify DATETIME,
+PRIMARY KEY(orcr_ordercreditid),	
+FOREIGN KEY (orcr_orderid) REFERENCES orders(orde_orderid),
+FOREIGN KEY (orcr_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (orcr_usermodifyid) REFERENCES users(user_userid)
+);
+
+CREATE TABLE credits (
+cred_creditid INT NOT NULL AUTO_INCREMENT, 
+       cred_termid INT NOT NULL,	
+cred_customerid INT NOT NULL,
+       cred_orderid INT,
+       cred_ordertypeid INT,
+       cred_salesuserid INT,
+cred_code VARCHAR(10),
+cred_name VARCHAR(30),
+cred_comments VARCHAR(500),
+       cred_status CHAR NOT NULL,
+       cred_firstpayment DATE,
+cred_startdate DATETIME,
+cred_enddate DATETIME,
+       cred_amount DOUBLE NOT NULL,
+cred_progress INT,
+cred_tags VARCHAR(255),
+       cred_wflowtypeid INT,
+cred_wflowid INT,
+cred_usercreateid INT,
+cred_usermodifyid INT,
+cred_datecreate DATETIME,
+cred_datemodify DATETIME,
+PRIMARY KEY (cred_creditid),
+FOREIGN KEY (cred_customerid) REFERENCES customers(cust_customerid),
+FOREIGN KEY (cred_salesuserid) REFERENCES users(user_userid),
+FOREIGN KEY (cred_orderid) REFERENCES orders(orde_orderid),
+FOREIGN KEY (cred_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid),
+FOREIGN KEY (cred_wflowid) REFERENCES wflows(wflw_wflowid),
+FOREIGN KEY (cred_wflowtypeid) REFERENCES wflowtypes(wfty_wflowtypeid),	
+FOREIGN KEY (cred_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (cred_orderid) REFERENCES orders(orde_orderid),
+FOREIGN KEY (cred_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid),
+FOREIGN KEY (cred_wflowid) REFERENCES wflows(wflw_wflowid),
+FOREIGN KEY (cred_wflowtypeid) REFERENCES wflowtypes(wfty_wflowtypeid),	
+FOREIGN KEY (cred_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (cred_usermodifyid) REFERENCES users(user_userid)
+);
+
+
+ALTER TABLE bankmovconcepts ADD COLUMN bkmc_orderdeliveryid INT;
+ALTER TABLE bankmovconcepts ADD FOREIGN KEY (bkmc_orderdeliveryid) REFERENCES orderdeliveries(odly_orderdeliveryid);
+
+ALTER TABLE developmentblocks CHANGE COLUMN dvbl_processporcent dvbl_processpercentage INT;
+ALTER TABLE bankmovconcepts ADD COLUMN bkmc_orderdeliveryid INT;
+ALTER TABLE bankmovconcepts ADD FOREIGN KEY (bkmc_orderdeliveryid) REFERENCES orderdeliveries(odly_orderdeliveryid);
+
+
+ALTER TABLE orderdeliveryitems ADD COLUMN odyi_ordercreditid INT;
+ALTER TABLE orderdeliveryitems ADD FOREIGN KEY (odyi_ordercreditid) REFERENCES ordercredits(orcr_ordercreditid);
+
+ALTER TABLE companies ADD COLUMN comp_logo VARCHAR(255);
+
+ALTER TABLE requisitiontypes ADD COLUMN rqtp_stock CHAR;
+ALTER TABLE wflowdocuments ADD COLUMN wfdo_filelink VARCHAR(100);
+ALTER TABLE useremails MODIFY COLUMN usem_email VARCHAR(100);
+
+ALTER TABLE usersocials MODIFY COLUMN usso_account VARCHAR(50);
+
+ALTER TABLE modules ADD COLUMN modu_enablemobile int;
+
+ALTER TABLE developmentphases ADD COLUMN dvph_feeduedate DATE;
+
+-- 20160922
+
+ALTER TABLE workcontracts ADD COLUMN woco_totalreal DOUBLE;
+
+CREATE TABLE consultingservices (
+cose_consultingserviceid INT NOT NULL AUTO_INCREMENT, 
+cose_code VARCHAR(10) NOT NULL,
+cose_name VARCHAR(60) NOT NULL,
+cose_description VARCHAR(255),
+cose_usercreateid INT,
+cose_usermodifyid INT,
+cose_datecreate DATETIME,
+cose_datemodify DATETIME,
+PRIMARY KEY (cose_consultingserviceid),
+FOREIGN KEY (cose_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (cose_usermodifyid) REFERENCES users(user_userid)
+);
+
+ALTER TABLE customers ADD COLUMN cust_consultingserviceid INT;
+ALTER TABLE customers ADD FOREIGN KEY (cust_consultingserviceid) REFERENCES consultingservices (cose_consultingserviceid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_enableautofill INT;
+
+ALTER TABLE paccounts ADD COLUMN pacc_reqicode VARCHAR(10);
+
+ALTER TABLE wflowdocuments MODIFY COLUMN wfdo_filelink VARCHAR(200);
+
+CREATE TABLE customercompanies (
+	cucp_customercompanyid INT NOT NULL AUTO_INCREMENT,
+	cucp_customerid INT NOT NULL,
+	cucp_companyid INT NOT NULL,
+	cucp_usercreateid INT,
+	cucp_usermodifyid INT,
+	cucp_datecreate DATETIME,
+	cucp_datemodify DATETIME,
+	PRIMARY KEY (cucp_customercompanyid),
+	FOREIGN KEY (cucp_customerid) REFERENCES customers(cust_customerid),
+	FOREIGN KEY (cucp_companyid) REFERENCES companies(comp_companyid)
+);
+
+
+ALTER TABLE territories MODIFY COLUMN terr_name VARCHAR(60);
+
+CREATE TABLE regions (
+	regi_regionid INT NOT NULL AUTO_INCREMENT, 
+	regi_code VARCHAR(10) NOT NULL,
+	regi_name VARCHAR(60) NOT NULL,
+	regi_description VARCHAR(255),
+	regi_usercreateid INT,
+	regi_usermodifyid INT,
+	regi_datecreate DATETIME,
+	regi_datemodify DATETIME,
+	PRIMARY KEY (regi_regionid),
+	FOREIGN KEY (regi_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (regi_usermodifyid) REFERENCES users(user_userid)
+);
+
+ALTER TABLE customers ADD COLUMN cust_regionid INT;
+ALTER TABLE customers ADD FOREIGN KEY (cust_regionid) REFERENCES regions(regi_regionid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_systemcurrencyid INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_systemcurrencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE customeraddress change column cuad_neighborhood cuad_neighborhood varchar(60);
+ALTER TABLE customeraddress change column cuad_number cuad_number varchar(25);
+ALTER TABLE industries CHANGE COLUMN indu_name indu_name VARCHAR(100) NULL DEFAULT NULL ;
+
+ALTER TABLE quotes ADD COLUMN quot_authnum DOUBLE;
+ALTER TABLE customers ADD COLUMN cust_rating CHAR(1);
+
+
+ALTER TABLE suppliers ADD COLUMN supl_currencyid INT;
+ALTER TABLE suppliers ADD FOREIGN KEY (supl_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE suppliers ADD COLUMN supl_paymenttype CHAR(1);
+ALTER TABLE customers ADD COLUMN cust_paymenttype CHAR(1);
+
+CREATE TABLE supplierbankaccounts (
+suba_supplierbankaccountid INT NOT NULL AUTO_INCREMENT,
+suba_supplierid INT NOT NULL,
+suba_bank VARCHAR(70),
+suba_clabe VARCHAR(20),
+   suba_accountnumber VARCHAR(30),
+suba_usercreateid INT,
+suba_usermodifyid INT,
+suba_datecreate DATETIME,
+suba_datemodify DATETIME,
+PRIMARY KEY (suba_supplierbankaccountid),
+FOREIGN KEY (suba_supplierid) REFERENCES suppliers(supl_supplierid)
+);
+
+CREATE TABLE customerbankaccounts (
+cuba_customerbankaccountid INT NOT NULL AUTO_INCREMENT,
+cuba_customerid INT NOT NULL,
+   cuba_bank VARCHAR(70),
+cuba_clabe VARCHAR(20),
+   cuba_accountnumber VARCHAR(30),
+cuba_usercreateid INT,
+cuba_usermodifyid INT,
+cuba_datecreate DATETIME,
+cuba_datemodify DATETIME,
+PRIMARY KEY (cuba_customerbankaccountid),
+FOREIGN KEY (cuba_customerid) REFERENCES customers(cust_customerid)
+);
+
+-- 20161017
+CREATE TABLE suppliercompanies (
+sucp_suppliercompanyid INT NOT NULL AUTO_INCREMENT,
+sucp_supplierid INT NOT NULL,
+sucp_companyid INT NOT NULL,
+sucp_usercreateid INT,
+sucp_usermodifyid INT,
+sucp_datecreate DATETIME,
+sucp_datemodify DATETIME,
+PRIMARY KEY (sucp_suppliercompanyid),
+FOREIGN KEY (sucp_supplierid) REFERENCES suppliers(supl_supplierid),
+FOREIGN KEY (sucp_companyid) REFERENCES companies(comp_companyid),
+   FOREIGN KEY (sucp_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (sucp_usermodifyid) REFERENCES users(user_userid)
+);
+
+
+CREATE TABLE supplieremails (
+suem_supplieremailid INT NOT NULL AUTO_INCREMENT, 
+suem_type CHAR(1) NOT NULL,
+suem_email VARCHAR(100),
+suem_supplierid INT NOT NULL,
+suem_usercreateid INT,
+suem_usermodifyid INT,
+suem_datecreate DATETIME,
+suem_datemodify DATETIME,
+PRIMARY KEY (suem_supplieremailid),
+FOREIGN KEY (suem_supplierid) REFERENCES suppliers(supl_supplierid),
+FOREIGN KEY (suem_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (suem_usermodifyid) REFERENCES users(user_userid)
+);
+
+CREATE TABLE supplierphones (
+suph_supplierphoneid INT NOT NULL AUTO_INCREMENT, 
+suph_type CHAR(1) NOT NULL,
+   suph_number VARCHAR(15),
+   suph_extension VARCHAR(5),
+suph_fax VARCHAR(15),
+suph_supplierid INT NOT NULL,
+suph_usercreateid INT,
+suph_usermodifyid INT,
+suph_datecreate DATETIME,
+suph_datemodify DATETIME,
+PRIMARY KEY (suph_supplierphoneid),
+FOREIGN KEY (suph_supplierid) REFERENCES suppliers(supl_supplierid),
+FOREIGN KEY (suph_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (suph_usermodifyid) REFERENCES users(user_userid)
+);
+
+
+CREATE TABLE supplieraddress (
+suad_supplieraddressid INT NOT NULL AUTO_INCREMENT, 
+suad_type CHAR(1) NOT NULL,
+suad_street VARCHAR(100),
+suad_number VARCHAR(60),
+suad_description VARCHAR(500),
+suad_neighborhood VARCHAR(60),
+suad_zip VARCHAR(5),
+suad_cityid INT, 
+suad_supplierid INT NOT NULL,
+suad_usercreateid INT,
+suad_usermodifyid INT,
+suad_datecreate DATETIME,
+suad_datemodify DATETIME,
+PRIMARY KEY (suad_supplieraddressid),
+FOREIGN KEY (suad_supplierid) REFERENCES suppliers(supl_supplierid),
+FOREIGN KEY (suad_cityid) REFERENCES cities(city_cityid),
+FOREIGN KEY (suad_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (suad_usermodifyid) REFERENCES users(user_userid)
+);
+
+CREATE TABLE suppliercontacts (
+suco_suppliercontactid INT NOT NULL AUTO_INCREMENT, 
+suco_firstname VARCHAR(50) NOT NULL,
+suco_fatherlastname VARCHAR(50),
+suco_motherlastname VARCHAR(50),
+suco_position VARCHAR(50),
+   suco_email VARCHAR(50),
+suco_number VARCHAR(15),
+suco_cellphone VARCHAR(15), 
+suco_extension VARCHAR(5), 
+suco_alias VARCHAR(255),
+suco_comments VARCHAR(255),
+suco_supplierid INT NOT NULL,
+suco_usercreateid INT,
+suco_usermodifyid INT,
+suco_datecreate DATETIME,
+suco_datemodify DATETIME,
+PRIMARY KEY (suco_suppliercontactid),
+FOREIGN KEY (suco_supplierid) REFERENCES suppliers(supl_supplierid),
+FOREIGN KEY (suco_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (suco_usermodifyid) REFERENCES users(user_userid)
+);
+
+
+ALTER TABLE opportunities MODIFY COLUMN oppo_name VARCHAR(100);
+ALTER TABLE quotes MODIFY COLUMN quot_name VARCHAR(100);
+ALTER TABLE projects MODIFY COLUMN proj_name VARCHAR(100);
+ALTER TABLE orders MODIFY COLUMN orde_name VARCHAR(100);
+ALTER TABLE wflows MODIFY COLUMN wflw_name VARCHAR(100);
+
+
+ALTER TABLE wflowsteps ADD COLUMN wfsp_userid INT;
+ALTER TABLE wflowsteps ADD FOREIGN KEY (wfsp_userid) REFERENCES users(user_userid);
+
+ALTER TABLE wflowusers ADD COLUMN wflu_assignsteps INT;
+
+ALTER TABLE users ADD COLUMN user_startdate DATE;
+ALTER TABLE users ADD COLUMN user_enddate DATE;
+ALTER TABLE users ADD COLUMN user_bloodtype CHAR;
+ALTER TABLE users ADD COLUMN user_description VARCHAR(1000);
+ALTER TABLE users ADD COLUMN user_employeenumber VARCHAR(50);
+ALTER TABLE users ADD COLUMN user_rfc VARCHAR(12);
+ALTER TABLE users ADD COLUMN user_curp VARCHAR(18);
+ALTER TABLE users ADD COLUMN user_socialnumber VARCHAR(11);
+
+DROP TABLE terms;
+
+CREATE TABLE credittypes (
+crty_credittypeid INT NOT NULL AUTO_INCREMENT,
+crty_code VARCHAR(10) NOT NULL,
+crty_name VARCHAR(30) NOT NULL,
+crty_description VARCHAR(255),  
+crty_deadline INT NOT NULL,
+crty_interest DOUBLE NOT NULL,
+crty_type CHAR NOT NULL,
+crty_creditlimit DOUBLE NOT NULL,
+crty_guarantees INT(11),
+crty_usercreateid INT,
+crty_usermodifyid INT,
+crty_datecreate DATETIME,
+crty_datemodify DATETIME,
+PRIMARY KEY (crty_credittypeid)
+);
+
+ALTER TABLE credits CHANGE COLUMN cred_termid cred_credittypeid INT(11) NOT NULL;
+ALTER TABLE credits ADD FOREIGN KEY (cred_credittypeid) REFERENCES credittypes(crty_credittypeid);
+ALTER TABLE customers ADD COLUMN cust_creditlimit DOUBLE;
+
+
+CREATE TABLE usercreditlimits (
+uscl_usercreditlimitid INT NOT NULL AUTO_INCREMENT, 
+uscl_userid INT(11) NOT NULL,
+uscl_creditlimit DOUBLE NOT NULL,
+uscl_usercreateid INT,
+uscl_usermodifyid INT,
+uscl_datecreate DATETIME,
+uscl_datemodify DATETIME,
+PRIMARY KEY (uscl_usercreditlimitid),
+FOREIGN KEY (uscl_userid) REFERENCES users(user_userid)
+);
+
+CREATE TABLE creditguarantees (
+crgu_creditguaranteesid INT NOT NULL AUTO_INCREMENT,
+crgu_customerid INT NOT NULL,
+crgu_creditid INT NOT NULL,
+crgu_usercreateid INT,
+crgu_usermodifyid INT,
+crgu_datecreate DATETIME,
+crgu_datemodify DATETIME,
+PRIMARY KEY (crgu_creditguaranteesid),
+FOREIGN KEY (crgu_customerid) REFERENCES customers(cust_customerid),
+FOREIGN KEY (crgu_creditid) REFERENCES credits(cred_creditid)
+);
+
+ALTER TABLE customerdates ADD COLUMN cuda_emailreminder INT;
+ALTER TABLE customerdates ADD COLUMN cuda_reminddate INT;
+
+-- 20161022
+ALTER TABLE products ADD COLUMN prod_reneworder INT; 
+ALTER TABLE products ADD COLUMN prod_ordertypeid INT;
+ALTER TABLE products ADD FOREIGN KEY (prod_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid);
+
+ALTER TABLE orders ADD COLUMN orde_reneworderid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_reneworderid) REFERENCES orders(orde_orderid);
+
+ALTER TABLE raccounts ADD COLUMN racc_failure INT(11);
+ALTER TABLE raccounts ADD COLUMN racc_related VARCHAR(30);
+
+ALTER TABLE developmentphases ADD COLUMN dvph_maintenancecost DOUBLE;
+
+ALTER TABLE users MODIFY COLUMN user_rfc VARCHAR(13);
+UPDATE products SET prod_reneworder = 0;
+
+ALTER TABLE ordercomplaints ADD COLUMN ordc_file VARCHAR(255);
+ALTER TABLE ordercomplaints MODIFY ordc_orderid INT;
+
+CREATE TABLE customerpaymenttypes (
+cupt_customerpaymenttypeid INT NOT NULL AUTO_INCREMENT, 
+cupt_paymenttype CHAR(1) NOT NULL,
+cupt_currencyid INT,
+cupt_customerid INT NOT NULL,
+cupt_usercreateid INT,
+cupt_usermodifyid INT,
+cupt_datecreate DATETIME,
+cupt_datemodify DATETIME,
+PRIMARY KEY (cupt_customerpaymenttypeid),
+FOREIGN KEY (cupt_currencyid) REFERENCES currencies(cure_currencyid),
+FOREIGN KEY (cupt_customerid) REFERENCES customers(cust_customerid),
+FOREIGN KEY (cupt_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (cupt_usermodifyid) REFERENCES users(user_userid)
+);
+
+CREATE TABLE supplierpaymenttypes (
+supt_supplierpaymenttypeid INT NOT NULL AUTO_INCREMENT, 
+supt_paymenttype CHAR(1) NOT NULL,
+supt_currencyid INT,
+supt_supplierid INT NOT NULL,
+supt_usercreateid INT,
+supt_usermodifyid INT,
+supt_datecreate DATETIME,
+supt_datemodify DATETIME,
+PRIMARY KEY (supt_supplierpaymenttypeid),
+FOREIGN KEY (supt_currencyid) REFERENCES currencies(cure_currencyid),
+FOREIGN KEY (supt_supplierid) REFERENCES suppliers(supl_supplierid),
+FOREIGN KEY (supt_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (supt_usermodifyid) REFERENCES users(user_userid)
+);
+
+-- 20161031
+
+CREATE TABLE productcompanies (
+prcp_productcompanyid INT NOT NULL AUTO_INCREMENT, 
+prcp_companyid INT NOT NULL,
+prcp_productid INT NOT NULL,
+prcp_usercreateid INT,
+prcp_usermodifyid INT,
+prcp_datecreate DATETIME,
+prcp_datemodify DATETIME,
+PRIMARY KEY (prcp_productcompanyid),
+FOREIGN KEY (prcp_companyid) REFERENCES companies(comp_companyid),
+FOREIGN KEY (prcp_productid) REFERENCES products(prod_productid),
+FOREIGN KEY (prcp_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (prcp_usermodifyid) REFERENCES users(user_userid)
+);
+
+ALTER TABLE users ADD COLUMN user_phone VARCHAR(20);
+ALTER TABLE users ADD COLUMN user_mobile VARCHAR(12);
+
+ALTER TABLE sfconfig ADD COLUMN sfcf_mailserveruser VARCHAR(50);
+ALTER TABLE sfconfig ADD COLUMN sfcf_mailserverpassword VARCHAR(255);
+
+ALTER TABLE products ADD COLUMN prod_wflowtypeid INT;
+ALTER TABLE products ADD FOREIGN KEY (prod_wflowtypeid) REFERENCES wflowtypes(wfty_wflowtypeid);
+ALTER TABLE flexconfig ADD COLUMN flxc_orderrenewdays INT(11);
+
+ALTER TABLE companies MODIFY COLUMN comp_number VARCHAR(20);
+
+ALTER TABLE customerbankaccounts ADD COLUMN cuba_currencyid INT;
+ALTER TABLE customerbankaccounts ADD FOREIGN KEY (cuba_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE supplierbankaccounts ADD COLUMN suba_currencyid INT;
+ALTER TABLE supplierbankaccounts ADD FOREIGN KEY (suba_currencyid) REFERENCES currencies(cure_currencyid);
+
+-- 20161115
+
+ALTER TABLE sessiontypes ADD COLUMN sety_currencyid INT;
+ALTER TABLE sessiontypes ADD FOREIGN KEY (sety_currencyid) REFERENCES currencies(cure_currencyid);
+
+ALTER TABLE sessionsales ADD COLUMN sesa_sessiondemo INT;
+
+CREATE TABLE propertysaledetails (
+	prsd_propertysaledetailid INT NOT NULL AUTO_INCREMENT, 
+	prsd_propertysaleid INT NOT NULL,
+	prsd_notary INT,
+	prsd_writingnumber VARCHAR(20),
+	prsd_usercreateid INT,
+	prsd_usermodifyid INT,
+	prsd_datecreate DATETIME,
+	prsd_datemodify DATETIME,
+	PRIMARY KEY (prsd_propertysaledetailid),
+	FOREIGN KEY (prsd_propertysaleid) REFERENCES propertysales(prsa_propertysaleid),
+	FOREIGN KEY (prsd_notary) REFERENCES suppliers(supl_supplierid),
+	FOREIGN KEY (prsd_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (prsd_usermodifyid) REFERENCES users(user_userid)
+);
+
+
+CREATE TABLE customernotes (
+cuno_customernoteid INT NOT NULL AUTO_INCREMENT,
+cuno_customerid INT NOT NULL,
+cuno_type CHAR(1) NOT NULL,
+cuno_notes VARCHAR(500) NOT NULL,
+cuno_file VARCHAR(255),
+cuno_usercreateid INT,
+cuno_usermodifyid INT,
+cuno_datecreate DATETIME,
+cuno_datemodify DATETIME,
+PRIMARY KEY (cuno_customernoteid),
+FOREIGN KEY (cuno_customerid) REFERENCES customers(cust_customerid),
+FOREIGN KEY (cuno_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (cuno_usermodifyid) REFERENCES users(user_userid)
+);
+
+ALTER TABLE developments ADD COLUMN deve_municipalagency INT;
+ALTER TABLE developments ADD FOREIGN KEY (deve_municipalagency) REFERENCES suppliers(supl_supplierid);
+ALTER TABLE developments ADD COLUMN deve_municipalagencywater INT;
+ALTER TABLE developments ADD FOREIGN KEY (deve_municipalagencywater) REFERENCES suppliers(supl_supplierid);
+
+ALTER TABLE raccounts ADD COLUMN racc_relatedraccountid INT;
+ALTER TABLE raccounts ADD FOREIGN KEY (racc_relatedraccountid) REFERENCES raccounts(racc_raccountid);
+ALTER TABLE raccounts DROP COLUMN racc_related;
+
+ALTER TABLE raccounts ADD COLUMN racc_taxapplies INT;
+ALTER TABLE raccounts ADD COLUMN racc_tax DOUBLE;
+
+-- 20161130
+ALTER TABLE raccounts ADD COLUMN racc_taxapplies INT;
+ALTER TABLE raccounts ADD COLUMN racc_tax DOUBLE;
+
+ALTER TABLE raccounts CHANGE COLUMN racc_amount racc_total DOUBLE NULL DEFAULT NULL ;
+ALTER TABLE raccounts ADD COLUMN racc_amount DOUBLE;
+
+ALTER TABLE credits ADD COLUMN cred_bond VARCHAR(20);
+
+-- 20161214
+ALTER TABLE properties ADD COLUMN prty_facade VARCHAR(255);
+ALTER TABLE properties ADD COLUMN prty_map VARCHAR(255);
+ALTER TABLE properties ADD COLUMN prty_location VARCHAR(255);
+ALTER TABLE properties ADD COLUMN prty_latitude DOUBLE;
+ALTER TABLE properties ADD COLUMN prty_longitude DOUBLE;
+ALTER TABLE developmentblocks ADD COLUMN dvbl_map VARCHAR(255);
+
+-- 20170110
+ALTER TABLE sessions ADD COLUMN sess_autossign INT;
+
+ALTER TABLE sessiontypepackages ADD COLUMN setp_enabled INT;
+UPDATE sessiontypepackages SET setp_enabled = 1;
+
+ALTER TABLE sessiontypepackages ADD COLUMN setp_profileid INT;
+ALTER TABLE sessiontypepackages ADD FOREIGN KEY (setp_profileid) REFERENCES groups(group_profileidcure_currencyid);
+
+ALTER TABLE properties DROP COLUMN prty_latitude;
+ALTER TABLE properties DROP COLUMN prty_longitude;
+ALTER TABLE properties ADD COLUMN prty_coordinates VARCHAR(50);
+
+ALTER TABLE locations ADD COLUMN loct_coordinates VARCHAR(50);
+
+ALTER TABLE sessionsales ADD COLUMN sesa_signletter INT;
+ALTER TABLE sessionsales ADD COLUMN sesa_takephoto INT;
+
+-- 20170127
+ALTER TABLE sessionreviews MODIFY COLUMN serw_comments VARCHAR(500);
+ALTER TABLE sessionreviews ADD COLUMN serw_programmini INT;
+ALTER TABLE sessionreviews ADD COLUMN serw_integration INT;
+ALTER TABLE sessionreviews ADD COLUMN serw_interaction INT;
+ALTER TABLE sessionreviews ADD COLUMN serw_coordination INT;
+ALTER TABLE sessionreviews ADD COLUMN serw_programjunior INT;
+ALTER TABLE sessionreviews ADD COLUMN serw_recognition INT;
+ALTER TABLE sessionreviews ADD COLUMN serw_crawl INT;
+ALTER TABLE sessionreviews ADD COLUMN serw_back INT;
+ALTER TABLE sessionreviews ADD COLUMN serw_chest INT;
+ALTER TABLE sessionreviews ADD COLUMN serw_butterflyswim INT;
+ALTER TABLE sessionreviews DROP COLUMN serw_breathing1;
+ALTER TABLE sessionreviews DROP COLUMN serw_kick1;
+ALTER TABLE sessionreviews DROP COLUMN serw_arrows1;
+ALTER TABLE sessionreviews DROP COLUMN serw_coordination1;
+ALTER TABLE sessionreviews DROP COLUMN serw_independence1;
+ALTER TABLE sessionreviews DROP COLUMN serw_breathing2;
+ALTER TABLE sessionreviews DROP COLUMN serw_kick2;
+ALTER TABLE sessionreviews DROP COLUMN serw_arrows2;
+ALTER TABLE sessionreviews DROP COLUMN serw_coordination2;
+ALTER TABLE sessionreviews DROP COLUMN serw_independence2;
+ALTER TABLE sessionreviews DROP COLUMN serw_breathing3;
+ALTER TABLE sessionreviews DROP COLUMN serw_kick3;
+ALTER TABLE sessionreviews DROP COLUMN serw_arrows3;
+ALTER TABLE sessionreviews DROP COLUMN serw_coordination3;
+ALTER TABLE sessionreviews DROP COLUMN serw_independence3;
+
+ALTER TABLE propertysaledetails ADD COLUMN prsd_creditmodality VARCHAR(50);
+
+
+ALTER TABLE raccounts ADD COLUMN racc_intransit INT;
+
+
+ALTER TABLE flexconfig ADD COLUMN flxc_defaultbankaccountid INT;
+ALTER TABLE credits ADD COLUMN cred_collectoruserid INT;
+
+ALTER TABLE customers ADD COLUMN cust_reqpaytypeid INT;
+ALTER TABLE customers ADD FOREIGN KEY (cust_reqpaytypeid) REFERENCES reqpaytypes(rqpt_reqpaytypeid);
+
+ALTER TABLE customers ADD COLUMN cust_reqpaytypeid INT;
+ALTER TABLE customers ADD FOREIGN KEY (cust_reqpaytypeid) REFERENCES reqpaytypes(rqpt_reqpaytypeid);
+
+ALTER TABLE properties ADD COLUMN prty_garage VARCHAR(512);
+ALTER TABLE properties ADD COLUMN prty_roofgarden VARCHAR(512);
+
+ALTER TABLE bankaccounts ADD COLUMN bkac_responsibleid INT;
+ALTER TABLE bankaccounts ADD FOREIGN KEY (bkac_responsibleid) REFERENCES users(user_userid);
+
+ALTER TABLE whmovements ADD COLUMN whmv_companyid INT;
+ALTER TABLE whmovements ADD FOREIGN KEY (whmv_companyid) REFERENCES companies(comp_companyid);
+ALTER TABLE orderdeliveries ADD COLUMN odly_companyid INT;
+ALTER TABLE orderdeliveries ADD FOREIGN KEY (odly_companyid) REFERENCES companies(comp_companyid);
+
+ALTER TABLE bankaccounts ADD COLUMN bkac_clabe VARCHAR(20);
+ALTER TABLE developmentphases ADD COLUMN dvph_companyid INT;
+ALTER TABLE developmentphases ADD FOREIGN KEY (dvph_companyid) REFERENCES companies(comp_companyid);
+ALTER TABLE developmentphases ADD COLUMN dvph_bankaccountid INT;
+ALTER TABLE developmentphases ADD FOREIGN KEY (dvph_bankaccountid) REFERENCES bankaccounts(bkac_bankaccountid);
+ALTER TABLE propertymodels ADD COLUMN ptym_garage VARCHAR(512);
+ALTER TABLE propertymodels ADD COLUMN ptym_roofgarden VARCHAR(512);
+
+-- 20170425
+ALTER TABLE orders ADD COLUMN orde_comments VARCHAR(1000);
+ALTER TABLE orders ADD COLUMN orde_authorizeduser INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_authorizeduser) REFERENCES users (user_userid);
+ALTER TABLE orders ADD COLUMN orde_authorizeddate DATETIME;
+ALTER TABLE orders ADD COLUMN orde_cancellationdate DATETIME;
+ALTER TABLE orders ADD COLUMN orde_customercontactid INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_customercontactid) REFERENCES customercontacts (cuco_customercontactid);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_defaultformatorder INT;
+ALTER TABLE orders ADD COLUMN orde_currencyparity DOUBLE;
+
+-- 20170517
+CREATE TABLE equipmentcompanies (
+eqcp_equipmentcompanyid INT NOT NULL AUTO_INCREMENT, 
+eqcp_companyid INT NOT NULL,
+eqcp_equipmentid INT NOT NULL,
+eqcp_usercreateid INT,
+eqcp_usermodifyid INT,
+eqcp_datecreate DATETIME,
+eqcp_datemodify DATETIME,
+PRIMARY KEY (eqcp_equipmentcompanyid),
+FOREIGN KEY (eqcp_companyid) REFERENCES companies(comp_companyid),
+FOREIGN KEY (eqcp_equipmentid) REFERENCES equipments(equi_equipmentid),
+FOREIGN KEY (eqcp_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (eqcp_usermodifyid) REFERENCES users(user_userid)
+);
+
+--  Se cambia nombre a la tabla Tipos de Atención a Clientes
+
+RENAME TABLE ordercomplainttypes TO customerservicetypes;
+ALTER TABLE customerservicetypes CHANGE COLUMN orct_ordercomplainttypeid csty_customerservicetypeid INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE customerservicetypes CHANGE COLUMN orct_code csty_code VARCHAR(10) NOT NULL;
+ALTER TABLE customerservicetypes CHANGE COLUMN orct_name csty_name VARCHAR(50) NOT NULL;
+ALTER TABLE customerservicetypes CHANGE COLUMN orct_description csty_description VARCHAR(255);
+ALTER TABLE customerservicetypes CHANGE COLUMN orct_userid csty_userid INT;
+ALTER TABLE customerservicetypes CHANGE COLUMN orct_sflog csty_sflog TEXT;
+ALTER TABLE customerservicetypes CHANGE COLUMN orct_usercreateid csty_usercreateid INT;
+ALTER TABLE customerservicetypes CHANGE COLUMN orct_usermodifyid csty_usermodifyid INT;
+ALTER TABLE customerservicetypes CHANGE COLUMN orct_datecreate csty_datecreate DATETIME;
+ALTER TABLE customerservicetypes CHANGE COLUMN orct_datemodify csty_datemodify DATETIME;
+
+
+--  Se cambia nombre a la tabla Atención a Clientes
+RENAME TABLE ordercomplaints TO customerservices;
+ALTER TABLE customerservices CHANGE COLUMN ordc_ordercomplaintid cuse_customerserviceid INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE customerservices CHANGE COLUMN ordc_code cuse_code VARCHAR(10);
+ALTER TABLE customerservices CHANGE COLUMN ordc_name cuse_name VARCHAR(50) NOT NULL;
+ALTER TABLE customerservices CHANGE COLUMN ordc_description cuse_description VARCHAR(255);
+ALTER TABLE customerservices CHANGE COLUMN ordc_ordercomplainttypeid cuse_customerservicetypeid INT;
+ALTER TABLE customerservices CHANGE COLUMN ordc_orderid cuse_orderid INT;
+ALTER TABLE customerservices CHANGE COLUMN ordc_solution cuse_solution VARCHAR(500);
+ALTER TABLE customerservices CHANGE COLUMN ordc_status cuse_status CHAR(1);
+ALTER TABLE customerservices CHANGE COLUMN ordc_active cuse_active INT;
+ALTER TABLE customerservices CHANGE COLUMN ordc_registrationdate cuse_registrationdate DATE;
+ALTER TABLE customerservices CHANGE COLUMN ordc_committaldate cuse_committaldate DATE;
+ALTER TABLE customerservices CHANGE COLUMN ordc_solutiondate cuse_solutiondate DATE;
+ALTER TABLE customerservices CHANGE COLUMN ordc_userid cuse_userid INT;
+ALTER TABLE customerservices CHANGE COLUMN ordc_file cuse_file VARCHAR(500);
+ALTER TABLE customerservices CHANGE COLUMN ordc_companyid cuse_companyid INT;
+ALTER TABLE customerservices CHANGE COLUMN ordc_sflog cuse_sflog TEXT;
+ALTER TABLE customerservices CHANGE COLUMN ordc_usercreateid cuse_usercreateid INT;
+ALTER TABLE customerservices CHANGE COLUMN ordc_usermodifyid cuse_usermodifyid INT;
+ALTER TABLE customerservices CHANGE COLUMN ordc_datecreate cuse_datecreate DATETIME;
+ALTER TABLE customerservices CHANGE COLUMN ordc_datemodify cuse_datemodify DATETIME;
+
+
+​--  Se cambia nombre a la tabla Seguimiento de Atención a Clientes​
+
+​RENAME TABLE ordercomplaintfollowups TO customerservicefollowups;
+ALTER TABLE customerservicefollowups CHANGE COLUMN orcf_ordercomplaintfollowupid csfo_customerservicefollowupid INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE customerservicefollowups CHANGE COLUMN orcf_ordercomplaintid csfo_customerserviceid INT;
+ALTER TABLE customerservicefollowups CHANGE COLUMN orcf_description csfo_description VARCHAR(255);
+ALTER TABLE customerservicefollowups CHANGE COLUMN orcf_userid csfo_userid INT;
+ALTER TABLE customerservicefollowups CHANGE COLUMN orcf_followupdate csfo_followupdate DATETIME;
+ALTER TABLE customerservicefollowups CHANGE COLUMN orcf_sflog csfo_sflog TEXT;
+ALTER TABLE customerservicefollowups CHANGE COLUMN orcf_usercreateid csfo_usercreateid INT;
+ALTER TABLE customerservicefollowups CHANGE COLUMN orcf_usermodifyid csfo_usermodifyid INT;
+ALTER TABLE customerservicefollowups CHANGE COLUMN orcf_datecreate csfo_datecreate DATETIME;
+ALTER TABLE customerservicefollowups CHANGE COLUMN orcf_datemodify csfo_datemodify DATETIME;​
+
+ALTER TABLE wflowsteptypes ADD COLUMN wfst_funnel INT;
+ALTER TABLE wflowsteps ADD COLUMN wfsp_funnel INT;
+ALTER TABLE wflows ADD COLUMN wflw_funnel INT;
+
+-- 20170612
+
+ALTER TABLE paccountassignments ADD COLUMN pass_currencyparity DOUBLE;
+ALTER TABLE paccountassignments ADD COLUMN pass_amountconverted DOUBLE;
+
+ALTER TABLE raccountassignments ADD COLUMN rass_currencyparity DOUBLE;
+ALTER TABLE raccountassignments ADD COLUMN rass_amountconverted DOUBLE;
+ALTER TABLE paccounts ADD COLUMN pacc_taxapplies INT;
+ALTER TABLE paccounts ADD COLUMN pacc_tax DOUBLE;
+ALTER TABLE paccounts ADD COLUMN pacc_total DOUBLE;
+
+ALTER TABLE sessionsales ADD COLUMN sesa_inscriptiondate DATE;
+
+ALTER TABLE paccountassignments ADD COLUMN pass_currencyparity DOUBLE;
+ALTER TABLE paccountassignments ADD COLUMN pass_amountconverted DOUBLE;
+
+ALTER TABLE raccountassignments ADD COLUMN rass_currencyparity DOUBLE;
+ALTER TABLE raccountassignments ADD COLUMN rass_amountconverted DOUBLE;
+
+ALTER TABLE paccounts ADD COLUMN pacc_taxapplies INT;
+ALTER TABLE paccounts ADD COLUMN pacc_tax DOUBLE;
+ALTER TABLE paccounts ADD COLUMN pacc_total DOUBLE;
+
+-- MDM
+ALTER TABLE propertymodelextras ADD COLUMN prmx_file VARCHAR(255);
+
+ALTER TABLE flexconfig ADD COLUMN flxc_automaticpaymentcxc INT;
+
+ALTER TABLE wflowlogs ADD COLUMN wflg_link VARCHAR(200);
+
+ALTER TABLE ordertypes ADD COLUMN ortp_emailreminders INT;
+ALTER TABLE ordertypes ADD COLUMN ortp_reminddaysbeforeendorder INT;
+ALTER TABLE ordertypes ADD COLUMN ortp_profileid INT;
+ALTER TABLE ordertypes ADD FOREIGN KEY (ortp_profileid) REFERENCES groups(prof_profileid);
+
+-- 20170710
+
+-- Config. Flex
+ALTER TABLE flexconfig ADD COLUMN flxc_defaultformatopportunity INT;
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_defaultformatopportunity) REFERENCES formats (frmt_formatid);
+ALTER TABLE flexconfig ADD FOREIGN KEY (flxc_defaultformatorder) REFERENCES formats (frmt_formatid);
+
+-- Oportunidades
+ALTER TABLE opportunities ADD COLUMN oppo_currencyparity DOUBLE;
+ALTER TABLE opportunities ADD COLUMN oppo_customerrequisition VARCHAR(20);
+
+-- Cotizaciones
+ALTER TABLE quotes ADD COLUMN quot_currencyparity DOUBLE;
+ALTER TABLE quotes ADD COLUMN quot_coverageparity INT;
+ALTER TABLE quotes ADD COLUMN quot_comments VARCHAR(1000);
+ALTER TABLE quotes ADD COLUMN quot_customerrequisition VARCHAR(20);
+ALTER TABLE quotes ADD COLUMN quot_customercontactid INT;
+ALTER TABLE quotes ADD FOREIGN KEY (quot_customercontactid) REFERENCES customercontacts (cuco_customercontactid);
+
+ALTER TABLE quotes ADD COLUMN quot_authorizeddate DATETIME;
+ALTER TABLE quotes ADD COLUMN quot_authorizeduser INT;
+ALTER TABLE quotes ADD FOREIGN KEY (quot_authorizeduser) REFERENCES users (user_userid);
+ALTER TABLE quotes ADD COLUMN quot_cancelleddate DATETIME;
+ALTER TABLE quotes ADD COLUMN quot_cancelleduser INT;
+ALTER TABLE quotes ADD FOREIGN KEY (quot_cancelleduser) REFERENCES users (user_userid);
+
+-- Pedidos
+ALTER TABLE orders ADD COLUMN  orde_coverageparity INT;
+ALTER TABLE orders ADD COLUMN orde_customerrequisition VARCHAR(20);
+ALTER TABLE orders CHANGE COLUMN orde_cancellationdate orde_cancelleddate DATETIME;
+ALTER TABLE orders CHANGE COLUMN orde_cancellationuser orde_cancelleduser INT;
+
+ALTER TABLE orders ADD COLUMN orde_cancelleduser INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_cancelleduser) REFERENCES users (user_userid);
+ALTER TABLE orders ADD COLUMN orde_finisheddate DATETIME;
+ALTER TABLE orders ADD COLUMN orde_finisheduser INT;
+ALTER TABLE orders ADD FOREIGN KEY (orde_finisheduser) REFERENCES users (user_userid);
+
+
+-- 20170719
+ALTER TABLE ordergroups ADD COLUMN ordg_createraccount INT;
+
+
+ALTER TABLE raccounts ADD COLUMN racc_ordergroupid INT;
+ALTER TABLE raccounts ADD FOREIGN KEY (racc_ordergroupid) REFERENCES ordergroups(ordg_ordergroupid);
+
+ALTER TABLE ordergroups ADD COLUMN ordg_createraccount INT;
+
+
+ALTER TABLE raccounts ADD COLUMN racc_ordergroupid INT;
+ALTER TABLE raccounts ADD FOREIGN KEY (racc_ordergroupid) REFERENCES ordergroups(ordg_ordergroupid);
+
+-- 20170904
+ALTER TABLE credits ADD COLUMN cred_companyid INT;
+ALTER TABLE credits ADD FOREIGN KEY (cred_companyid) REFERENCES companies(comp_companyid);
+ALTER TABLE credits ADD COLUMN cred_currencyid INT;
+ALTER TABLE credits ADD FOREIGN KEY (cred_currencyid) REFERENCES currencies(cure_currencyid);
+ALTER TABLE credits ADD COLUMN cred_currencyparity DOUBLE;
+-- Quitar hora de los créditos y luego cambiar la columna el tipo de datos a Fecha solamente
+UPDATE credits SET cred_startdate = SUBSTRING(cred_startdate, 1, 10);
+ALTER TABLE credits MODIFY COLUMN cred_startdate DATE;
+ALTER TABLE credits MODIFY COLUMN cred_enddate DATE;
+
+ALTER TABLE wflows ADD COLUMN wflw_customerid INT;
+ALTER TABLE wflows ADD FOREIGN KEY (wflw_customerid) REFERENCES customers(cust_customerid);
+ALTER TABLE wflowdocuments MODIFY COLUMN wfdo_filelink VARCHAR(500);
+ALTER TABLE wflowlogs MODIFY COLUMN wflg_link VARCHAR(500);
+
+ALTER TABLE modules ADD COLUMN modu_enablehelp INT;
+ALTER TABLE modules ADD COLUMN modu_helptext VARCHAR(10000);
+ALTER TABLE modules ADD COLUMN modu_helplink VARCHAR(255);
+
+-- 20170925
+ALTER TABLE raccounts ADD COLUMN racc_linked INT;
+
+
+CREATE TABLE raccountlinks (
+ralk_raccountlinkid INT NOT NULL AUTO_INCREMENT, 
+ralk_raccountid INT NOT NULL,
+ralk_foreignid INT NOT NULL,
+ralk_usercreateid INT,
+ralk_usermodifyid INT,
+ralk_datecreate DATETIME,
+ralk_datemodify DATETIME,
+PRIMARY KEY (ralk_raccountlinkid),
+FOREIGN KEY (ralk_foreignid) REFERENCES raccounts(racc_raccountid)
+);
+CREATE TABLE sessiontypeextras (
+setx_sessiontypeextraid INT NOT NULL AUTO_INCREMENT, 
+setx_name VARCHAR(50),
+setx_description VARCHAR(500),
+setx_price DOUBLE,
+setx_fixedprice INT,
+setx_startdate DATE,
+setx_enddate DATE,
+setx_sessiontypeid INT,
+setx_usercreateid INT,
+setx_usermodifyid INT,
+setx_datecreate DATETIME,
+setx_datemodify DATETIME,
+PRIMARY KEY (setx_sessiontypeextraid),
+FOREIGN KEY (setx_sessiontypeid) REFERENCES sessiontypes(sety_sessiontypeid),
+FOREIGN KEY (setx_usercreateid) REFERENCES users(user_userid),
+FOREIGN KEY (setx_usermodifyid) REFERENCES users(user_userid));
+
+CREATE TABLE ordersessionextras (
+orsx_ordersessionextraid INT NOT NULL AUTO_INCREMENT, 
+orsx_quantity INT,
+orsx_price DOUBLE,	
+orsx_amount DOUBLE,
+orsx_comments VARCHAR(255),
+orsx_orderid INT NOT NULL,
+orsx_sessiontypeextraid INT,
+orsx_usercreateid INT,
+orsx_usermodifyid INT,
+orsx_datecreate DATETIME,    
+   orsx_datemodify DATETIME,
+PRIMARY KEY(orsx_ordersessionextraid),
+FOREIGN KEY (orsx_orderid) REFERENCES orders(orde_orderid),
+FOREIGN KEY (orsx_sessiontypeextraid) REFERENCES sessiontypeextras(setx_sessiontypeextraid),
+   FOREIGN KEY (orsx_usercreateid) REFERENCES users(user_userid),
+   FOREIGN KEY (orsx_usermodifyid) REFERENCES users(user_userid));
+
+-- Autorización OC, CxP, CxC    
+ALTER TABLE requisitions ADD COLUMN reqi_authorizeduser INT;
+ALTER TABLE requisitions ADD FOREIGN KEY (reqi_authorizeduser) REFERENCES users (user_userid);
+ALTER TABLE requisitions ADD COLUMN reqi_authorizeddate DATETIME;
+
+ALTER TABLE paccounts ADD COLUMN pacc_authorizeduser INT;
+ALTER TABLE paccounts ADD FOREIGN KEY (pacc_authorizeduser) REFERENCES users (user_userid);
+ALTER TABLE paccounts ADD COLUMN pacc_authorizeddate DATETIME;
+
+ALTER TABLE raccounts ADD COLUMN racc_authorizeduser INT;
+ALTER TABLE raccounts ADD FOREIGN KEY (racc_authorizeduser) REFERENCES users (user_userid);
+ALTER TABLE raccounts ADD COLUMN racc_authorizeddate DATETIME;
+
+-- Envio de Correo al conciliar el MB
+ALTER TABLE flexconfig ADD COLUMN flxc_sendemailreconciled INT;
+
+ALTER TABLE bankmovements MODIFY COLUMN bkmv_bankreference VARCHAR(30);
+
+ALTER TABLE propertymodels ADD COLUMN ptym_bonusrg DOUBLE;
+
+ALTER TABLE flexconfig ADD COLUMN flxc_sendemailreconciled INT;
+
+-- Autorizar el Envio de Correo al proveedor
+ALTER TABLE suppliers ADD COLUMN supl_sendemail INT;
+
+-- Conciliacion en Bancos
+ALTER TABLE bankmovements ADD COLUMN bkmv_reconcileduserid INT;
+ALTER TABLE bankmovements ADD FOREIGN KEY (bkmv_reconcileduserid) REFERENCES users (user_userid);
+
+
+ALTER TABLE bankmovements ADD COLUMN bkmv_reconcileddate DATETIME;
+
+CREATE TABLE wflowsteptracktypes (
+	wftr_wflowsteptracktypeid INT NOT NULL AUTO_INCREMENT, 
+	wftr_name VARCHAR(30),
+	wftr_description VARCHAR(255),	
+	wftr_wflowcategoryid INT NOT NULL,
+	wftr_usercreateid INT,
+	wftr_usermodifyid INT,
+	wftr_datecreate DATETIME,    
+	wftr_datemodify DATETIME,
+	PRIMARY KEY(wftr_wflowsteptracktypeid),
+	FOREIGN KEY (wftr_wflowcategoryid) REFERENCES wflowcategories(wfca_wflowcategoryid),
+	FOREIGN KEY (wftr_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (wftr_usermodifyid) REFERENCES users(user_userid)
+);
+
+CREATE TABLE wflowsteptracks (
+	wfsr_wflowsteptrackid INT NOT NULL AUTO_INCREMENT, 
+	wfsr_name VARCHAR(30),
+	wfsr_description VARCHAR(255),	
+	wfsr_startdate DATETIME,  
+	wfsr_enddate DATETIME,  
+	wfsr_minutes INT,
+	wfsr_userid INT NOT NULL,
+	wfsr_wflowid INT NOT NULL,
+	wfsr_wflowstepid INT NOT NULL,
+	wfsr_wflowsteptracktypeid INT NOT NULL,
+	wfsr_usercreateid INT,
+	wfsr_usermodifyid INT,
+	wfsr_datecreate DATETIME,    
+	wfsr_datemodify DATETIME,
+	PRIMARY KEY(wfsr_wflowsteptrackid),
+	FOREIGN KEY (wfsr_userid) REFERENCES users(user_userid),
+	FOREIGN KEY (wfsr_wflowid) REFERENCES wflows(wflw_wflowid),
+	FOREIGN KEY (wfsr_wflowstepid) REFERENCES wflowsteps(wfsp_wflowstepid),
+	FOREIGN KEY (wfsr_wflowsteptracktypeid) REFERENCES wflowsteptracktypes(wftr_wflowsteptracktypeid),
+	FOREIGN KEY (wfsr_usercreateid) REFERENCES users(user_userid),
+	FOREIGN KEY (wfsr_usermodifyid) REFERENCES users(user_userid)
+);
+
+

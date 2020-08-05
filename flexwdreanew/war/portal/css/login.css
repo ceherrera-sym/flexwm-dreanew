@@ -1,0 +1,98 @@
+
+.loginError {
+	font-size: 9pt;
+	color: red;
+	width: 100%;
+	white-space: nowrap;
+}
+
+.loginTextBox {
+	border: 2px solid white;
+	width: 40%;
+	border-radius: 4px;
+	margin: 8px 0;
+	outline: none;
+	padding: 8px;
+	box-sizing: border-box;
+	height: 40px;
+	background: #BEBDBE;
+	border-radius: 5px 5px 15px 5px;
+	-webkit-appearance: none;
+	color: white;
+	height: 40px;
+}
+
+.loginTable {
+	margin-left: 5px;
+	margin-right: 5px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	border-bottom: 1px solid #ccc;
+	border-top: 1px solid #ccc;
+	border-left: 1px solid #ccc;
+	border-right: 1px solid #ccc;
+	border-radius: 10px;
+	padding-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	padding-right: 5px;
+	padding-left: 5px;
+	width:40%;
+	height: 20%;
+	align: center;
+	font-family: helvetica;
+}
+
+.loginButton {
+	border: 2px;
+	width: 130px;
+	height: 30px;
+	border-radius: 5px 5px 15px 5px;
+	outline: none;
+	padding: 8px;
+	box-sizing: border-box;
+	background: #CC1C2B;
+	color: white;
+	font-size: 15px;
+	-webkit-appearance: none;
+	text-align: center;
+	width: 20%;
+	height: 20%;
+	font-family: helvetica;
+}
+
+.copyright {
+	font-size: 8pt;
+	color: gray;
+	text-align: center;
+}
+
+/* .loginButton:active { */
+/* 	position: relative; */
+/* 	top: 1px; */
+/* } */
+
+.topBarLogin {
+	background-color: #3498db;
+	padding-left: 5px;
+}
+
+.alignLog {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: 80%;
+}
+
+::placehold {
+	color: white;
+}
+
+::-webkit-input-placeholder {
+	color: white;
+}
+
+:-ms-input-placeholder {
+	color: white;
+}

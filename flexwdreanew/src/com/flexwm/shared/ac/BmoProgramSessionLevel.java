@@ -1,0 +1,147 @@
+/**
+ * SYMGF
+ * Derechos Reservados Mauricio Lopez Barba
+ * Este software es propiedad de Mauricio Lopez Barba, y no puede ser
+ * utilizado, distribuido, copiado sin autorizacion expresa por escrito.
+ * 
+ * @author Mauricio Lopez Barba
+ * @version 2013-10
+ */
+
+package com.flexwm.shared.ac;
+
+import java.io.Serializable;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Arrays;
+import com.symgae.shared.BmFieldType;
+import com.symgae.shared.BmObject;
+import com.symgae.shared.BmField;
+import com.symgae.shared.BmOrder;
+import com.symgae.shared.BmSearchField;
+
+
+/**
+ * @author smuniz
+ *
+ */
+
+public class BmoProgramSessionLevel extends BmObject implements Serializable {
+	private static final long serialVersionUID = 1L;
+	private BmField sequence, name, description, programSessionId;
+	private BmoProgramSession bmoProgramSession = new BmoProgramSession();
+
+	public BmoProgramSessionLevel() {
+		super("com.flexwm.server.ac.PmProgramSessionLevel", "programsessionlevels", "programsessionlevelid", "PGSL", "Nivel Programas");
+
+		//Campo de Datos
+		sequence = setField("sequence", "", "Nivel", 2, Types.INTEGER, false, BmFieldType.NUMBER, false);
+		name = setField("name", "", "Nombre", 100, Types.VARCHAR, false, BmFieldType.STRING, false);
+		description = setField("description", "", "Descripción", 500, Types.VARCHAR, false, BmFieldType.STRING, false);
+		programSessionId = setField("programsessionid", "", "Programa", 8, Types.INTEGER, false, BmFieldType.ID, false);
+	}
+
+	@Override
+	public ArrayList<BmField> getDisplayFieldList() {
+		return new ArrayList<BmField>(Arrays.asList(
+				getSequence(),
+				getName(),				
+				getDescription(),
+				getBmoProgramSession().getName()
+				));
+	}
+
+	@Override
+	public ArrayList<BmSearchField> getSearchFields() {
+		return new ArrayList<BmSearchField>(Arrays.asList(
+				new BmSearchField(getName()), 
+				new BmSearchField(getDescription())
+				));
+	}
+	
+	@Override
+	public ArrayList<BmField> getListBoxFieldList() {
+		return new ArrayList<BmField>(Arrays.asList(
+				getSequence(),
+				getName(),
+				getBmoProgramSession().getName()
+				));
+	}
+
+	@Override
+	public ArrayList<BmOrder> getOrderFields() {
+		return new ArrayList<BmOrder>(Arrays.asList(new BmOrder(getKind(), getProgramSessionId(), BmOrder.ASC),
+				new BmOrder(getKind(), getSequence(), BmOrder.ASC),
+				new BmOrder(getKind(), getName(), BmOrder.ASC)));
+	}
+
+	/**
+	 * @return the sequence
+	 */
+	public BmField getSequence() {
+		return sequence;
+	}
+
+	/**
+	 * @param sequence the sequence to set
+	 */
+	public void setSequence(BmField sequence) {
+		this.sequence = sequence;
+	}
+
+	/**
+	 * @return the name
+	 */
+	public BmField getName() {
+		return name;
+	}
+
+	/**
+	 * @param name the name to set
+	 */
+	public void setName(BmField name) {
+		this.name = name;
+	}
+
+	/**
+	 * @return the description
+	 */
+	public BmField getDescription() {
+		return description;
+	}
+
+	/**
+	 * @param description the description to set
+	 */
+	public void setDescription(BmField description) {
+		this.description = description;
+	}
+
+	/**
+	 * @return the programSessionId
+	 */
+	public BmField getProgramSessionId() {
+		return programSessionId;
+	}
+
+	/**
+	 * @param programSessionId the programSessionId to set
+	 */
+	public void setProgramSessionId(BmField programSessionId) {
+		this.programSessionId = programSessionId;
+	}
+
+	/**
+	 * @return the bmoProgramSession
+	 */
+	public BmoProgramSession getBmoProgramSession() {
+		return bmoProgramSession;
+	}
+
+	/**
+	 * @param bmoProgramSession the bmoProgramSession to set
+	 */
+	public void setBmoProgramSession(BmoProgramSession bmoProgramSession) {
+		this.bmoProgramSession = bmoProgramSession;
+	}
+}
