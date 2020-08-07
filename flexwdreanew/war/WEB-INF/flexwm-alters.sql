@@ -6056,6 +6056,8 @@ UPDATE projects LEFT JOIN orders ON (orde_orderid = proj_orderid) SET proj_total
 
 	UPDATE whsections LEFT JOIN warehouses ON (whse_warehouseid = ware_warehouseid) SET whse_status = 'A' WHERE ware_type = 'N';
 	
+	ALTER TABLE ordertypes ADD ortp_sendextramail INT(5);
+	
 	CREATE TABLE extraorderprofiles (
 		eopr_extraorderprofileid INT NOT NULL AUTO_INCREMENT, 
 		eopr_usercreateid INT,		
