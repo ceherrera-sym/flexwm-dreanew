@@ -26,6 +26,7 @@ import com.flexwm.shared.cm.BmoOpportunity;
 import com.flexwm.shared.cm.BmoQuote;
 import com.flexwm.shared.cm.BmoQuoteGroup;
 import com.flexwm.shared.cm.BmoQuoteItem;
+import com.flexwm.shared.op.BmoOrderType;
 import com.flexwm.shared.op.BmoProductKitItem;
 
 
@@ -61,16 +62,31 @@ public class PmQuoteGroup extends PmObject {
 			if (!(bmoQuoteGroup.getIndex().toInteger() > 0)) {
 				bmoQuoteGroup.getIndex().setValue(nextIndex(pmConn, bmoQuoteGroup));
 			}
+			//Calcular total de kit
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL) && bmoQuoteGroup.getIsKit().toBoolean()) {
+				bmoQuoteGroup.getTotal().setValue(bmoQuoteGroup.getDays().toDouble() * bmoQuoteGroup.getAmount().toDouble());
+				updateItems(pmConn,bmoQuoteGroup, bmUpdateResult);
+			}
 
 			super.save(pmConn, bmoQuoteGroup, bmUpdateResult);
-
 			// Recalcular la cotizacion completa
 			pmQuote.updateBalance(pmConn, bmoQuote, bmUpdateResult);
 		}
 
 		return bmUpdateResult;
 	}
-	
+	public void updateItems(PmConn pmConn, BmoQuoteGroup bmoQuoteGroup, BmUpdateResult bmUpdateResult) throws SFException {
+		String sql = "SELECT qoit_quoteitemid FROM quoteitems WHERE qoit_quotegroupid = " + bmoQuoteGroup.getId();
+		PmQuoteItem pmQuoteItem = new PmQuoteItem(getSFParams());
+		pmConn.doFetch(sql);
+		while (pmConn.next()) {
+			BmoQuoteItem nextBmoQuoteItem = (BmoQuoteItem)pmQuoteItem.get(pmConn.getInt("qoit_quoteitemid"));
+			
+			nextBmoQuoteItem.getDays().setValue(bmoQuoteGroup.getDays().toDouble());
+			
+			pmQuoteItem.saveSimple(pmConn, nextBmoQuoteItem, bmUpdateResult);			
+		}		
+	}
 	// Regresa el indice maximo mas 1
 	private int nextIndex(PmConn pmConn, BmoQuoteGroup bmoQuoteGroup) throws SFException {
 		int index = 1;
@@ -100,7 +116,9 @@ public class PmQuoteGroup extends PmObject {
 				try {
 					pmConn.open();
 					pmConn.disableAutoCommit();
-
+					//Total para drea
+					if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL))
+						bmoQuoteGroup.getTotal().setValue(bmoQuoteGroup.getDays().toDouble() * bmoQuoteGroup.getAmount().toDouble());
 					// Crear el grupo de la cotización
 					super.save(pmConn, bmoQuoteGroup, bmUpdateResult);
 					bmoQuoteGroup.setId(bmUpdateResult.getId());
@@ -247,7 +265,7 @@ public class PmQuoteGroup extends PmObject {
 			bmoQuoteItem.getQuoteGroupId().setValue(bmoQuoteGroup.getId());
 			bmoQuoteItem.getName().setValue(bmoProductKitItem.getBmoProduct().getName().toString());
 			bmoQuoteItem.getQuantity().setValue(bmoProductKitItem.getQuantity().toDouble());
-			bmoQuoteItem.getDays().setValue(bmoProductKitItem.getDays().toInteger());
+			bmoQuoteItem.getDays().setValue(bmoProductKitItem.getDays().toDouble());
 			bmoQuoteItem.getProductId().setValue(bmoProductKitItem.getProductId().toInteger());
 			bmoQuoteItem.getIndex().setValue(index);
 			// Tomar Partida presp. y Departamento del Producto, sino, de la Cotizacion

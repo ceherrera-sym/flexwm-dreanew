@@ -26,6 +26,7 @@ import com.flexwm.shared.fi.BmoRaccountType;
 import com.flexwm.shared.op.BmoOrder;
 import com.flexwm.shared.op.BmoOrderGroup;
 import com.flexwm.shared.op.BmoOrderItem;
+import com.flexwm.shared.op.BmoOrderType;
 import com.flexwm.shared.op.BmoProductCompany;
 import com.flexwm.shared.op.BmoProductKitItem;
 
@@ -66,13 +67,14 @@ public class PmOrderGroup extends PmObject {
 			if (!(bmoOrderGroup.getIndex().toInteger() > 0)) {
 				bmoOrderGroup.getIndex().setValue(nextIndex(pmConn, bmoOrderGroup));
 			}
+			//Calcular total de kit
+			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL) && bmoOrderGroup.getIsKit().toBoolean()) {
+				bmoOrderGroup.getTotal().setValue(bmoOrderGroup.getDays().toDouble() * bmoOrderGroup.getAmount().toDouble());
+				updateItems(pmConn,bmoOrderGroup, bmUpdateResult);
+			}
 
 			super.save(pmConn, bmoOrderGroup, bmUpdateResult);
 			
-//			if(bmoOrderGroup.getCreateProject().toBoolean()) {
-//				if(bmoOrder.getBmoOrderType().getCreateProject().toBoolean())
-//					updateItemTrue(pmConn, bmoOrderGroup, bmUpdateResult);
-//			}
 			// Recalcular el pedido completo
 			pmOrder.updateBalance(pmConn, bmoOrder, bmUpdateResult);
 			
@@ -85,7 +87,18 @@ public class PmOrderGroup extends PmObject {
 		}
 		return bmUpdateResult;
 	}
-
+	public void updateItems(PmConn pmConn, BmoOrderGroup bmoOrderGroup, BmUpdateResult bmUpdateResult) throws SFException {
+		String sql = "SELECT ordi_orderitemid FROM orderitems  WHERE ordi_ordergroupid =  " + bmoOrderGroup.getId();
+		PmOrderItem pmOrderItem = new PmOrderItem(getSFParams());
+		pmConn.doFetch(sql);
+		while (pmConn.next()) {
+			BmoOrderItem nextBmoOrderItem = (BmoOrderItem)pmOrderItem.get(pmConn.getInt("ordi_orderitemid"));
+			
+			nextBmoOrderItem.getDays().setValue(bmoOrderGroup.getDays().toDouble());
+			
+			pmOrderItem.saveSimple(pmConn, nextBmoOrderItem, bmUpdateResult);			
+		}		
+	}
 	// Sube el grupo un nivel
 	private void changeIndex(PmConn pmConn, BmoOrderGroup bmoOrderGroup, String direction) throws SFException {
 		String sql = "";
@@ -163,9 +176,12 @@ public class PmOrderGroup extends PmObject {
 				try {
 					pmConn.open();
 					pmConn.disableAutoCommit();
-
+					//Total para drea
+					if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL))
+						bmoOrderGroup.getTotal().setValue(bmoOrderGroup.getDays().toDouble() * bmoOrderGroup.getAmount().toDouble());
 					// Crear el grupo de la cotización
 					super.save(pmConn, bmoOrderGroup, bmUpdateResult);
+					
 					bmoOrderGroup.setId(bmUpdateResult.getId());
 					
 					// Buscar el ultimo index y asignar al nuevo grupo

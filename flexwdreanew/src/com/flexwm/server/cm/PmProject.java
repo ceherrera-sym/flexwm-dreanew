@@ -49,6 +49,7 @@ import com.flexwm.shared.op.BmoOrderType;
 import com.flexwm.shared.op.BmoRequisition;
 import com.flexwm.shared.op.BmoWhMovItem;
 import com.flexwm.shared.op.BmoWhMovement;
+import com.flexwm.shared.op.BmoWhSection;
 import com.flexwm.shared.wf.BmoWFlow;
 import com.flexwm.shared.wf.BmoWFlowLog;
 import com.flexwm.shared.wf.BmoWFlowType;
@@ -387,7 +388,8 @@ public class PmProject extends PmObject {
 					if (bmoOrder.getWFlowId().toInteger() > 0)						
 						pmWFlowLog.addLog(pmConn, bmUpdateResult, wflowId, BmoWFlowLog.TYPE_OTHER, "El Proyecto se guardó como Finalizado.");
 					   
-					pmOrder.save(pmConn, bmoOrder, bmUpdateResult);
+					pmOrder.save(pmConn, bmoOrder, bmUpdateResult);					
+					
 					
 				} else if (bmoProject.getStatus().equals(BmoProject.STATUS_REVISION)) {
 					pmWFlowLog.addLog(pmConn, bmUpdateResult, wflowId, BmoWFlowLog.TYPE_OTHER, "El Proyecto se guardó como Revisión.");
@@ -407,6 +409,7 @@ public class PmProject extends PmObject {
 				bmoProject.getWFlowId().setValue(bmoOrder.getWFlowId().toInteger());
 
 			super.save(pmConn, bmoProject, bmUpdateResult);
+			
 
 		}
 
@@ -442,9 +445,49 @@ public class PmProject extends PmObject {
 			//				BmoOrder bmoOrder = (BmoOrder)pmOrder.get(pmConn, bmoProject.getOrderId().toInteger());
 			//			}
 		}
-		
-		
+		//Actualizar estatus de seccion de almacen
+		if (!bmUpdateResult.hasErrors()) {
+			updateWhSection(pmConn,bmoProject, bmUpdateResult);
+		}
+		// Forzar el ID del resultado que sea del proyecto y no de otra clase
+		bmUpdateResult.setId(bmoProject.getId());
 
+		return bmUpdateResult;
+	}
+	
+	public BmUpdateResult updateWhSection(PmConn pmConn,BmoProject bmoProject,BmUpdateResult bmUpdateResult) throws SFException {
+//		PmWhSection pmWhSection = new PmWhSection(getSFParams());
+		PmConn pmConn2 = new PmConn(getSFParams());
+		pmConn2.open();
+		String sql = "SELECT orde_orderid,whse_whsectionid FROM orders "
+				+ " LEFT JOIN whsections ON (whse_orderid = orde_orderid) "
+				+ " WHERE orde_orderid = " + bmoProject.getOrderId().toInteger() + " OR orde_originreneworderid = " + bmoProject.getOrderId().toInteger();
+		pmConn2.doFetch(sql);
+		System.err.println(sql);
+		while (pmConn2.next()) {
+			String status = "";
+//			BmoWhSection nextBmoWhSection = (BmoWhSection)pmWhSection.getBy(pmConn, pmConn.getInt("orde_orderid"), new BmoWhSection().getOrderId().getName());
+			
+//			if (bmoProject.getStatus().equals(BmoProject.STATUS_FINISHED)) {
+//				nextBmoWhSection.getStatus().setValue(BmoWhSection.STATUS_INACTIVE);
+//			} else {
+//				nextBmoWhSection.getStatus().setValue(BmoWhSection.STATUS_ACTIVE);
+//			}
+//			pmWhSection.save(pmConn, nextBmoWhSection, bmUpdateResult);
+			//se hara un insert directo con (solo guarda la primera seccion y se detiene) se analisara
+			
+			if (bmoProject.getStatus().equals(BmoProject.STATUS_FINISHED)) {
+				status = ""+BmoWhSection.STATUS_INACTIVE;
+			} else {
+				status = ""+BmoWhSection.STATUS_ACTIVE;
+			}
+			
+			sql = "UPDATE whsections SET whse_status = '" + status + "' where whse_whsectionid = " + pmConn2.getInt("whse_whsectionid");
+			
+			pmConn.doUpdate(sql);
+		}
+		pmConn2.close();
+		
 		return bmUpdateResult;
 	}
 

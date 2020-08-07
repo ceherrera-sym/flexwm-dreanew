@@ -115,6 +115,12 @@ public class PmOrderItem extends PmObject {
 
 		PmProduct pmProduct = new PmProduct(getSFParams());
 		BmoProduct bmoProduct = new BmoProduct();
+		//No permite cambios en DRea en un kit
+		if (bmoOrderGroup.getIsKit().toBoolean() && bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			if (bmoOrderItem.getId() > 0) {
+				bmUpdateResult.addMsg("No se puede modificar el ítem , es un Kit");
+			}
+		}
 
 		// Obten el registro del producto y su precio vigente
 		if (bmoOrderItem.getProductId().toInteger() > 0) {

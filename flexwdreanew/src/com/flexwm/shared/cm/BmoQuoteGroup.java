@@ -23,8 +23,8 @@ import com.symgae.shared.BmSearchField;
 
 public class BmoQuoteGroup extends BmObject implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private BmField code, name, description, amount, isKit, image, showQuantity, showPrice, 
-	showProductImage, showGroupImage, showAmount, index, quoteId, payConditionId,showItems;
+	private BmField code, name, description, amount, isKit, image, showQuantity, showPrice,total, 
+	showProductImage, showGroupImage, showAmount, index, quoteId, payConditionId,showItems,days;
 	
 	public static String ACTION_PRODUCTKIT = "productkit";
 	public static String ACTION_CHANGEINDEX = "ACTIONCHANGEINDEX";
@@ -39,6 +39,8 @@ public class BmoQuoteGroup extends BmObject implements Serializable {
 		amount = setField("amount", "0", "Subtotal", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
 		isKit = setField("iskit", "", "Es Kit?", 8, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 		image = setField("image", "", "Imagen Grupo", 500, Types.VARCHAR, true, BmFieldType.IMAGE, false);
+		days = setField("days", "1", "Días", 20, Types.FLOAT, true, BmFieldType.NUMBER, false);
+		total = setField("total", "0", "Total", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
 		
 		showQuantity = setField("showquantity", "", "Cantidad?", 8, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 		showPrice = setField("showprice", "", "Precio?", 8, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
@@ -192,4 +194,21 @@ public class BmoQuoteGroup extends BmObject implements Serializable {
 	public void setPayConditionId(BmField payConditionId) {
 		this.payConditionId = payConditionId;
 	}
+
+	public BmField getDays() {
+		return days;
+	}
+
+	public void setDays(BmField days) {
+		this.days = days;
+	}
+
+	public BmField getTotal() {
+		return total;
+	}
+
+	public void setTotal(BmField total) {
+		this.total = total;
+	}
+	
 }

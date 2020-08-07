@@ -372,19 +372,41 @@ try {
 	              int i = 1;
 	              while (quoteGroups.hasNext()) { 
 	                   bmoQuoteGroup = (BmoQuoteGroup)quoteGroups.next();%>
-	                    <tr>
-	                        <td class="reportHeaderCell" colspan="7" style="white-space: normal">
-	                            <%= i++ %>. <%= bmoQuoteGroup.getName().toHtml() %>
-	                            <%	if (bmoQuoteGroup.getDescription().toString().length() > 0) { %>
-	                            		<br><%= bmoQuoteGroup.getDescription().toHtml() %>
-	                            <%	} %>
-	                        </td>
-	                        <td class="reportHeaderCellRight" colspan="">
-	                        	<%if (bmoQuoteGroup.getShowAmount().toBoolean()) { %>                  	
-		                            <%= formatCurrency.format(bmoQuoteGroup.getAmount().toDouble()) %>&nbsp;
-	                            <%} %>
-	                        </td>
-	                    </tr> 
+	                   <% if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {%>
+		                    <tr>
+		                        <td class="reportHeaderCell" colspan="7" style="white-space: normal">
+		                            <%= i++ %>. <%= bmoQuoteGroup.getName().toHtml() %> <%if (bmoQuoteGroup.getIsKit().toBoolean()) { %> (<%=bmoQuoteGroup.getDays()%>  D&iacute;as) <% } %>
+		                            <%	if (bmoQuoteGroup.getDescription().toString().length() > 0) { %>
+		                            		<br><%= bmoQuoteGroup.getDescription().toHtml() %>
+		                            <%	} %>
+		                        </td>
+		                        <td class="reportHeaderCellRight" colspan="">
+		                        	<% if (bmoQuoteGroup.getIsKit().toBoolean()) { %>
+			                        	<%if (bmoQuoteGroup.getShowAmount().toBoolean()) { %>                  	
+				                            <%= formatCurrency.format(bmoQuoteGroup.getTotal().toDouble()) %>&nbsp;
+			                            <%} %>
+		                            <% } else { %>
+		                            	<%if (bmoQuoteGroup.getShowAmount().toBoolean()) { %>                  	
+				                            <%= formatCurrency.format(bmoQuoteGroup.getAmount().toDouble()) %>&nbsp;
+			                            <%} %>
+		                            <% } %>
+		                        </td>
+		                    </tr> 
+	                    <% } else { %>
+	                    	<tr>
+		                        <td class="reportHeaderCell" colspan="7" style="white-space: normal">
+		                            <%= i++ %>. <%= bmoQuoteGroup.getName().toHtml() %>
+		                            <%	if (bmoQuoteGroup.getDescription().toString().length() > 0) { %>
+		                            		<br><%= bmoQuoteGroup.getDescription().toHtml() %>
+		                            <%	} %>
+		                        </td>
+		                        <td class="reportHeaderCellRight" colspan="">
+		                        	<%if (bmoQuoteGroup.getShowAmount().toBoolean()) { %>                  	
+			                            <%= formatCurrency.format(bmoQuoteGroup.getAmount().toDouble()) %>&nbsp;
+		                            <%} %>
+		                        </td>
+		                    </tr> 
+	                    <% } %>
 	             <%	  
 	                // Si es Kit solo pone descripcion
 	             	//if (bmoQuoteGroup.getIsKit().toBoolean()) {

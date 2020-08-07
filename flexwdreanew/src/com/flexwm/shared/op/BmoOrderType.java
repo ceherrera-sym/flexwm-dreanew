@@ -29,7 +29,7 @@ public class BmoOrderType extends BmObject implements Serializable {
 	scheduleStart, scheduleEnd, enableReqiOrderFinish, hasTaxes, defaultBudgetItemId, requiredLoseComments,
 	defaultAreaId, enableExtraOrder, wFlowTypeId, filterOnScrum,remindDaysBeforeRentIncrease, remindDaysBeforeRentIncreaseTwo,
 	dataFiscal,remindDaysBeforeEndContractDate, remindDaysBeforeEndContractDateTwo,emailReminderContractEnd, atmCCRevision,statusDefaultDetail,
-	areaDefaultDetail,remindDaysBeforeEndContractDateThree, requiredPropertyModel, defaultWFlowTypeId;
+	areaDefaultDetail,remindDaysBeforeEndContractDateThree, requiredPropertyModel, defaultWFlowTypeId,sendExtraMail;
 
 	public static final char TYPE_SALE = 'S';
 	public static final char TYPE_RENTAL = 'R';
@@ -51,7 +51,7 @@ public class BmoOrderType extends BmObject implements Serializable {
 		name = setField("name", "", "Nombre T. Ped.", 30, Types.VARCHAR, false, BmFieldType.STRING, true);
 		description = setField("description", "", "Descripción", 255, Types.VARCHAR, true, BmFieldType.STRING, false);
 		autoRenew = setField("autorenew", "", "Auto Renovable?", 5, Types.INTEGER, false, BmFieldType.BOOLEAN, false);
-
+		
 		type = setField("type", "", "Tipo Pedido", 1, Types.CHAR, false, BmFieldType.OPTIONS, false);
 		type.setOptionList(new ArrayList<BmFieldOption>(Arrays.asList(
 				new BmFieldOption(TYPE_SALE, "Venta", "./icons/ortp_type_sale.png"),
@@ -92,6 +92,7 @@ public class BmoOrderType extends BmObject implements Serializable {
 		// Permitir pedido Extra
 		enableExtraOrder= setField("enableextraorder", "false", "Permitir pedido Extra", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 		wFlowTypeId = setField("wflowtypeid", "", "Tipo Flujo Extra", 20, Types.INTEGER, true, BmFieldType.ID, false);
+		sendExtraMail = setField("sendextramail", "", "Notificar Aut. Extra?", 5, Types.INTEGER, false, BmFieldType.BOOLEAN, false);
 		
 		filterOnScrum = setField("filteronscrum", "false", "Filtrar en SCRUM", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 	
@@ -151,9 +152,17 @@ public class BmoOrderType extends BmObject implements Serializable {
 //	public void setCreateProject(BmField createProject) {
 //		this.createProject = createProject;
 //	}
-
+	
 	public BmField getName() {
 		return name;
+	}
+
+	public BmField getSendExtraMail() {
+		return sendExtraMail;
+	}
+
+	public void setSendExtraMail(BmField sendExtraMail) {
+		this.sendExtraMail = sendExtraMail;
 	}
 
 	public void setName(BmField name) {

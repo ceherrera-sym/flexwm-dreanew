@@ -392,13 +392,26 @@ public class PmQuote extends PmObject {
 		String sql = "";
 
 		// Suma los items de los grupos de la cotizacion
-		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL) 
-				|| bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_SALE)
+		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_SALE)
 				|| bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_CONSULTANCY)) {
 			pmConn.doFetch("SELECT SUM(qogr_amount) FROM quotegroups "
 					+ " WHERE qogr_quoteid = " + bmoQuote.getId());
 			if (pmConn.next()) quoteItemAmount = pmConn.getDouble(1);
-			if (!getSFParams().isProduction()) System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
+			 System.err.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
+		}
+		
+		//Calculo de total para drea(campo total en lugar de subtotal)total = amount * days o subtotal
+		
+		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {		
+			pmConn.doFetch("SELECT qogr_amount AS sumAmount,qogr_total AS sumTotal,qogr_iskit FROM quotegroups "
+					+ " WHERE qogr_quoteid = " + bmoQuote.getId() );
+			while (pmConn.next()) {
+				if (pmConn.getInt("qogr_iskit") > 0)
+					quoteItemAmount += pmConn.getDouble("sumTotal");
+				else
+					quoteItemAmount += pmConn.getDouble("sumAmount");
+			}
+			 System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
 		}
 
 		// Suma de recursos
@@ -446,7 +459,7 @@ public class PmQuote extends PmObject {
 			double total = 0;
 			
 			double taxRate = ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getTax().toDouble() / 100;				
-			if (bmoQuote.getTaxApplies().toBoolean()) tax = (bmoQuote.getAmount().toDouble() - bmoQuote.getDiscount().toDouble()) * taxRate;
+			if (bmoQuote.getTaxApplies().toBoolean()) tax = (bmoQuote.getAmount().toDouble() - bmoQuote.getDiscount().toDouble()) * taxRate;		
 				total = bmoQuote.getAmount().toDouble() - bmoQuote.getDiscount().toDouble() + tax;
 			
 

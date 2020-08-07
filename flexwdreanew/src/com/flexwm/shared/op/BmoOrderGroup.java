@@ -23,7 +23,7 @@ import com.symgae.shared.BmSearchField;
 
 public class BmoOrderGroup extends BmObject implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private BmField name, description, amount, isKit, image, showQuantity, showPrice, 
+	private BmField name, description, amount, isKit, image, showQuantity, showPrice,days,total,
 	showProductImage, showGroupImage, showAmount, createRaccount, index, orderId, payConditionId,showItems;
 	
 	public static String ACTION_PRODUCTKIT = "PRODUCTKIT";
@@ -33,6 +33,9 @@ public class BmoOrderGroup extends BmObject implements Serializable {
 		super("com.flexwm.server.op.PmOrderGroup", "ordergroups", "ordergroupid", "ORDG", "Grupo de Pedido");
 		
 		// Campo de datos
+		days = setField("days", "1", "Días", 20, Types.FLOAT, true, BmFieldType.NUMBER, false);
+		total = setField("total", "0", "Total", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
+		
 		name = setField("name", "", "Nombre", 100, Types.VARCHAR, false, BmFieldType.STRING, false);
 		description = setField("description", "", "Descripción", 512, Types.VARCHAR, true, BmFieldType.STRING, false);
 		amount = setField("amount", "0", "Subtotal", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
@@ -92,7 +95,7 @@ public class BmoOrderGroup extends BmObject implements Serializable {
 
 	public void setDescription(BmField description) {
 		this.description = description;
-	}
+	}	
 
 	public BmField getAmount() {
 		return amount;
@@ -189,6 +192,22 @@ public class BmoOrderGroup extends BmObject implements Serializable {
 
 	public void setPayConditionId(BmField payConditionId) {
 		this.payConditionId = payConditionId;
+	}
+
+	public BmField getDays() {
+		return days;
+	}
+
+	public void setDays(BmField days) {
+		this.days = days;
+	}
+
+	public BmField getTotal() {
+		return total;
+	}
+
+	public void setTotal(BmField total) {
+		this.total = total;
 	}
 	
 }

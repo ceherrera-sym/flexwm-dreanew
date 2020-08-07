@@ -315,7 +315,7 @@ ALTER TABLE modules DROP COLUMN modu_componentid;
 ALTER TABLE modules ADD COLUMN modu_sfcomponentid INT;
 ALTER TABLE modules ADD FOREIGN KEY (modu_sfcomponentid) REFERENCES sfcomponents(sfcm_sfcomponentid);
 
-
+bmoQuoteGroup
 CREATE TABLE sfcomponentaccess (
 	sfca_sfcomponentaccessid INT NOT NULL AUTO_INCREMENT, 
 	sfca_read INT, 
@@ -6025,7 +6025,48 @@ ALTER TABLE quotegroups CHANGE COLUMN qogr_showinfkit qogr_showitems INT (8) ;
 ALTER TABLE projects ADD proj_total double; 
 UPDATE projects LEFT JOIN orders ON (orde_orderid = proj_orderid) SET proj_total = orde_total;
 
+-- 5/agosto/2020
+	ALTER TABLE quotegroups ADD qogr_days double;
+	ALTER TABLE quotegroups ADD qogr_total double;
+	
+	ALTER TABLE ordergroups ADD ordg_days double;
+	ALTER TABLE ordergroups ADD ordg_total double;
+	
+	ALTER TABLE whsections ADD whse_status CHAR(1);
+	-- Actualizar secciones con nuevo estatus
+	UPDATE whsections 
+	LEFT JOIN orders on (whse_orderid = orde_orderid) 
+	LEFT JOIN projects ON (orde_orderid = proj_orderid) 
+	SET whse_status = 'N' WHERE whse_orderid > 0 AND (proj_status = 'F' OR proj_status = 'C');
+	
+	UPDATE whsections 
+	LEFT JOIN orders on (whse_orderid = orde_orderid) 
+	LEFT JOIN projects ON (orde_orderid = proj_orderid) 
+	SET whse_status = 'A' WHERE whse_orderid > 0 AND (proj_status <> 'F' OR proj_status <> 'C');
+		
+	UPDATE whsections 
+	LEFT JOIN orders on (whse_orderid = orde_orderid) 
+	LEFT JOIN projects ON (orde_originreneworderid = proj_orderid) 
+	SET whse_status = 'A' WHERE whse_orderid > 0 AND (proj_status <> 'F' OR proj_status <> 'C');
+	
+	UPDATE whsections 
+	LEFT JOIN orders on (whse_orderid = orde_orderid) 
+	LEFT JOIN projects ON (orde_originreneworderid = proj_orderid) 
+	SET whse_status = 'N' WHERE whse_orderid > 0 AND (proj_status = 'F' OR proj_status = 'C');
 
-
-
-
+	UPDATE whsections LEFT JOIN warehouses ON (whse_warehouseid = ware_warehouseid) SET whse_status = 'A' WHERE ware_type = 'N';
+	
+	CREATE TABLE extraorderprofiles (
+		eopr_extraorderprofileid INT NOT NULL AUTO_INCREMENT, 
+		eopr_usercreateid INT,		
+		eopr_usermodifyid INT,
+		eopr_datecreate DATETIME,
+		eopr_datemodify DATETIME,
+		eopr_profileid INT,	
+	    eopr_ordertypeid INT,
+		PRIMARY KEY(eopr_extraorderprofileid),
+		FOREIGN KEY (eopr_usercreateid) REFERENCES users(user_userid),
+		FOREIGN KEY (eopr_usermodifyid) REFERENCES users(user_userid),
+	    FOREIGN KEY (eopr_profileid) REFERENCES profiles(prof_profileid),
+	    FOREIGN KEY (eopr_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid)
+	);

@@ -9,11 +9,13 @@
  */
 package com.flexwm.shared.op;
 
+
 import java.io.Serializable;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import com.symgae.shared.BmField;
+import com.symgae.shared.BmFieldOption;
 import com.symgae.shared.BmFieldType;
 import com.symgae.shared.BmObject;
 import com.symgae.shared.BmOrder;
@@ -22,17 +24,29 @@ import com.symgae.shared.BmSearchField;
 
 public class BmoWhSection extends BmObject implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private BmField name, description, warehouseId, orderId;
+	private BmField name, description, warehouseId, orderId,status;
 
 	BmoWarehouse bmoWarehouse = new BmoWarehouse();
+	
+	public static char STATUS_ACTIVE = 'A';
+	public static char STATUS_INACTIVE = 'N';
+	
+	public static String ACCESS_CHANGESTATUS = "WHSST";
 
 	public BmoWhSection() {
 		super("com.flexwm.server.op.PmWhSection","whsections", "whsectionid", "WHSE","Secciones de Almacén");
 
+		status = setField("status", "" + STATUS_ACTIVE, "Estatus", 1, Types.CHAR, false, BmFieldType.OPTIONS, false);
+		status.setOptionList(new ArrayList<BmFieldOption>(Arrays.asList(
+				new BmFieldOption(STATUS_ACTIVE, "Activo", "../icons/boolean_true.png"),
+				new BmFieldOption(STATUS_INACTIVE, "Inactivo", "../icons/boolean_false.png")
+				)));
+		
 		name = setField("name", "", "Nombre Sección", 100, Types.VARCHAR, false, BmFieldType.STRING, false);
 		description = setField("description", "", "Descripción", 255, 0, true, BmFieldType.STRING, false);
 		warehouseId = setField("warehouseid", "", "Almacén", 8, Types.INTEGER, false, BmFieldType.ID, false);	
 		orderId = setField("orderid", "", "Pedido", 8, Types.INTEGER, true, BmFieldType.ID, false);	
+		
 	}
 
 	@Override
@@ -41,7 +55,8 @@ public class BmoWhSection extends BmObject implements Serializable {
 				getName(),
 				getDescription(),
 				getBmoWarehouse().getName(),
-				getBmoWarehouse().getType()
+				getBmoWarehouse().getType(),
+				getStatus()
 				));
 	}
 
@@ -115,4 +130,13 @@ public class BmoWhSection extends BmObject implements Serializable {
 	public void setOrderId(BmField orderId) {
 		this.orderId = orderId;
 	}
+
+	public BmField getStatus() {
+		return status;
+	}
+
+	public void setStatus(BmField status) {
+		this.status = status;
+	}
+	
 }

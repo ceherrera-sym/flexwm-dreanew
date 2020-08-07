@@ -32,6 +32,7 @@ import com.flexwm.shared.cm.BmoQuote;
 import com.flexwm.shared.cm.BmoQuoteGroup;
 import com.flexwm.shared.cm.BmoQuoteItem;
 import com.flexwm.shared.fi.BmoBudgetItem;
+import com.flexwm.shared.op.BmoOrderType;
 import com.flexwm.shared.op.BmoProduct;
 
 
@@ -88,7 +89,7 @@ public class PmQuoteItem extends PmObject {
 
 		return bmoQuoteItem;
 	}
-
+	
 	@Override
 	public BmUpdateResult save(PmConn pmConn, BmObject bmObject, BmUpdateResult bmUpdateResult) throws SFException {
 		bmoQuoteItem = (BmoQuoteItem)bmObject;
@@ -108,6 +109,12 @@ public class PmQuoteItem extends PmObject {
 		PmOpportunity pmOpportunity = new PmOpportunity(getSFParams());
 		BmoOpportunity bmoOpportunity = new BmoOpportunity();
 		bmoOpportunity = (BmoOpportunity)pmOpportunity.getBy(pmConn, bmoQuote.getId(), bmoOpportunity.getQuoteId().getName());
+		//No permite cambios en DRea en un kit
+		if (bmoQuoteGroup.getIsKit().toBoolean() && bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			if (bmoQuoteItem.getId() > 0) {
+				bmUpdateResult.addMsg("No se puede modificar el ítem , es un Kit");
+			}
+		}
 
 		// Si la cotización ya está autorizada, no se puede hacer movimientos
 		if (bmoQuote.getStatus().toChar() == BmoQuote.STATUS_AUTHORIZED) {
@@ -206,7 +213,7 @@ public class PmQuoteItem extends PmObject {
 			if (!(bmoQuoteItem.getIndex().toInteger() > 0)) {
 				bmoQuoteItem.getIndex().setValue(nextIndex(pmConn, bmoQuoteItem));
 			}
-
+			
 			// Primero agrega el ultimo valor
 			super.save(pmConn, bmObject, bmUpdateResult);
 
@@ -218,6 +225,7 @@ public class PmQuoteItem extends PmObject {
 	}
 
 	public BmUpdateResult simpleSave(PmConn pmConn, BmoQuoteItem bmoQuoteItem, BmUpdateResult bmUpdateResult) throws SFException{
+		
 		return super.save(pmConn, bmoQuoteItem, bmUpdateResult);
 	}
 	

@@ -24,6 +24,7 @@ public class UiWhSection extends UiList {
 	public void postShow() {
 		addFilterListBox(new UiListBox(getUiParams(), new BmoWarehouse()), bmoWhSection.getBmoWarehouse());
 		addStaticFilterListBox(new UiListBox(getUiParams(), bmoWhSection.getBmoWarehouse().getType()), bmoWhSection.getBmoWarehouse(), bmoWhSection.getBmoWarehouse().getType());
+		addStaticFilterListBox(new UiListBox(getUiParams(), bmoWhSection.getStatus()), bmoWhSection, bmoWhSection.getStatus(),"" + BmoWhSection.STATUS_ACTIVE);
 	}
 
 	@Override
@@ -50,6 +51,7 @@ public class UiWhSection extends UiList {
 		TextBox nameTextBox = new TextBox();
 		TextArea descriptionTextArea = new TextArea();
 		UiListBox warehouseListBox = new UiListBox(getUiParams(), new BmoWarehouse());
+		UiListBox statusListBox = new UiListBox(getUiParams());
 		BmoWhSection bmoWhSection;
 
 		public UiWhSectionForm(UiParams uiParams, int id) {
@@ -62,6 +64,12 @@ public class UiWhSection extends UiList {
 			formFlexTable.addField(1, 0, nameTextBox, bmoWhSection.getName());
 			formFlexTable.addField(2, 0, descriptionTextArea, bmoWhSection.getDescription());
 			formFlexTable.addField(3, 0, warehouseListBox, bmoWhSection.getWarehouseId());	
+			formFlexTable.addField(4, 0, statusListBox, bmoWhSection.getStatus());	
+			
+			statusListBox.setEnabled(false);
+			if (getUiParams().getSFParams().hasSpecialAccess(BmoWhSection.ACCESS_CHANGESTATUS)){
+				statusListBox.setEnabled(true);
+			}
 		}
 
 		@Override

@@ -74,6 +74,8 @@ public class UiOrderGroupGrid extends Ui {
 	private TextArea descriptionTextArea = new TextArea();
 	private int orderGroupId;
 	private BmFilter bmFilter;
+	protected TextBox daysTextBox = new TextBox();
+	private Label totaLabel = new Label("");
 
 	private FlowPanel orderGroupPanel = new FlowPanel();
 	private FlowPanel orderItemPanel = new FlowPanel();
@@ -316,8 +318,15 @@ public class UiOrderGroupGrid extends Ui {
 			formFlexTable.addField(6, 0, amountTextBox, bmoOrderGroup.getAmount());
 		else
 			formFlexTable.addLabelField(6, 0, amountLabel, bmoOrderGroup.getAmount());
-		formFlexTable.addPanel(7, 0, orderItemPanel, 2);
-		formFlexTable.addPanel(8, 0, buttonPanel, 2);
+		
+
+		if (bmoOrderGroup.getIsKit().toBoolean()  && bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				formFlexTable.addField(7, 0, daysTextBox, bmoOrderGroup.getDays());
+				formFlexTable.addLabelField(8, 0, totaLabel, bmoOrderGroup.getTotal());
+		}	
+
+		formFlexTable.addPanel(9, 0, orderItemPanel, 2);
+		formFlexTable.addPanel(10, 0, buttonPanel, 2);
 
 		numberFormat = NumberFormat.getCurrencyFormat();
 		String formatted = numberFormat.format(bmoOrderGroup.getAmount().toDouble());
@@ -326,7 +335,12 @@ public class UiOrderGroupGrid extends Ui {
 				&& getSFParams().hasSpecialAccess(BmoQuote.ACCESS_CHANGEKITPRICE))
 			amountTextBox.setText(formatted);
 		else 
-			amountLabel.setText(formatted);
+			amountLabel.setText(formatted);		
+
+		formatted = numberFormat.format(bmoOrderGroup.getTotal().toDouble());
+		
+		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL) && bmoOrderGroup.getIsKit().toBoolean()) 
+			totaLabel.setText(formatted);
 
 		orderGroupTitle.setText(bmoOrderGroup.getName().toString());
 
@@ -347,7 +361,9 @@ public class UiOrderGroupGrid extends Ui {
 		amountTextBox.setEnabled(false);
 		payConditionUiListBox.setEnabled(false);
 		showItmesCheckBox.setEnabled(false);
+		daysTextBox.setEnabled(false);
 		if (bmoOrder.getStatus().toChar() == BmoOrder.STATUS_REVISION) {
+			daysTextBox.setEnabled(true);
 			nameTextBox.setEnabled(true);
 			showQuantityCheckBox.setEnabled(true);
 			showPriceCheckBox.setEnabled(true);
@@ -894,12 +910,13 @@ public class UiOrderGroupGrid extends Ui {
 			bmoOrderGroup.getShowGroupImage().setValue(showGroupImageCheckBox.getValue());	
 			bmoOrderGroup.getCreateRaccount().setValue(createRaccountCheckBox.getValue());
 			bmoOrderGroup.getImage().setValue(imageFileUpload.getBlobKey());
+			bmoOrderGroup.getDays().setValue(daysTextBox.getValue());
 			bmoOrderGroup.getPayConditionId().setValue(payConditionUiListBox.getSelectedId());
-//			if (bmoOrderGroup.getIsKit().toBoolean()
-//					&& getSFParams().hasSpecialAccess(BmoOrder.ACCESS_CHANGEKITPRICE))
+			if (bmoOrderGroup.getIsKit().toBoolean()
+					&& getSFParams().hasSpecialAccess(BmoOrder.ACCESS_CHANGEKITPRICE))
 				bmoOrderGroup.getAmount().setValue(amountTextBox.getText());
-//			else 
-//				bmoOrderGroup.getAmount().setValue(amountLabel.getText());
+			else 
+				bmoOrderGroup.getAmount().setValue(amountLabel.getText());
 			
 			if (bmoOrderGroup.getIsKit().toBoolean())
 				bmoOrderGroup.getShowItems().setValue(showItmesCheckBox.getValue());
@@ -1428,7 +1445,14 @@ public class UiOrderGroupGrid extends Ui {
 
 	public void deleteItem(BmObject bmObject) {
 		bmoOrderItem = (BmoOrderItem)bmObject;
-		deleteItem();
+		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			if (!bmoOrderItem.getBmoOrderGroup().getIsKit().toBoolean())
+				deleteItem();
+			else 
+				showErrorMessage("No se puede eliminar el ítem , es un Kit");
+		} else {
+			deleteItem();
+		}
 	}
 
 	public void deleteItem() {

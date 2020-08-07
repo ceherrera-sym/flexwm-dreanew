@@ -86,6 +86,7 @@ public class BmoOrder extends BmObject implements Serializable {
 	public static String ACTION_CREATENEWORDER = "NEWORDER";
 	public static String ACTION_TOTALREQUISITIONS = "TOTALREQUISITIONS";
 	public static String ACTION_EXTRAORDER = "EXTRAORDER";
+	public static String ACTION_GETEXTRAORDER = "GETEXTRAORDER";
 	public static String ACTION_GETTAXRACCS = "ACTION_GETTAXRACCS";
 	public static String ACTION_GETTAXRACCSPAYMENTS = "ACTION_GETTAXRACCSPAYMENTS";
 	public static String ACTION_GETTAXRACCSPENDING = "ACTION_GETTAXRACCSPENDING";

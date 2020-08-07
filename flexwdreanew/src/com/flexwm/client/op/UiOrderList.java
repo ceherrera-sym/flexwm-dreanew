@@ -10,6 +10,9 @@
 
 package com.flexwm.client.op;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import com.flexwm.shared.BmoFlexConfig;
 import com.flexwm.shared.ar.BmoPropertyRental;
 import com.flexwm.shared.cm.BmoCustomer;
@@ -18,16 +21,25 @@ import com.flexwm.shared.op.BmoOrder;
 import com.flexwm.shared.op.BmoOrderType;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Panel;
+import com.symgae.client.ui.UiClickHandler;
 import com.symgae.client.ui.UiList;
 import com.symgae.client.ui.UiListBox;
+import com.symgae.client.ui.UiListCheckBox;
 import com.symgae.client.ui.UiParams;
 import com.symgae.client.ui.UiSuggestBox;
+import com.symgae.shared.BmField;
+import com.symgae.shared.BmFieldType;
 import com.symgae.shared.BmFilter;
 import com.symgae.shared.BmObject;
+import com.symgae.shared.BmOrder;
 import com.symgae.shared.BmUpdateResult;
 import com.symgae.shared.GwtUtil;
 import com.symgae.shared.SFException;
@@ -133,9 +145,120 @@ public class UiOrderList extends UiList {
 				}
 			}
 		}
-
 	}
+	private void prepareColumnHeader() {
+		ArrayList<BmField> fields;
 
+		if (isMobile()) 
+			fields = getBmObject().getMobileFieldList();
+		else 
+			fields = getBmObject().getDisplayFieldList();
+
+		Iterator<BmField> it = fields.iterator();
+
+		int col = 0;
+		if (enableActionBar) {
+			listFlexTable.setWidget(0, 0, listActionCheckBox);
+			listFlexTable.getCellFormatter().addStyleName(0, 0, "listHeaderFirstColumn");
+			listFlexTable.getCellFormatter().addStyleName(0, col++, "listHeaderFirstColumn");
+		}
+
+		while (it.hasNext()) {
+			BmField titleBmField = (BmField)it.next();
+			if (!titleBmField.isInternal()) {
+				boolean existingOrder = getUiParams().getUiProgramParams(getBmObject().getProgramCode()).hasOrder(getBmObject().getKind(), titleBmField.getName());
+				String suffix = "";
+
+				if (existingOrder) {
+					BmOrder currentOrder = getUiParams().getUiProgramParams(getBmObject().getProgramCode()).searchOrder(getBmObject().getKind(), titleBmField.getName());
+					if (currentOrder.getOrder().equalsIgnoreCase(BmOrder.ASC)) {
+						suffix = " >";
+					} else {
+						suffix = " <";
+					}
+				}
+
+				Label titleLabel = new Label();
+				listFlexTable.addListTitleCell(0, col++, getBmObject().getProgramCode(), titleBmField, titleLabel, existingOrder);
+
+				titleLabel.setText(titleLabel.getText() + suffix);
+
+				// No ordena por imagen
+				if (!(titleBmField.getFieldType() == BmFieldType.IMAGE) && !(titleBmField.getFieldType() == BmFieldType.FILEUPLOAD)) {
+					titleLabel.addClickHandler(new UiClickHandler(titleBmField) {
+						@Override
+						public void onClick(ClickEvent event) {
+//							addOrderField(bmField);
+						}
+					});
+				}		
+			}
+		}
+	}
+	// Tipo de desplegado en columnas
+		public void displayColumnList() {	
+			listActionCheckBox.setValue(false);
+			listFlexTable.resetListCheckBoxList();
+
+			// Prepara encabezado de la lista
+			prepareColumnHeader();
+
+			int row = 1, col = 0, firstCol = 0;
+			while (iterator.hasNext()) {
+				BmObject cellBmObject = (BmObject)iterator.next(); 
+				ArrayList<BmField> fields;
+
+				if (isMobile()) 
+					fields = cellBmObject.getMobileFieldList();
+				else 
+					fields = cellBmObject.getDisplayFieldList();
+
+				col = 0;
+				if (enableActionBar) {
+					CheckBox checkBox = new CheckBox();
+					checkBox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+						@Override
+						public void onValueChange(ValueChangeEvent<Boolean> event) {
+							toggleActionPanel();
+						}
+					});
+					UiListCheckBox uiListCheckBox = new UiListCheckBox(cellBmObject, checkBox);
+					listFlexTable.addListCheckBox(uiListCheckBox);
+					listFlexTable.setWidget(row, 0, uiListCheckBox.getCheckBox());
+					listFlexTable.setWidget(row, 0, uiListCheckBox.getCheckBox());
+					listFlexTable.getCellFormatter().addStyleName(row, 0, "listFirstColumn");
+					col++;
+				}
+				firstCol = col;
+
+				Iterator<BmField> itf = fields.iterator();
+				while (itf.hasNext()) {
+					BmField cellBmField = (BmField)itf.next();
+
+					if (!cellBmField.isInternal()) {
+
+						if (col == firstCol) {
+							String linkValue = cellBmField.getValue();
+							if (linkValue == null || linkValue.equalsIgnoreCase(""))
+								linkValue = "Editar";
+							Label linkLabel = new Label(linkValue);
+							linkLabel.addClickHandler(rowClickHandler);
+							linkLabel.setStyleName("listCellLink");
+							listFlexTable.setWidget(row, col++, linkLabel);
+						} else {
+							listFlexTable.addListCell(row, col++, cellBmObject, cellBmField);	
+						}
+
+						if (totalCols < col) totalCols = col;
+					}
+				}
+
+				listFlexTable.formatRow(row);
+				row++;
+			}
+			if (bmoOrder.getId() > 0 && !isMaster())
+				existExtra();
+		}
 	@Override
 	public void create() {
 		UiOrderForm uiOrderForm = new UiOrderForm(getUiParams(), 0);
@@ -149,6 +272,36 @@ public class UiOrderList extends UiList {
 		uiOrderDetail.show();
 	}
 
+	public void existExtra() {
+		AsyncCallback<BmUpdateResult> callback = new AsyncCallback<BmUpdateResult>() {
+
+			public void onFailure(Throwable caught) {
+				stopLoading();
+				showErrorMessage(this.getClass().getName() + "-hasActiveOrder() ERROR: " + caught.toString());
+			}
+
+			public void onSuccess(BmUpdateResult result) {
+				stopLoading();
+				if (result.getId() > 0) {
+					extOrderImage.setVisible(false);
+				}
+				else {
+					extOrderImage.setVisible(true);
+				}
+			
+			}
+		};
+		try {
+			if (!isLoading()) {
+				startLoading();
+				getUiParams().getBmObjectServiceAsync().action(bmoOrder.getPmClass(),bmoOrder,
+						BmoOrder.ACTION_GETEXTRAORDER,"",callback);
+			}
+		} catch (SFException e) {
+			stopLoading();
+			showErrorMessage(this.getClass().getName() + "-hasActiveOrder() ERROR: " + e.toString());
+		}
+	}
 	public void hasActiveOrder() {
 
 		AsyncCallback<BmUpdateResult> callback = new AsyncCallback<BmUpdateResult>() {

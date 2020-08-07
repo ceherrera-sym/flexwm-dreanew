@@ -20,7 +20,6 @@ import com.symgae.shared.BmField;
 import com.symgae.shared.BmOrder;
 import com.symgae.shared.BmSearchField;
 import com.symgae.shared.sf.BmoProfile;
-import com.flexwm.shared.wf.BmoWFlowCategory;
 
 
 public class BmoWFlowCategoryProfile extends BmObject implements Serializable {

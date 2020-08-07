@@ -40,7 +40,7 @@ public class BmoQuoteItem extends BmObject implements Serializable {
 		name = setField("name", "", "Nombre", 200, Types.VARCHAR, true, BmFieldType.STRING, false);
 		description = setField("description", "", "Descripción", 800, Types.VARCHAR, true, BmFieldType.STRING, false);
 		quantity = setField("quantity", "1", "Cantidad", 20, Types.DOUBLE, false, BmFieldType.NUMBER, false);
-		days = setField("days", "1", "Días", 20, Types.FLOAT, true, BmFieldType.NUMBER, false);
+		days = setField("days", "1", "Días", 20, Types.DOUBLE, true, BmFieldType.NUMBER, false);
 		price = setField("price", "", "Precio", 20, Types.DOUBLE, false, BmFieldType.CURRENCY, false);
 		basePrice = setField("baseprice", "", "Precio Base", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
 		amount = setField("amount", "", "Subtotal", 20, Types.DOUBLE, false, BmFieldType.CURRENCY, false);

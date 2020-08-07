@@ -78,6 +78,7 @@ import com.flexwm.shared.fi.BmoRaccount;
 import com.flexwm.shared.fi.BmoRaccountItem;
 import com.flexwm.shared.fi.BmoRaccountType;
 import com.flexwm.shared.op.BmoConsultancy;
+import com.flexwm.shared.op.BmoExtraOrderProfile;
 import com.flexwm.shared.op.BmoOrder;
 import com.flexwm.shared.op.BmoOrderDetail;
 import com.flexwm.shared.op.BmoOrderEquipment;
@@ -1097,6 +1098,7 @@ public class PmOrder extends PmObject {
 				
 				pmConsultancy.saveSimple(pmConn,bmoConsultancy, bmUpdateResult);			
 			} else if (!newRecord && !bmUpdateResult.hasErrors() && bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL) ) {
+				//Validar que no es pedido extra ya que el pedido extra no tiene projectId
 				if (!(bmoOrder.getRenewOrderId().toInteger() > 0) && !(bmoOrder.getOriginRenewOrderId().toInteger() > 0)) {
 					BmoProject bmoProject = new BmoProject();
 					PmProject pmProject = new PmProject(getSFParams());
@@ -1114,9 +1116,40 @@ public class PmOrder extends PmObject {
 					bmoProject.getTags().setValue(bmoOrder.getTags().toString());
 					bmoProject.getTotal().setValue(bmoOrder.getTotal().toDouble());
 					pmProject.saveSimple(pmConn, bmoProject, bmUpdateResult);	
+				//Es un pedido extra y se esta autorizando	
+				} else if (bmoOrder.getStatus().equals(BmoOrder.STATUS_AUTHORIZED)) {
+					//Mandar notificacion(Pedido extra)
+					//Si esta marcado el envio en tipo de pedido
+					if (bmoOrder.getBmoOrderType().getSendExtraMail().toBoolean()) {
+						BmoExtraOrderProfile bmoExtraOrderProfile = new BmoExtraOrderProfile();
+						PmExtraOrderProfile pmExtraOrderProfile = new PmExtraOrderProfile(getSFParams());
+						BmFilter orderTypeFilter = new BmFilter();
+						boolean hasProfiles = false;
+						orderTypeFilter.setValueFilter(bmoExtraOrderProfile.getKind(), bmoExtraOrderProfile.getOrderTypeId(), bmoOrder.getOrderTypeId().toInteger());
+						Iterator<BmObject> profileList = pmExtraOrderProfile.list(orderTypeFilter).iterator();
+						//Construir consulta para usaruios a mandar notificación
+						String sql = "SELECT pfus_userid FROM profileusers WHERE ";
+						int i = 0;
+						while (profileList.hasNext()) {
+							hasProfiles = true;
+							BmoExtraOrderProfile nextProfile = (BmoExtraOrderProfile)profileList.next();
+							//Agrega nuevo un OR y el id de perfil
+							if (i > 0)sql += " OR ";						
+							sql += "pfus_profileid = " + nextProfile.getProfileId().toInteger();
+
+							i++;
+						}
+						// se agrupa por usuarios para no repetir emails
+						sql += " GROUP BY pfus_userid ";
+						System.err.println(sql);
+						if (hasProfiles) {
+							//Notificar que se autorizo un Pedido Extra
+							sendEmailAutorized(pmConn,bmoOrder,sql);
+						}
+
+					}
 				}
-			}
-			
+			}			
 			// La ultima accion debe ser save
 			if (!bmUpdateResult.hasErrors())
 				super.save(pmConn, bmoOrder, bmUpdateResult);
@@ -1124,7 +1157,54 @@ public class PmOrder extends PmObject {
 
 		return bmUpdateResult; 
 	}
+	public void sendEmailAutorized(PmConn pmConn,BmoOrder bmoOrder,String sql) throws SFException {
+		ArrayList<SFMailAddress> mailList = new ArrayList<SFMailAddress>();
+		PmUser pmUser = new PmUser(getSFParams());
+		String msg = "";
+		String msgBody = "";
+		pmConn.doFetch(sql);
+		
+		BmoProject bmoProject = new BmoProject();
+		PmProject pmProject = new PmProject(getSFParams());
+		
+		while (pmConn.next() ) {
+			BmoUser bmoUser = (BmoUser)pmUser.get( pmConn.getInt("pfus_userid"));
+			
+			if (bmoUser.getStatus().equals(BmoUser.STATUS_ACTIVE)) {
+				mailList.add(new SFMailAddress(bmoUser.getEmail().toString(), 
+						bmoUser.getFirstname().toString() 
+						+ " " + bmoUser.getFatherlastname().toString()));
+			}
+		}
+		bmoProject = (BmoProject)pmProject.getBy(pmConn, bmoOrder.getOriginRenewOrderId().toInteger(), bmoProject.getOrderId().getName());
+		
+		String subject = "Autorización Pedido Extra " + bmoOrder.getCode().toString();
 
+		msg = " <p style=\"font-size:12px\"> " 
+				+ " <b>Pedido:</b> " + bmoOrder.getCode().toHtml() + " " + bmoOrder.getName().toHtml() 
+				+ "<br>"
+				+ " <b>Proyecto</b> " + bmoProject.getCode().toHtml() + " " + bmoProject.getName().toHtml()
+				+ "</p>";
+		msg += "	<p align=\"left\" style=\"font-size:12px\"> "
+				+ " Este mensaje podría contener información confidencial, si tú no eres el destinatario por favor reporta esta situación a los datos de contacto "
+				+ " y bórralo sin retener copia alguna." + "	</p> ";
+
+		msgBody = HtmlUtil.mailBodyFormat(getSFParams(), subject, msg);
+
+
+		if (getSFParams().isProduction()) {
+			try {
+				SFSendMail.send(getSFParams(),
+						mailList, 
+						getSFParams().getBmoSFConfig().getEmail().toString(), 
+						getSFParams().getBmoSFConfig().getAppTitle().toString(), 
+						subject, 
+						msgBody);
+			} catch (Exception e) {
+				throw new SFException(this.getClass().getName() + " - sendMailReminder() - Error al enviar email: " + e.toString());
+			}
+		}
+	}
 	// Validar que exista una venta de sesión ligada al pedido
 	public boolean hasSessionSale(BmoOrder bmoOrder, BmUpdateResult bmUpdateResult) throws SFException {
 		String sql = "";
@@ -2892,8 +2972,7 @@ public class PmOrder extends PmObject {
 		BmoOrderType bmoOrderTypeDefault = (BmoOrderType) pmOrderType.get(pmConn, orderTypeDefaultId);
 
 		// Suma los items de los grupos de la cotizacion
-		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)
-				|| bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_SALE)
+		if ( bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_SALE)
 				|| bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_CONSULTANCY)) {
 			sql = "select sum(ordg_amount) from ordergroups " + " where ordg_orderid = " + bmoOrder.getId();
 			pmConn.doFetch(sql);
@@ -2911,6 +2990,18 @@ public class PmOrder extends PmObject {
 					System.out.println(this.getClass().getName() + " - updateBalance() SQL: " + sql);
 			}
 		}
+		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {		
+			pmConn.doFetch("SELECT ordg_amount AS sumAmount,ordg_total AS sumTotal,ordg_iskit FROM ordergroups "
+					+ " WHERE ordg_orderid = " + bmoOrder.getId() );
+			while (pmConn.next()) {
+				if (pmConn.getInt("ordg_iskit") > 0)
+					orderItemAmount += pmConn.getDouble("sumTotal");
+				else
+					orderItemAmount += pmConn.getDouble("sumAmount");
+			}
+			 System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
+		}
+
 
 		// Suma de recursos y equipos de renta
 		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
@@ -3685,6 +3776,16 @@ public class PmOrder extends PmObject {
 //			
 		} else if (action.equals(BmoOrder.ACTION_DELETECONSULTANCYFROMORDER)) {
 			deleteConsultancyFromOrder(bmoOrder, bmUpdateResult);
+		} else if (action.equals(BmoOrder.ACTION_GETEXTRAORDER)) {		
+			try {
+				BmoOrder ordeExtra = (BmoOrder)this.getBy(bmoOrder.getId(), bmoOrder.getOriginRenewOrderId().getName());
+				if (ordeExtra.getId() > 0)
+					bmUpdateResult.setId(1);
+				else
+					bmUpdateResult.setId(-1);
+			}catch (Exception e) {
+				bmUpdateResult.setId(-1);
+			}
 		}
 		return bmUpdateResult;
 	}

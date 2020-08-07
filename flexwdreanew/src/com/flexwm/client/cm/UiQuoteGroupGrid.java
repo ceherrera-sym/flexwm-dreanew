@@ -105,10 +105,11 @@ public class UiQuoteGroupGrid extends Ui {
 	private UiFileUploadBox imageFileUpload = new UiFileUploadBox(getUiParams());
 	UiListBox payConditionUiListBox= new UiListBox(getUiParams(), new BmoPayCondition());
 	private Label amountLabel = new Label("");
+	private Label totaLabel = new Label("");
 	private TextBox amountTextBox = new TextBox();
 	private NumberFormat numberFormat = NumberFormat.getDecimalFormat();
 	protected Button saveButton = new Button("GUARDAR");
-
+	protected TextBox daysTextBox = new TextBox();
 	protected DialogBox quoteItemDialogBox;
 
 	private BmoQuote bmoQuote;
@@ -294,8 +295,13 @@ public class UiQuoteGroupGrid extends Ui {
 			formFlexTable.addField(6, 0, amountTextBox, bmoQuoteGroup.getAmount());
 		else
 			formFlexTable.addLabelField(6, 0, amountLabel, bmoQuoteGroup.getAmount());
-		formFlexTable.addPanel(7, 0, quoteItemPanel, 2);
-		formFlexTable.addPanel(8, 0, buttonPanel, 2);
+		
+		if (bmoQuoteGroup.getIsKit().toBoolean()  && bmoOpportunity.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				formFlexTable.addField(7, 0, daysTextBox, bmoQuoteGroup.getDays());
+				formFlexTable.addLabelField(8, 0, totaLabel, bmoQuoteGroup.getTotal());
+		}
+		formFlexTable.addPanel(9, 0, quoteItemPanel, 2);
+		formFlexTable.addPanel(10, 0, buttonPanel, 2);
 
 		numberFormat = NumberFormat.getCurrencyFormat();
 		String formatted = numberFormat.format(bmoQuoteGroup.getAmount().toDouble());
@@ -305,10 +311,16 @@ public class UiQuoteGroupGrid extends Ui {
 			amountTextBox.setText(formatted);
 		else 
 			amountLabel.setText(formatted);
-
+		
+		formatted = numberFormat.format(bmoQuoteGroup.getTotal().toDouble());
+		
+		if (bmoOpportunity.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL) && bmoQuoteGroup.getIsKit().toBoolean()) 
+			totaLabel.setText(formatted);
+		
 		quoteGroupTitle.setText(bmoQuoteGroup.getName().toString());
 
 		statusEffect();
+		
 	}
 
 	public void statusEffect() {
@@ -323,7 +335,9 @@ public class UiQuoteGroupGrid extends Ui {
 		deleteButton.setVisible(false);
 		saveButton.setVisible(false);
 		payConditionUiListBox.setEnabled(false);
+		daysTextBox.setEnabled(false);
 		if (bmoQuote.getStatus().equals(BmoQuote.STATUS_REVISION)) {
+			daysTextBox.setEnabled(true);
 			nameTextBox.setEnabled(true);
 			showQuantityCheckBox.setEnabled(true);
 			showPriceCheckBox.setEnabled(true);
@@ -339,6 +353,10 @@ public class UiQuoteGroupGrid extends Ui {
 					&& getSFParams().hasSpecialAccess(BmoQuote.ACCESS_CHANGEKITPRICE))
 				amountTextBox.setEnabled(true);
 		}
+		//No permitir agrgar items a un kit Drea
+		if (bmoOpportunity.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL) && bmoQuoteGroup.getIsKit().toBoolean()) {
+			addQuoteItemButton.setVisible(false);
+		}
 	}
 
 	public void changeHeight() {
@@ -346,7 +364,6 @@ public class UiQuoteGroupGrid extends Ui {
 	}
 
 	public void setColumns() {
-
 		// Subir o bajar de nivel
 		if (!isMobile()) {
 			// Columna mover arriba
@@ -644,7 +661,9 @@ public class UiQuoteGroupGrid extends Ui {
 
 		// Eliminar
 		Column<BmObject, String> deleteColumn;
-		if (bmoQuote.getStatus().equals(BmoQuote.STATUS_REVISION)) {
+		if (bmoQuote.getStatus().equals(BmoQuote.STATUS_REVISION)) {			
+			//Si es de Renta(Drea)Validar si es kit
+
 			deleteColumn = new Column<BmObject, String>(new ButtonCell()) {
 				@Override
 				public String getValue(BmObject bmObject) {
@@ -657,6 +676,7 @@ public class UiQuoteGroupGrid extends Ui {
 					deleteItem(bmObject);
 				}
 			});
+
 		} else {
 			deleteColumn = new Column<BmObject, String>(new TextCell()) {
 				@Override
@@ -713,6 +733,10 @@ public class UiQuoteGroupGrid extends Ui {
 
 			if (bmoQuoteGroup.getIsKit().toBoolean())
 				bmoQuoteGroup.getShowItems().setValue(showItmesCheckBox.getValue());
+			
+			if (bmoQuoteGroup.getIsKit().toBoolean())
+				bmoQuoteGroup.getDays().setValue(daysTextBox.getValue());
+			
 			save();
 
 		} catch (BmException e) {
@@ -1157,7 +1181,14 @@ public class UiQuoteGroupGrid extends Ui {
 
 	public void deleteItem(BmObject bmObject){
 		bmoQuoteItem = (BmoQuoteItem)bmObject;
-		deleteItem();
+		if (bmoOpportunity.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			if (!bmoQuoteItem.getBmoQuoteGroup().getIsKit().toBoolean())
+				deleteItem();
+			else 
+				showErrorMessage("No se puede eliminar el ítem , es un Kit");
+		} else {
+			deleteItem();
+		}
 	}
 
 	public void deleteItem() {
@@ -1980,4 +2011,5 @@ public class UiQuoteGroupGrid extends Ui {
 	public void setSaveItemRpcAttempt(int saveItemRpcAttempt) {
 		this.saveItemRpcAttempt = saveItemRpcAttempt;
 	}
-}
+
+	}

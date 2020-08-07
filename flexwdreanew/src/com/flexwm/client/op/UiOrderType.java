@@ -55,6 +55,7 @@ public class UiOrderType extends UiList {
 		UiSuggestBox dispersionProfileUiSuggestBox = new UiSuggestBox(new BmoProfile());
 		CheckBox filterOnScrumCheckBox = new CheckBox();
 		CheckBox endContractCheckBox = new CheckBox();
+		CheckBox sendExtraMailCheckBox = new CheckBox();
 
 		CheckBox enableSendDeliveryCheckBox = new CheckBox();
 		CheckBox enableReqiOrderFinishCheckBox = new CheckBox();
@@ -146,14 +147,18 @@ public class UiOrderType extends UiList {
 			// Renta
 			formFlexTable.addField(32, 0, enableExtraOrderCheckBox, bmoOrderType.getEnableExtraOrder());
 			formFlexTable.addField(33, 0, wFlowTypeListBox, bmoOrderType.getwFlowTypeId());
-			formFlexTable.addField(34, 0, areaDefaultDetailUiList, bmoOrderType.getAreaDefaultDetail());
-			formFlexTable.addField(35, 0, statusDefaultDetailUiList, bmoOrderType.getStatusDefaultDetail());
+			formFlexTable.addField(34, 0, sendExtraMailCheckBox,bmoOrderType.getSendExtraMail());
+			if (!newRecord) {
+				formFlexTable.addField(35, 0, new UiExtraOrderProfileLabelList(getUiParams(), id));
+			}
+			formFlexTable.addField(36, 0, areaDefaultDetailUiList, bmoOrderType.getAreaDefaultDetail());
+			formFlexTable.addField(37, 0, statusDefaultDetailUiList, bmoOrderType.getStatusDefaultDetail());
 			// todos
-			formFlexTable.addSectionLabel(36, 0, financesSection, 2);
-			formFlexTable.addField(37, 0, hasTaxes, bmoOrderType.getHasTaxes());
+			formFlexTable.addSectionLabel(38, 0, financesSection, 2);
+			formFlexTable.addField(39, 0, hasTaxes, bmoOrderType.getHasTaxes());
 			if ((((BmoFlexConfig) getSFParams().getBmoAppConfig()).getEnableWorkBudgetItem().toInteger() > 0)) {
-				formFlexTable.addField(38, 0, defaultBudgetItemSuggestBox, bmoOrderType.getDefaultBudgetItemId());
-				formFlexTable.addField(39, 0, defaultAreaSuggestBox, bmoOrderType.getDefaultAreaId());
+				formFlexTable.addField(40, 0, defaultBudgetItemSuggestBox, bmoOrderType.getDefaultBudgetItemId());
+				formFlexTable.addField(41, 0, defaultAreaSuggestBox, bmoOrderType.getDefaultAreaId());
 			}
 
 			statusEffect();
@@ -219,6 +224,7 @@ public class UiOrderType extends UiList {
 				remindDaysBeforeEndDateTwoTextBox.setEnabled(false);
 				remindDaysBeforeEndDateTwoTextBox.setValue("");
 			}
+					
 
 			if (typeListBox.getSelectedCode().equals(""+BmoOrderType.TYPE_LEASE)) {
 				formFlexTable.showField(remindDaysBeforeEndOrderTwoTextBox);
@@ -232,6 +238,7 @@ public class UiOrderType extends UiList {
 				formFlexTable.hideField(dispersionProfileUiSuggestBox);
 				formFlexTable.hideField(enableExtraOrderCheckBox);
 				formFlexTable.hideField(wFlowTypeListBox);
+//				formFlexTable.hideField(sendExtraMailCheckBox);
 			} else if(typeListBox.getSelectedCode().equals("" + BmoOrderType.TYPE_CREDIT)) {
 				formFlexTable.showField(dispersionProfileUiSuggestBox);
 
@@ -247,11 +254,13 @@ public class UiOrderType extends UiList {
 				formFlexTable.hideField(remindDaysBeforeEndDateThreeTextBox);
 				formFlexTable.hideField(requiredPropertyModelCheckBox);
 				formFlexTable.hideField(defaultWFlowTypeListBox);
+//				formFlexTable.hideField(sendExtraMailCheckBox);
 			} 
 			else if(typeListBox.getSelectedCode().equals("" + BmoOrderType.TYPE_RENTAL)) {
 				formFlexTable.showField(enableExtraOrderCheckBox);
 				formFlexTable.showField(wFlowTypeListBox);
-
+//				formFlexTable.showField(sendExtraMailCheckBox);
+				
 				formFlexTable.hideField(remindDaysBeforeEndOrderTwoTextBox);
 				formFlexTable.hideField(dispersionProfileUiSuggestBox);
 				formFlexTable.hideField(remindDaysBeforeRentIncreaseTextBox);
@@ -262,10 +271,12 @@ public class UiOrderType extends UiList {
 				formFlexTable.hideField(remindDaysBeforeEndDateThreeTextBox);
 				formFlexTable.hideField(requiredPropertyModelCheckBox);
 				formFlexTable.hideField(defaultWFlowTypeListBox);
+				
 
 			} else if(typeListBox.getSelectedCode().equals("" + BmoOrderType.TYPE_PROPERTY)) {
 				formFlexTable.showField(requiredPropertyModelCheckBox);
 				formFlexTable.showField(defaultWFlowTypeListBox);
+//				formFlexTable.hideField(sendExtraMailCheckBox);
 
 			} else {
 				formFlexTable.hideField(remindDaysBeforeEndOrderTwoTextBox);
@@ -281,6 +292,7 @@ public class UiOrderType extends UiList {
 
 				formFlexTable.hideField(requiredPropertyModelCheckBox);
 				formFlexTable.hideField(defaultWFlowTypeListBox);
+//				formFlexTable.hideField(sendExtraMailCheckBox);
 			}
 		}
 
@@ -351,6 +363,7 @@ public class UiOrderType extends UiList {
 //			bmoOrderType.getCreateProject().setValue(createProyectCheckBox.getValue());
 			bmoOrderType.getRequiredPropertyModel().setValue(requiredPropertyModelCheckBox.getValue());
 			bmoOrderType.getDefaultWFlowTypeId().setValue(defaultWFlowTypeListBox.getSelectedId());
+			bmoOrderType.getSendExtraMail().setValue(sendExtraMailCheckBox.getValue());
 			return bmoOrderType;
 		}
 
