@@ -14,7 +14,6 @@ import java.io.Serializable;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
-import com.flexwm.shared.op.BmoEquipment;
 import com.symgae.shared.BmFieldType;
 import com.symgae.shared.BmObject;
 import com.symgae.shared.BmField;

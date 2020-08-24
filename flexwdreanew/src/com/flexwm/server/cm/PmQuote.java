@@ -389,6 +389,8 @@ public class PmQuote extends PmObject {
 	public void updateBalance(PmConn pmConn, BmoQuote bmoQuote, BmUpdateResult bmUpdateResult) throws SFException {
 		double quoteItemAmount = 0, quoteEquipmentAmount = 0, quoteStaffAmount = 0, 
 				quotePropertyAmount = 0, quotePropertyModelExtraAmount = 0, amount = 0;
+		//Drea
+		double comission = 0.0,feeProduction = 0.0;
 		String sql = "";
 
 		// Suma los items de los grupos de la cotizacion
@@ -403,30 +405,33 @@ public class PmQuote extends PmObject {
 		//Calculo de total para drea(campo total en lugar de subtotal)total = amount * days o subtotal
 		
 		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {		
-			pmConn.doFetch("SELECT qogr_amount AS sumAmount,qogr_total AS sumTotal,qogr_iskit FROM quotegroups "
+			pmConn.doFetch("SELECT qogr_amount AS sumAmount,qogr_total AS sumTotal,qogr_iskit,qogr_comission,qogr_feeproduction FROM quotegroups "
 					+ " WHERE qogr_quoteid = " + bmoQuote.getId() );
 			while (pmConn.next()) {
 				if (pmConn.getInt("qogr_iskit") > 0)
 					quoteItemAmount += pmConn.getDouble("sumTotal");
 				else
 					quoteItemAmount += pmConn.getDouble("sumAmount");
+				
+				comission += pmConn.getDouble("qogr_comission");
+				feeProduction += pmConn.getDouble("qogr_feeproduction");
 			}
 			 System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
 		}
 
 		// Suma de recursos
-		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
-			pmConn.doFetch("SELECT SUM(qoeq_amount) FROM quoteequipments "
-					+ " WHERE qoeq_quoteid = " + bmoQuote.getId());
-			if (pmConn.next()) quoteEquipmentAmount = pmConn.getDouble(1);
-			if (!getSFParams().isProduction()) System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
-
-			// Suma de personal
-			pmConn.doFetch("SELECT SUM(qost_amount) FROM quotestaff "
-					+ " WHERE qost_quoteid = " + bmoQuote.getId());
-			if (pmConn.next()) quoteStaffAmount = pmConn.getDouble(1);
-			if (!getSFParams().isProduction()) System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
-		}
+//		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+//			pmConn.doFetch("SELECT SUM(qoeq_amount) FROM quoteequipments "
+//					+ " WHERE qoeq_quoteid = " + bmoQuote.getId());
+//			if (pmConn.next()) quoteEquipmentAmount = pmConn.getDouble(1);
+//			if (!getSFParams().isProduction()) System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
+//
+//			// Suma de personal
+//			pmConn.doFetch("SELECT SUM(qost_amount) FROM quotestaff "
+//					+ " WHERE qost_quoteid = " + bmoQuote.getId());
+//			if (pmConn.next()) quoteStaffAmount = pmConn.getDouble(1);
+//			if (!getSFParams().isProduction()) System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
+//		}
 
 		// Suma de inmuebles
 		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_PROPERTY)) {
@@ -444,7 +449,9 @@ public class PmQuote extends PmObject {
 		}
 
 		amount = quoteItemAmount + quoteEquipmentAmount + quoteStaffAmount + quotePropertyAmount + quotePropertyModelExtraAmount;
-
+		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			amount = amount + feeProduction - comission;
+		}
 		// Calcular montos
 		if (amount == 0) {
 			bmoQuote.getAmount().setValue(0);

@@ -26,7 +26,8 @@ import com.symgae.shared.sf.BmoArea;
 
 public class BmoQuoteItem extends BmObject implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private BmField name, description, quantity, days, basePrice, price, amount, index, quoteGroupId, productId, commission, budgetItemId, areaId;
+	private BmField name, description, quantity, days, basePrice, price, amount, index, quoteGroupId, productId, commission, budgetItemId, areaId
+	,discountApplies, discount;
 	BmoProduct bmoProduct;
 	BmoQuoteGroup bmoQuoteGroup;
 	BmoArea bmoArea = new BmoArea();
@@ -49,9 +50,14 @@ public class BmoQuoteItem extends BmObject implements Serializable {
 		commission = setField("commission", "0", "Comisión", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 		index = setField("index", "", "Índice", 8, Types.INTEGER, true, BmFieldType.NUMBER, false);
 		
+		
 		areaId = setField("areaid", "", "Departamento", 20, Types.INTEGER, true, BmFieldType.ID, false);
 		budgetItemId = setField("budgetitemid", "", "Partida Presup.", 11, Types.INTEGER, true, BmFieldType.ID, false);
-
+		
+		discountApplies = setField("discountapplies", "0", "Aplica Descuento?", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+		discount = setField("discount", "0", "Descuento", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
+		
+		
 		bmoProduct = new BmoProduct();
 		bmoQuoteGroup = new BmoQuoteGroup();
 	}
@@ -213,4 +219,24 @@ public class BmoQuoteItem extends BmObject implements Serializable {
 	public void setIndex(BmField index) {
 		this.index = index;
 	}
+
+	public BmField getDiscountApplies() {
+		return discountApplies;
+	}
+
+	public void setDiscountApplies(BmField discountApplies) {
+		this.discountApplies = discountApplies;
+	}
+
+	public BmField getDiscount() {
+		return discount;
+	}
+
+	public void setDiscount(BmField discount) {
+		this.discount = discount;
+	}
+
+	
+
+	
 }

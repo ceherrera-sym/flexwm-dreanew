@@ -26,6 +26,7 @@ import com.flexwm.shared.cm.BmoOpportunity;
 import com.flexwm.shared.cm.BmoQuote;
 import com.flexwm.shared.cm.BmoQuoteGroup;
 import com.flexwm.shared.cm.BmoQuoteItem;
+import com.flexwm.shared.cm.BmoQuoteMainGroup;
 import com.flexwm.shared.op.BmoOrderType;
 import com.flexwm.shared.op.BmoProductKitItem;
 
@@ -52,6 +53,12 @@ public class PmQuoteGroup extends PmObject {
 		// Obten la cotización
 		PmQuote pmQuote = new PmQuote(getSFParams());
 		BmoQuote bmoQuote = (BmoQuote)pmQuote.get(pmConn, bmoQuoteGroup.getQuoteId().toInteger());
+		//validar grupo maestro para Dreanew
+		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			if (bmoQuoteGroup.getMainGroupId().toInteger() <= 0 ) {
+				bmUpdateResult.addError(bmoQuoteGroup.getMainGroupId().getName(), "Debe seleccionar un Grupo para el Sub-Grupo");
+			}
+		}
 
 		// Si la cotización ya está autorizada, no se puede hacer movimientos
 		if (bmoQuote.getStatus().toChar() == BmoQuote.STATUS_AUTHORIZED) {
@@ -62,18 +69,91 @@ public class PmQuoteGroup extends PmObject {
 			if (!(bmoQuoteGroup.getIndex().toInteger() > 0)) {
 				bmoQuoteGroup.getIndex().setValue(nextIndex(pmConn, bmoQuoteGroup));
 			}
-			//Calcular total de kit
+			
 			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL) && bmoQuoteGroup.getIsKit().toBoolean()) {
 				bmoQuoteGroup.getTotal().setValue(bmoQuoteGroup.getDays().toDouble() * bmoQuoteGroup.getAmount().toDouble());
 				updateItems(pmConn,bmoQuoteGroup, bmUpdateResult);
 			}
-
+			//calcular descuento y fee de produccion por grupo
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				if(bmoQuoteGroup.getIsKit().toBoolean()) {
+					bmoQuoteGroup.getFeeProduction().setValue(bmoQuoteGroup.getTotal().toDouble() * (bmoQuoteGroup.getFeeProductionRate().toDouble()/100));
+					bmoQuoteGroup.getCommissionAmount().setValue((bmoQuoteGroup.getTotal().toDouble() + bmoQuoteGroup.getFeeProduction().toDouble()) * (bmoQuoteGroup.getCommissionRate().toDouble()/100));
+				} else {
+					bmoQuoteGroup.getFeeProduction().setValue(bmoQuoteGroup.getAmount().toDouble() * (bmoQuoteGroup.getFeeProductionRate().toDouble()/100));
+					bmoQuoteGroup.getCommissionAmount().setValue((bmoQuoteGroup.getAmount().toDouble() + bmoQuoteGroup.getFeeProduction().toDouble()) * (bmoQuoteGroup.getCommissionRate().toDouble()/100));
+				}				
+			}
+		
 			super.save(pmConn, bmoQuoteGroup, bmUpdateResult);
+			
+			//Acciones Drea
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				
+				updateMainGroup(pmConn,bmoQuoteGroup.getMainGroupId().toInteger(),bmUpdateResult);
+				if (!bmoQuoteGroup.getIsKit().toBoolean())
+					updateDiscountitems(pmConn, bmoQuoteGroup, bmUpdateResult);
+			}
+			
 			// Recalcular la cotizacion completa
 			pmQuote.updateBalance(pmConn, bmoQuote, bmUpdateResult);
 		}
 
 		return bmUpdateResult;
+	}
+	//Dar guardar a los items para recalcular valores
+	public void updateDiscountitems(PmConn pmConn, BmoQuoteGroup bmoQuoteGroup,BmUpdateResult bmUpdateResult) throws SFException {
+		BmoQuoteItem bmoQuoteItem = new BmoQuoteItem();
+		PmQuoteItem pmQuoteItem = new PmQuoteItem(getSFParams());
+		BmFilter bmFilter = new BmFilter();
+		
+		bmFilter.setValueFilter(bmoQuoteItem.getKind(), bmoQuoteItem.getQuoteGroupId(), bmoQuoteGroup.getId());
+		Iterator<BmObject> iterator = pmQuoteItem.list(bmFilter).iterator();
+		while (iterator.hasNext()) {
+			BmoQuoteItem nextBmoQuoteItem = (BmoQuoteItem)iterator.next();
+			if (!bmoQuoteGroup.getDiscountApplies().toBoolean())
+				nextBmoQuoteItem.getDiscountApplies().setValue(bmoQuoteGroup.getDiscountApplies().toBoolean());
+			
+			pmQuoteItem.save(pmConn, nextBmoQuoteItem, bmUpdateResult);
+		}
+		
+	}
+	
+	public void updateMainGroup(PmConn pmConn, int mainGroupId, BmUpdateResult bmUpdateResult) throws SFException {
+		PmQuoteMainGroup pmQuoteMainGroup = new PmQuoteMainGroup(getSFParams());
+		BmoQuoteMainGroup bmoQuoteMainGroup = (BmoQuoteMainGroup)pmQuoteMainGroup.get(pmConn, mainGroupId);
+		
+		
+		String sql = "SELECT qogr_amount,qogr_total,qogr_iskit,qogr_discount,qogr_comission,qogr_feeproduction,qogr_price,qogr_days"
+				+ " from quotegroups where qogr_maingroupid = "  + mainGroupId;
+		
+		double total = 0;
+		double discount = 0;
+		double comission = 0;
+		double fee = 0;
+		double price = 0;
+		
+		pmConn.doFetch(sql);
+		while (pmConn.next()) {
+			if (pmConn.getInt("qogr_iskit") > 0) {
+				total += pmConn.getDouble("qogr_total");
+				price += pmConn.getDouble("qogr_amount") * pmConn.getDouble("qogr_days");
+			} else {
+				total += pmConn.getDouble("qogr_amount");
+				price += pmConn.getDouble("qogr_amount") + pmConn.getDouble("qogr_discount")  ;
+			}
+			
+			discount += pmConn.getDouble("qogr_discount");
+			comission +=  pmConn.getDouble("qogr_comission");
+			fee += pmConn.getDouble("qogr_feeproduction");			
+		}
+		bmoQuoteMainGroup.getDiscount().setValue(discount);
+		bmoQuoteMainGroup.getCommission().setValue(comission);
+		bmoQuoteMainGroup.getProductionFee().setValue(fee);
+		bmoQuoteMainGroup.getAmount().setValue(price);
+		bmoQuoteMainGroup.getTotal().setValue(total);
+		pmQuoteMainGroup.save(pmConn, bmoQuoteMainGroup, bmUpdateResult);
+		
 	}
 	public void updateItems(PmConn pmConn, BmoQuoteGroup bmoQuoteGroup, BmUpdateResult bmUpdateResult) throws SFException {
 		String sql = "SELECT qoit_quoteitemid FROM quoteitems WHERE qoit_quotegroupid = " + bmoQuoteGroup.getId();
@@ -138,7 +218,10 @@ public class PmQuoteGroup extends PmObject {
 					// Agregar todos los items del kit a este grupo de cotizaciones
 					int productKitId = Integer.parseInt(value);
 					addKit(pmConn, bmoQuoteGroup, productKitId, bmUpdateResult);
-
+					
+					if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+						updateMainGroup(pmConn, bmoQuoteGroup.getMainGroupId().toInteger(), bmUpdateResult);
+					}
 					// Aprovechar para recalcular el grupo y la cotizacion, puede ser redundante...
 					calculateAmount(pmConn, bmoQuoteGroup, bmUpdateResult);
 
@@ -302,11 +385,13 @@ public class PmQuoteGroup extends PmObject {
 			if (!bmUpdateResult.hasErrors())
 				pmQuoteItem.simpleSave(pmConn, bmoQuoteItem, bmUpdateResult);
 			index++;
-		}
+		}		
 	}
 
 	public void calculateAmount(PmConn pmConn, BmoQuoteGroup bmoQuoteGroup, BmUpdateResult bmUpdateResult) throws SFException {
 		this.bmoQuoteGroup = bmoQuoteGroup;
+		PmQuote pmQuote = new PmQuote(getSFParams());
+		BmoQuote bmoQuote = (BmoQuote)pmQuote.get(bmoQuoteGroup.getQuoteId().toInteger());
 
 		// Si no es KIT, recacular mediante items
 		if (!bmoQuoteGroup.getIsKit().toBoolean()) {
@@ -316,16 +401,28 @@ public class PmQuoteGroup extends PmObject {
 			double amount = -1;
 			if (pmConn.next()) amount = pmConn.getDouble(1);
 			bmoQuoteGroup.getAmount().setValue(amount);
-		}
+			//Descuento Drea
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				pmConn.doFetch("SELECT sum(qoit_discount) AS dicount,sum(qoit_feeproduction) AS feeSum,sum(qoit_comission) sumCom ,sum(qoit_price) sumPrice FROM quoteitems "
+						+ " WHERE qoit_quotegroupid = " + bmoQuoteGroup.getId());
+				double discount = 0;
+				double price = 0;
+				if (pmConn.next()) {
+					discount = pmConn.getDouble("dicount");
+					price = pmConn.getDouble("sumPrice");
+				}
+				bmoQuoteGroup.getDiscount().setValue(discount);
+				bmoQuoteGroup.getPrice().setValue(price);
+			}
+		}		
 
-		super.save(pmConn, bmoQuoteGroup, bmUpdateResult);
+		super.save(pmConn, bmoQuoteGroup, bmUpdateResult);	
 
-		// Recalcular la cotizacion completa
-		PmQuote pmQuote = new PmQuote(getSFParams());
-		BmoQuote bmoQuote = (BmoQuote)pmQuote.get(pmConn, bmoQuoteGroup.getQuoteId().toInteger());
+		// Recalcular la cotizacion completa		
 		pmQuote.updateBalance(pmConn, bmoQuote, bmUpdateResult);
 	}
-
+	
+	
 	@Override
 	public BmUpdateResult delete(BmObject bmObject, BmUpdateResult bmUpdateResult) throws SFException {
 		bmoQuoteGroup = (BmoQuoteGroup)bmObject;
@@ -352,7 +449,10 @@ public class PmQuoteGroup extends PmObject {
 
 				// Eliminar grupo de cotización
 				bmUpdateResult = super.delete(pmConn, bmoQuoteGroup, bmUpdateResult);
-
+				if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+					updateMainGroup(pmConn, bmoQuoteGroup.getMainGroupId().toInteger(), bmUpdateResult);
+				}
+				
 				// Recalcular la cotizacion completa
 				pmQuote.updateBalance(pmConn, bmoQuote, bmUpdateResult);
 

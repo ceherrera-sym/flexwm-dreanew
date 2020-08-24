@@ -29,7 +29,7 @@ public class BmoOrderItem extends BmObject implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private BmField name, description, quantity, lockedQuantity, conflictQuantity, days, basePrice, price, amount, 
 	quantityDelivered, quantityReturned, lockStatus, orderGroupId, productId, baseCost, commission, index, budgetItemId, areaId,
-	orderItemComposedId;
+	orderItemComposedId, discountApplies, discount;
 	BmoProduct bmoProduct = new BmoProduct();
 	BmoOrderGroup bmoOrderGroup = new BmoOrderGroup();
 	BmoArea bmoArea = new BmoArea();
@@ -72,6 +72,9 @@ public class BmoOrderItem extends BmObject implements Serializable {
 		commission = setField("commission", "0", "Comisión", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 		areaId = setField("areaid", "", "Departamento", 20, Types.INTEGER, true, BmFieldType.ID, false);
 		budgetItemId = setField("budgetitemid", "", "Partida Presup.", 11, Types.INTEGER, true, BmFieldType.ID, false);
+		
+		discountApplies = setField("discountapplies", "0", "Aplica Descuento?", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+		discount = setField("discount", "0", "Descuento", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
 	}
 
 	@Override
@@ -301,5 +304,23 @@ public class BmoOrderItem extends BmObject implements Serializable {
 	public void setIndex(BmField index) {
 		this.index = index;
 	}
+
+	public BmField getDiscountApplies() {
+		return discountApplies;
+	}
+
+	public void setDiscountApplies(BmField discountApplies) {
+		this.discountApplies = discountApplies;
+	}
+
+	public BmField getDiscount() {
+		return discount;
+	}
+
+	public void setDiscount(BmField discount) {
+		this.discount = discount;
+	}
+	
+	
 
 }

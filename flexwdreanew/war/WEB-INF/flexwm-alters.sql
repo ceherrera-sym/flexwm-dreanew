@@ -6072,3 +6072,61 @@ UPDATE projects LEFT JOIN orders ON (orde_orderid = proj_orderid) SET proj_total
 	    FOREIGN KEY (eopr_profileid) REFERENCES profiles(prof_profileid),
 	    FOREIGN KEY (eopr_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid)
 	);
+	
+	-- 13/08-2020
+	CREATE TABLE quotemaingroups (
+		qmgr_quotemaingroupid INT NOT NULL AUTO_INCREMENT, 
+		qmgr_usercreateid INT(10),		
+		qmgr_usermodifyid INT(10),
+		qmgr_datecreate DATETIME,
+		qmgr_datemodify DATETIME,
+		qmgr_name VARCHAR(100),	
+	    qmgr_quoteid INT(10),
+	    qmgr_total DOUBLE,
+	    qmgr_discount DOUBLE,
+	    qmgr_productionfee DOUBLE,
+	    qmgr_amount DOUBLE,
+		qmgr_commission DOUBLE,
+		PRIMARY KEY(qmgr_quotemaingroupid),
+		FOREIGN KEY (qmgr_usercreateid) REFERENCES users(user_userid),
+		FOREIGN KEY (qmgr_usermodifyid) REFERENCES users(user_userid),
+	    FOREIGN KEY (qmgr_quoteid) REFERENCES quotes(quot_quoteid)
+	);
+
+	ALTER TABLE quotegroups ADD qogr_maingroupid INT(20);
+	ALTER TABLE quotegroups ADD FOREIGN KEY (qogr_maingroupid) REFERENCES quotemaingroups (qmgr_quotemaingroupid);
+	ALTER TABLE quotegroups ADD qogr_discount DOUBLE;
+	ALTER TABLE quotegroups ADD qogr_discountapplies INT(5);
+	ALTER TABLE quotegroups ADD qogr_discountrate DOUBLE;
+	ALTER TABLE quoteitems ADD qoit_discountapplies INT(5);
+	ALTER TABLE quoteitems ADD qoit_discount DOUBLE;
+	ALTER TABLE quotegroups ADD qogr_feeproductionapply INT(5);
+	ALTER TABLE quotegroups ADD qogr_feeproductionrate DOUBLE;
+	ALTER TABLE quotegroups ADD qogr_comissionapply INT(5);
+	ALTER TABLE quotegroups ADD qogr_commissionrate DOUBLE;
+	ALTER TABLE quotegroups ADD qogr_feeproduction DOUBLE;
+	ALTER TABLE quotegroups ADD qogr_comission DOUBLE;
+	ALTER TABLE quotegroups ADD qogr_price DOUBLE;
+	ALTER TABLE quoteitems ADD qoit_feeproductionapply INT(5);
+	ALTER TABLE quoteitems ADD qoit_comissionapply INT(5);
+	ALTER TABLE quoteitems ADD qoit_feeproduction DOUBLE;
+	ALTER TABLE quoteitems ADD qoit_comission DOUBLE;
+	-- Pedidos
+	ALTER TABLE ordergroups ADD ordg_feeproductionapply INT(5);
+	ALTER TABLE ordergroups ADD ordg_feeproductionrate DOUBLE;
+	ALTER TABLE ordergroups ADD ordg_comissionapply INT(5);
+	ALTER TABLE ordergroups ADD ordg_commissionrate DOUBLE;
+	ALTER TABLE ordergroups ADD ordg_feeproduction DOUBLE;
+	ALTER TABLE ordergroups ADD ordg_comission DOUBLE;
+	ALTER TABLE ordergroups ADD ordg_price DOUBLE;
+	ALTER TABLE ordergroups ADD ordg_discount DOUBLE;
+	ALTER TABLE ordergroups ADD ordg_discountapplies INT(5);
+	ALTER TABLE ordergroups ADD ordg_discountrate DOUBLE;
+	ALTER TABLE orderitems ADD ordi_feeproductionapply INT(5);
+	ALTER TABLE orderitems ADD ordi_comissionapply INT(5);
+	ALTER TABLE orderitems ADD ordi_feeproduction DOUBLE;
+	ALTER TABLE orderitems ADD ordi_comission DOUBLE;
+	ALTER TABLE orderitems ADD ordi_discountapplies INT(5);
+	ALTER TABLE orderitems ADD ordi_discount DOUBLE;
+	
+	

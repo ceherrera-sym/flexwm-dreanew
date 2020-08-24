@@ -7,6 +7,7 @@ import com.flexwm.shared.cm.BmoPayCondition;
 import com.flexwm.shared.cm.BmoQuote;
 import com.flexwm.shared.cm.BmoQuoteGroup;
 import com.flexwm.shared.cm.BmoQuoteItem;
+import com.flexwm.shared.cm.BmoQuoteMainGroup;
 import com.flexwm.shared.fi.BmoBudgetItem;
 import com.flexwm.shared.fi.BmoBudgetItemType;
 import com.flexwm.shared.op.BmoOrderType;
@@ -15,6 +16,7 @@ import com.flexwm.shared.op.BmoProductCompany;
 import com.flexwm.shared.op.BmoProductPrice;
 import com.flexwm.shared.op.BmoWhStock;
 import com.google.gwt.cell.client.ButtonCell;
+import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.EditTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
@@ -23,6 +25,8 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -102,15 +106,22 @@ public class UiQuoteGroupGrid extends Ui {
 	private CheckBox showProductImageCheckBox = new CheckBox();
 	private CheckBox showGroupImageCheckBox = new CheckBox();
 	private CheckBox showItmesCheckBox = new CheckBox();
+	private CheckBox discountApliesCheckBox = new CheckBox();
+	private CheckBox feeProductionApplyCheckBox = new CheckBox();
+	private CheckBox commissionAplyCheckBox = new CheckBox();
 	private UiFileUploadBox imageFileUpload = new UiFileUploadBox(getUiParams());
 	UiListBox payConditionUiListBox= new UiListBox(getUiParams(), new BmoPayCondition());
 	private Label amountLabel = new Label("");
 	private Label totaLabel = new Label("");
 	private TextBox amountTextBox = new TextBox();
+	private TextBox discountRateTextBox = new TextBox();
+	private TextBox feePrductionRateTextBox = new TextBox();
+	private TextBox commisionRate = new TextBox();
 	private NumberFormat numberFormat = NumberFormat.getDecimalFormat();
 	protected Button saveButton = new Button("GUARDAR");
 	protected TextBox daysTextBox = new TextBox();
 	protected DialogBox quoteItemDialogBox;
+	private UiSuggestBox mainGroupIdSuggestBox = new UiSuggestBox(new BmoQuoteMainGroup());
 
 	private BmoQuote bmoQuote;
 	protected BmoOpportunity bmoOpportunity;
@@ -253,6 +264,28 @@ public class UiQuoteGroupGrid extends Ui {
 		quoteGroupPanel.addStyleName("separator");
 
 		defaultPanel.add(quoteGroupPanel);
+		//Cambio en check
+		discountApliesCheckBox.addValueChangeHandler(new  ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				booleanChange();
+				
+			}
+		});		
+		commissionAplyCheckBox.addValueChangeHandler(new  ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				booleanChange();
+				
+			}
+		});
+		feeProductionApplyCheckBox.addValueChangeHandler(new  ValueChangeHandler<Boolean>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				booleanChange();
+				
+			}
+		});
 	}
 
 	public void show() {
@@ -266,10 +299,22 @@ public class UiQuoteGroupGrid extends Ui {
 		formFlexTable.clear();
 
 		if (bmoQuoteGroup.getIsKit().toBoolean())
-			formFlexTable.addSectionLabel(1, 0, "Kit de Items ", 4);
-		else
-			formFlexTable.addSectionLabel(1, 0, "Grupo de Items: " + bmoQuoteGroup.getName().toString(), 4);
-
+			formFlexTable.addSectionLabel(0, 0, "Kit de Items ", 4);
+		else {
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				formFlexTable.addSectionLabel(0, 0, "Sub-Grupo de Items: " + bmoQuoteGroup.getName().toString(), 4);
+			} else {
+				formFlexTable.addSectionLabel(0, 0, "Grupo de Items: " + bmoQuoteGroup.getName().toString(), 4);
+			}
+		}
+		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			//filtro solo grupos de la cotización
+			BmFilter quotMainGroupFilter = new BmFilter();
+			BmoQuoteMainGroup bmoQuoteMainGroup = new BmoQuoteMainGroup();				
+			quotMainGroupFilter.setValueFilter(bmoQuoteMainGroup.getKind(), bmoQuoteMainGroup.getQuoteId(), bmoQuote.getId());
+			mainGroupIdSuggestBox = new UiSuggestBox(bmoQuoteMainGroup , quotMainGroupFilter);
+			formFlexTable.addField(1, 0, mainGroupIdSuggestBox,bmoQuoteGroup.getMainGroupId());
+		}
 		formFlexTable.addField(2, 0, nameTextBox, bmoQuoteGroup.getName());
 
 		// Panel de Checkboxes
@@ -289,19 +334,32 @@ public class UiQuoteGroupGrid extends Ui {
 		if (getSFParams().hasRead(new BmoPayCondition().getProgramCode()))
 			formFlexTable.addField(5, 0, payConditionUiListBox, bmoQuoteGroup.getPayConditionId());
 		
+		if (bmoOpportunity.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			if (!bmoQuoteGroup.getIsKit().toBoolean()) {
+				formFlexTable.addField(6, 0, discountApliesCheckBox, bmoQuoteGroup.getDiscountApplies());
+				formFlexTable.addField(7, 0, discountRateTextBox, bmoQuoteGroup.getDiscountRate());
+			}
+			formFlexTable.addField(8, 0, commissionAplyCheckBox, bmoQuoteGroup.getCommissionApply());
+			formFlexTable.addField(9, 0, commisionRate, bmoQuoteGroup.getCommissionRate());
+			formFlexTable.addField(10, 0, feeProductionApplyCheckBox, bmoQuoteGroup.getFeeProductionApply());
+			formFlexTable.addField(11, 0, feePrductionRateTextBox, bmoQuoteGroup.getFeeProductionRate());
+		}
+		
 		// Si es kit y permite modificar monto
 		if (bmoQuoteGroup.getIsKit().toBoolean()
 				&& getSFParams().hasSpecialAccess(BmoQuote.ACCESS_CHANGEKITPRICE))
-			formFlexTable.addField(6, 0, amountTextBox, bmoQuoteGroup.getAmount());
+			formFlexTable.addField(12, 0, amountTextBox, bmoQuoteGroup.getAmount());
 		else
-			formFlexTable.addLabelField(6, 0, amountLabel, bmoQuoteGroup.getAmount());
+			formFlexTable.addLabelField(13, 0, amountLabel, bmoQuoteGroup.getAmount());
+		
+		
 		
 		if (bmoQuoteGroup.getIsKit().toBoolean()  && bmoOpportunity.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
-				formFlexTable.addField(7, 0, daysTextBox, bmoQuoteGroup.getDays());
-				formFlexTable.addLabelField(8, 0, totaLabel, bmoQuoteGroup.getTotal());
+				formFlexTable.addField(14, 0, daysTextBox, bmoQuoteGroup.getDays());
+				formFlexTable.addLabelField(15, 0, totaLabel, bmoQuoteGroup.getTotal());
 		}
-		formFlexTable.addPanel(9, 0, quoteItemPanel, 2);
-		formFlexTable.addPanel(10, 0, buttonPanel, 2);
+		formFlexTable.addPanel(16, 0, quoteItemPanel, 2);
+		formFlexTable.addPanel(17, 0, buttonPanel, 2);
 
 		numberFormat = NumberFormat.getCurrencyFormat();
 		String formatted = numberFormat.format(bmoQuoteGroup.getAmount().toDouble());
@@ -322,6 +380,10 @@ public class UiQuoteGroupGrid extends Ui {
 		statusEffect();
 		
 	}
+	
+	private void booleanChange() {
+		statusEffect();
+	}
 
 	public void statusEffect() {
 		nameTextBox.setEnabled(false);
@@ -336,6 +398,13 @@ public class UiQuoteGroupGrid extends Ui {
 		saveButton.setVisible(false);
 		payConditionUiListBox.setEnabled(false);
 		daysTextBox.setEnabled(false);
+		
+		discountApliesCheckBox.setEnabled(false);
+		commissionAplyCheckBox.setEnabled(false);
+		feeProductionApplyCheckBox.setEnabled(false);
+		discountRateTextBox.setEnabled(false);
+		commisionRate.setEnabled(false);
+		feePrductionRateTextBox.setEnabled(false);
 		if (bmoQuote.getStatus().equals(BmoQuote.STATUS_REVISION)) {
 			daysTextBox.setEnabled(true);
 			nameTextBox.setEnabled(true);
@@ -352,10 +421,38 @@ public class UiQuoteGroupGrid extends Ui {
 			if (bmoQuoteGroup.getIsKit().toBoolean()
 					&& getSFParams().hasSpecialAccess(BmoQuote.ACCESS_CHANGEKITPRICE))
 				amountTextBox.setEnabled(true);
+			
+			discountApliesCheckBox.setEnabled(true);
+			commissionAplyCheckBox.setEnabled(true);
+			feeProductionApplyCheckBox.setEnabled(true);
+			discountRateTextBox.setEnabled(true);
+			commisionRate.setEnabled(true);
+			feePrductionRateTextBox.setEnabled(true);
 		}
 		//No permitir agrgar items a un kit Drea
 		if (bmoOpportunity.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL) && bmoQuoteGroup.getIsKit().toBoolean()) {
 			addQuoteItemButton.setVisible(false);
+		}
+		//descuento Drea
+		if (discountApliesCheckBox.getValue()) {
+			formFlexTable.showField(discountRateTextBox);
+		} else {
+			formFlexTable.hideField(discountRateTextBox);
+			discountRateTextBox.setText("0.0");
+		}
+		//comision Drea
+		if (commissionAplyCheckBox.getValue()) {
+			formFlexTable.showField(commisionRate);
+		} else {
+			formFlexTable.hideField(commisionRate);
+			commisionRate.setText("0.0");
+		}
+		//Fee Prducción Drea
+		if (feeProductionApplyCheckBox.getValue()) {
+			formFlexTable.showField(feePrductionRateTextBox);
+		} else {
+			formFlexTable.hideField(feePrductionRateTextBox);
+			feePrductionRateTextBox.setText("0.0");
 		}
 	}
 
@@ -603,7 +700,68 @@ public class UiQuoteGroupGrid extends Ui {
 				quoteItemGrid.setColumnWidth(commisionColumn, 50, Unit.PX);
 			}
 		}
+		///////////////////////////////////////////////////Descuento
+		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
 
+			if (bmoQuote.getStatus().equals(BmoQuote.STATUS_AUTHORIZED)) {
+				Column<BmObject, String> discountAplyes = new Column<BmObject, String>(new  TextCell()) {
+					@Override
+					public String getValue(BmObject bmObject) {
+						if (((BmoQuoteItem)bmObject).getDiscountApplies().toBoolean())
+							return "Si";
+						else
+							return "No";
+					}
+				};
+
+				quoteItemGrid.addColumn(discountAplyes, SafeHtmlUtils.fromSafeConstant("Aplica Descuento?"));
+				discountAplyes.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+				quoteItemGrid.setColumnWidth(discountAplyes, 150, Unit.PX);
+			} else {
+				Column<BmObject, Boolean> discountAplyes = new Column<BmObject, Boolean>(new CheckboxCell()){				
+					@Override
+					public Boolean getValue(BmObject bmObject) {
+						return ((BmoQuoteItem)bmObject).getDiscountApplies().toBoolean();
+					}
+
+				};
+
+				discountAplyes.setFieldUpdater(new FieldUpdater<BmObject, Boolean>() {			
+					@Override
+					public void update(int index, BmObject bmObject, Boolean value) {
+						if (((BmoQuoteItem)bmObject).getBmoQuoteGroup().getDiscountApplies().toBoolean())
+							updateDiscount(bmObject, value);
+						else {
+							showSystemMessage("El Grupo no aplica descuento");
+							reset();
+						}
+
+					}
+				});
+
+
+				quoteItemGrid.addColumn(discountAplyes, SafeHtmlUtils.fromSafeConstant("Aplica Descuento?"));
+				discountAplyes.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+				quoteItemGrid.setColumnWidth(discountAplyes, 150, Unit.PX);
+
+			}
+
+			Column<BmObject, String> discountItemColumn = new Column<BmObject, String>(new  TextCell()) {
+				@Override
+				public String getValue(BmObject bmObject) {
+					numberFormat = NumberFormat.getCurrencyFormat();
+					String formatted = numberFormat.format(((BmoQuoteItem)bmObject).getDiscount().toDouble());
+					return (formatted);
+
+				}
+			};
+
+			quoteItemGrid.addColumn(discountItemColumn, SafeHtmlUtils.fromSafeConstant("Descuento"));
+			discountItemColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+			quoteItemGrid.setColumnWidth(discountItemColumn, 150, Unit.PX);
+		}
+	
+		
 		// Precio
 		Column<BmObject, String> priceColumn;
 		if (bmoQuote.getStatus().equals(BmoQuote.STATUS_REVISION)) {
@@ -689,6 +847,19 @@ public class UiQuoteGroupGrid extends Ui {
 		deleteColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 		quoteItemGrid.setColumnWidth(deleteColumn, 50, Unit.PX);	
 	}
+	
+	public void updateDiscount(BmObject bmObject,boolean value) {
+		BmoQuoteItem nextBmoQuoteItem = (BmoQuoteItem)bmObject;
+		try {
+			nextBmoQuoteItem.getDiscountApplies().setValue(value);
+		} catch (BmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (Window.confirm("Desea guardar el cambio?")) {
+			saveQuoteItem(nextBmoQuoteItem);
+		}
+	}
 
 	public void addProduct(){
 		addProduct(new BmoProduct());
@@ -737,6 +908,16 @@ public class UiQuoteGroupGrid extends Ui {
 			if (bmoQuoteGroup.getIsKit().toBoolean())
 				bmoQuoteGroup.getDays().setValue(daysTextBox.getValue());
 			
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				bmoQuoteGroup.getMainGroupId().setValue(mainGroupIdSuggestBox.getSelectedId());
+				bmoQuoteGroup.getDiscountApplies().setValue(discountApliesCheckBox.getValue());
+				bmoQuoteGroup.getDiscountRate().setValue(discountRateTextBox.getText());
+				bmoQuoteGroup.getCommissionApply().setValue(commissionAplyCheckBox.getValue());
+				bmoQuoteGroup.getCommissionRate().setValue(commisionRate.getText());
+				bmoQuoteGroup.getFeeProductionApply().setValue(feeProductionApplyCheckBox.getValue());
+				bmoQuoteGroup.getFeeProductionRate().setValue(feePrductionRateTextBox.getText());
+			}
+			
 			save();
 
 		} catch (BmException e) {
@@ -784,6 +965,31 @@ public class UiQuoteGroupGrid extends Ui {
 		}
 	}
 
+	public void saveQuoteItem(BmoQuoteItem bmoQuoteItem) {
+		// Establece eventos ante respuesta de servicio
+		AsyncCallback<BmUpdateResult> callback = new AsyncCallback<BmUpdateResult>() {
+			public void onFailure(Throwable caught) {
+				stopLoading();
+				showErrorMessage(this.getClass().getName() + "-save() ERROR: " + caught.toString());
+			}
+
+			public void onSuccess(BmUpdateResult result) {
+				stopLoading();
+				processUpdateResult(result);
+			}
+		};
+
+		// Llamada al servicio RPC
+		try {
+			if (!isLoading()) {
+				startLoading();
+				getUiParams().getBmObjectServiceAsync().save(bmoQuoteItem.getPmClass(), bmoQuoteItem, callback);
+			}
+		} catch (SFException e) {
+			stopLoading();
+			showErrorMessage(this.getClass().getName() + "-save() ERROR: " + e.toString());
+		}
+	}
 	public void save() {
 		// Establece eventos ante respuesta de servicio
 		AsyncCallback<BmUpdateResult> callback = new AsyncCallback<BmUpdateResult>() {
@@ -1231,6 +1437,7 @@ public class UiQuoteGroupGrid extends Ui {
 		private TextBox nameTextBox = new TextBox();
 		private TextArea descriptionTextArea = new TextArea();
 		private CheckBox commissionCheckBox = new CheckBox();
+		private CheckBox discountApliesItemCheckBox = new CheckBox();
 		private TextBox priceTextBox = new TextBox();
 		private BmoQuoteItem bmoQuoteItem;
 		private Button saveButton = new Button("AGREGAR");
@@ -1317,20 +1524,26 @@ public class UiQuoteGroupGrid extends Ui {
 			formTable.addField(1, 0, productSuggestBox, bmoQuoteItem.getProductId());
 			formTable.addLabelField(2, 0, "En Almacén", stockQuantity);
 			formTable.addLabelField(3, 0, "En Cotización", lockedQuantity);
-			formTable.addField(4, 0, nameTextBox, bmoQuoteItem.getName());
-			formTable.addField(5, 0, descriptionTextArea, bmoQuoteItem.getDescription());
-			formTable.addField(6, 0, quantityTextBox, bmoQuoteItem.getQuantity());
+			if (bmoQuoteGroup.getDiscountApplies().toBoolean() && bmoOpportunity.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				formTable.addField(4, 0, discountApliesItemCheckBox, bmoQuoteItem.getDiscountApplies());
+				discountApliesItemCheckBox.setValue(true);
+			}
+			
+			
+			formTable.addField(7, 0, nameTextBox, bmoQuoteItem.getName());			
+			formTable.addField(8, 0, descriptionTextArea, bmoQuoteItem.getDescription());
+			formTable.addField(9, 0, quantityTextBox, bmoQuoteItem.getQuantity());
 			// Si es de renta, mostrar días
 			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) 
-				formTable.addField(7, 0, daysTextBox, bmoQuoteItem.getDays());
+				formTable.addField(10, 0, daysTextBox, bmoQuoteItem.getDays());
 
 			if (getSFParams().isFieldEnabled(bmoQuoteItem.getCommission()))
-				formTable.addField(8, 0, commissionCheckBox, bmoQuoteItem.getCommission());
-			formTable.addField(9, 0, priceTextBox, bmoQuoteItem.getPrice());
+				formTable.addField(11, 0, commissionCheckBox, bmoQuoteItem.getCommission());
+			formTable.addField(12, 0, priceTextBox, bmoQuoteItem.getPrice());
 			if ((((BmoFlexConfig)getSFParams().getBmoAppConfig()).getEnableWorkBudgetItem().toInteger() > 0)) {	
 				setBudgetItemsListBoxFilters(bmoQuote.getCompanyId().toInteger());
-				formTable.addField(10, 0, budgetItemUiListBox, bmoQuoteItem.getBudgetItemId());
-				formTable.addField(11, 0, areaUiListBox, bmoQuoteItem.getAreaId());
+				formTable.addField(13, 0, budgetItemUiListBox, bmoQuoteItem.getBudgetItemId());
+				formTable.addField(14, 0, areaUiListBox, bmoQuoteItem.getAreaId());
 			}
 
 			formTable.addButtonPanel(buttonPanel);
@@ -1682,6 +1895,8 @@ public class UiQuoteGroupGrid extends Ui {
 					bmoQuoteItem.getBudgetItemId().setValue(budgetItemUiListBox.getSelectedId());
 					bmoQuoteItem.getAreaId().setValue(areaUiListBox.getSelectedId());
 				}
+				bmoQuoteItem.getDiscountApplies().setValue(discountApliesItemCheckBox.getValue());
+				
 				// Si no tiene permisos para agregar items sin producto, no permite avanzar
 				if (!(bmoQuoteItem.getProductId().toInteger() > 0)
 						&& !getSFParams().hasSpecialAccess(BmoQuote.ACCESS_NOPRODUCTITEM))

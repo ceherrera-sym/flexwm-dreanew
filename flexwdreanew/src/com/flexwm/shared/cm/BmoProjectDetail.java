@@ -22,7 +22,7 @@ import com.symgae.shared.BmSearchField;
 
 public class BmoProjectDetail extends BmObject implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private BmField prepDate, deliveryDate, loadStartDate, unloadStartDate, exitDate, returnDate;
+	private BmField prepDate, deliveryDate, loadStartDate, unloadStartDate, exitDate, returnDate, equipmentLoadDate, testDate ;
 	private BmField projectId;
 
 	public BmoProjectDetail() {
@@ -34,6 +34,8 @@ public class BmoProjectDetail extends BmObject implements Serializable {
 		loadStartDate = setField("loadstartdate", "", "Inicio montaje", 20, Types.TIMESTAMP, true, BmFieldType.DATETIME, false);
 		unloadStartDate = setField("unloadstartdate", "", "Inicio desmontaje", 20, Types.TIMESTAMP, true, BmFieldType.DATETIME, false);
 		returnDate = setField("returndate", "", "Regreso", 20, Types.TIMESTAMP, true, BmFieldType.DATETIME, false);		
+		equipmentLoadDate = setField("equipmentloaddate", "", "Carga de equipo", 20, Types.TIMESTAMP, true,  BmFieldType.DATETIME, false);
+		testDate = setField("testdate", "", "Pruebas", 20, Types.TIMESTAMP, true,  BmFieldType.DATETIME, false);
 
 		projectId = setField("projectid", "", "Proyecto", 8, Types.INTEGER, false, BmFieldType.ID, false);
 	}
@@ -111,4 +113,22 @@ public class BmoProjectDetail extends BmObject implements Serializable {
 	public void setReturnDate(BmField returnDate) {
 		this.returnDate = returnDate;
 	}
+
+	public BmField getEquipmentLoadDate() {
+		return equipmentLoadDate;
+	}
+
+	public void setEquipmentLoadDate(BmField equipmentLoadDate) {
+		this.equipmentLoadDate = equipmentLoadDate;
+	}
+
+	public BmField getTestDate() {
+		return testDate;
+	}
+
+	public void setTestDate(BmField testDate) {
+		this.testDate = testDate;
+	}
+	
+	
 }

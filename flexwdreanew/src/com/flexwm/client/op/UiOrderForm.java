@@ -187,12 +187,12 @@ public class UiOrderForm extends UiForm {
 	//private Button lifeCycleOrderButton = new Button("PEDIDO EXTRA");
 
 	//	// Recursos
-		private UiOrderEquipmentGrid orderEquipmentGrid;
-		private FlowPanel orderEquipmentPanel = new FlowPanel();
+//		private UiOrderEquipmentGrid orderEquipmentGrid;
+//		private FlowPanel orderEquipmentPanel = new FlowPanel();
 	//
 	//	// Personal
-		private UiOrderStaffGrid orderStaffGrid;
-		private FlowPanel orderStaffPanel = new FlowPanel();
+//		private UiOrderStaffGrid orderStaffGrid;
+//		private FlowPanel orderStaffPanel = new FlowPanel();
 
 	// Inmuebles
 	private UiOrderPropertyGrid orderPropertyGrid;
@@ -452,8 +452,8 @@ public class UiOrderForm extends UiForm {
 		// Panel
 		orderButtonPanel.setWidth("100%");
 		orderGroupsPanel.setWidth("100%");
-				orderEquipmentPanel.setWidth("100%");
-				orderStaffPanel.setWidth("100%");
+//				orderEquipmentPanel.setWidth("100%");
+//				orderStaffPanel.setWidth("100%");
 		orderPropertyPanel.setWidth("100%");
 		orderPropertyModelExtraPanel.setWidth("100%");		
 		orderSessionTypePackagePanel.setWidth("100%");
@@ -574,34 +574,34 @@ public class UiOrderForm extends UiForm {
 			} 
 
 			//			// Recursos
-						if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
-							formFlexTable.addSectionLabel(25, 0, equipmentsSection, 2);
-							// Panel de Checkboxes
-							FlowPanel checkBoxPanel = new FlowPanel();
-							checkBoxPanel.setWidth("100%");
-							checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showEquipmentQuantityCheckBox, bmoOrder.getShowEquipmentQuantity()));
-							checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showEquipmentPriceCheckBox, bmoOrder.getShowEquipmentPrice()));
-							formFlexTable.addLabelCell(26, 0, "Mostrar:");
-							formFlexTable.addPanel(26, 1, checkBoxPanel, 1);
-							formFlexTable.addPanel(27, 0, orderEquipmentPanel, 2);
-							orderEquipmentGrid = new UiOrderEquipmentGrid(getUiParams(), orderEquipmentPanel, bmoOrder, orderUpdater);
-							orderEquipmentGrid.show();
-						}
-			
-						// Personal
-						if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
-							formFlexTable.addSectionLabel(28, 0, staffSection, 2);
-							// Panel de Checkboxes
-							FlowPanel checkBoxPanel = new FlowPanel();
-							checkBoxPanel.setWidth("100%");
-							checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showStaffQuantityCheckBox, bmoOrder.getShowStaffQuantity()));
-							checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showStaffPriceCheckBox, bmoOrder.getShowStaffPrice()));
-							formFlexTable.addLabelCell(29, 0, "Mostrar:");
-							formFlexTable.addPanel(29, 1, checkBoxPanel, 1);
-							formFlexTable.addPanel(30, 0, orderStaffPanel, 2);
-							orderStaffGrid = new UiOrderStaffGrid(getUiParams(), orderStaffPanel, bmoOrder, orderUpdater);
-							orderStaffGrid.show();
-						}
+//			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+//				formFlexTable.addSectionLabel(25, 0, equipmentsSection, 2);
+//				// Panel de Checkboxes
+//				FlowPanel checkBoxPanel = new FlowPanel();
+//				checkBoxPanel.setWidth("100%");
+//				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showEquipmentQuantityCheckBox, bmoOrder.getShowEquipmentQuantity()));
+//				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showEquipmentPriceCheckBox, bmoOrder.getShowEquipmentPrice()));
+//				formFlexTable.addLabelCell(26, 0, "Mostrar:");
+//				formFlexTable.addPanel(26, 1, checkBoxPanel, 1);
+//				formFlexTable.addPanel(27, 0, orderEquipmentPanel, 2);
+//				orderEquipmentGrid = new UiOrderEquipmentGrid(getUiParams(), orderEquipmentPanel, bmoOrder, orderUpdater);
+//				orderEquipmentGrid.show();
+//			}
+//
+//			// Personal
+//			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+//				formFlexTable.addSectionLabel(28, 0, staffSection, 2);
+//				// Panel de Checkboxes
+//				FlowPanel checkBoxPanel = new FlowPanel();
+//				checkBoxPanel.setWidth("100%");
+//				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showStaffQuantityCheckBox, bmoOrder.getShowStaffQuantity()));
+//				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showStaffPriceCheckBox, bmoOrder.getShowStaffPrice()));
+//				formFlexTable.addLabelCell(29, 0, "Mostrar:");
+//				formFlexTable.addPanel(29, 1, checkBoxPanel, 1);
+//				formFlexTable.addPanel(30, 0, orderStaffPanel, 2);
+//				orderStaffGrid = new UiOrderStaffGrid(getUiParams(), orderStaffPanel, bmoOrder, orderUpdater);
+//				orderStaffGrid.show();
+//			}
 
 			// Inmuebles
 			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_PROPERTY)) {
@@ -1495,8 +1495,8 @@ public class UiOrderForm extends UiForm {
 		}
 
 				if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
-					orderEquipmentGrid.show();
-					orderStaffGrid.show();
+//					orderEquipmentGrid.show();
+//					orderStaffGrid.show();
 				}
 
 		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_PROPERTY)) {
@@ -1966,6 +1966,7 @@ public class UiOrderForm extends UiForm {
 		private TextArea descriptionTextArea = new TextArea();
 		private TextBox priceTextBox = new TextBox();
 		private CheckBox commissionCheckBox = new CheckBox();
+		private CheckBox discountAply = new CheckBox();
 		private BmoOrderItem bmoOrderItem;
 		private BmoOrder bmoOrder = new BmoOrder();
 		private Button saveButton = new Button("AGREGAR");
@@ -2001,6 +2002,15 @@ public class UiOrderForm extends UiForm {
 			};
 			formTable.setUiSuggestBoxAction(uiSuggestBoxAction);
 
+			listChangeHandler = new ChangeHandler() {
+				@Override
+				public void onChange(ChangeEvent event) {
+					formListChangeItem(event);
+				}
+			};
+
+			formTable.setListChangeHandler(listChangeHandler);
+			
 			saveButton.setStyleName("formSaveButton");
 			saveButton.addClickHandler(new ClickHandler() {
 				@Override
@@ -2055,26 +2065,29 @@ public class UiOrderForm extends UiForm {
 			formTable.addField(1, 0, productSuggestBox, bmoOrderItem.getProductId());
 			formTable.addLabelField(2, 0, "En Almacén", stockQuantity);
 			formTable.addLabelField(3, 0, "En Pedidos", lockedQuantity);
-			formTable.addField(4, 0, nameTextBox, bmoOrderItem.getName());
-			formTable.addField(5, 0, descriptionTextArea, bmoOrderItem.getDescription());
-			formTable.addField(6, 0, quantityTextBox, bmoOrderItem.getQuantity());
+			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL))
+				formTable.addField(4, 0, discountAply,bmoOrderItem.getDiscountApplies());
+			formTable.addField(5, 0, nameTextBox, bmoOrderItem.getName());
+			formTable.addField(6, 0, descriptionTextArea, bmoOrderItem.getDescription());
+			formTable.addField(7, 0, quantityTextBox, bmoOrderItem.getQuantity());
 
 			// Mostrar los días si es de tipo renta
 			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL))
-				formTable.addField(7, 0, daysTextBox, bmoOrderItem.getDays());
+				formTable.addField(8, 0, daysTextBox, bmoOrderItem.getDays());
 
 			if (getSFParams().isFieldEnabled(bmoOrderItem.getCommission()))
-				formTable.addField(8, 0, commissionCheckBox, bmoOrderItem.getCommission());
+				formTable.addField(9, 0, commissionCheckBox, bmoOrderItem.getCommission());
 
-			formTable.addField(9, 0, priceTextBox, bmoOrderItem.getPrice());
+			formTable.addField(10, 0, priceTextBox, bmoOrderItem.getPrice());
 			if ((((BmoFlexConfig)getSFParams().getBmoAppConfig()).getEnableWorkBudgetItem().toInteger() > 0)) {
 				setBudgetItemsListBoxFilters(bmoOrder.getCompanyId().toInteger());
-				formTable.addField(10, 0, budgetItemUiListBox, bmoOrderItem.getBudgetItemId());
-				formTable.addField(11, 0, areaUiListBox, bmoOrderItem.getAreaId());
+				formTable.addField(11, 0, budgetItemUiListBox, bmoOrderItem.getBudgetItemId());
+				formTable.addField(12, 0, areaUiListBox, bmoOrderItem.getAreaId());
 			}
-			formTable.addField(12, 0, orderGroupListBox, bmoOrderItem.getOrderGroupId());
+			formTable.addField(1, 0, orderGroupListBox, bmoOrderItem.getOrderGroupId());
 			formTable.addButtonPanel(buttonPanel);
 
+			discountAply.setEnabled(false);
 			statusEffect();
 		}
 
@@ -2129,6 +2142,22 @@ public class UiOrderForm extends UiForm {
 				statusEffect();
 			}
 		}
+		
+		public void formListChangeItem(ChangeEvent event) {			
+			if (event.getSource() == orderGroupListBox) {
+				if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+					bmoOrderGroup = (BmoOrderGroup)orderGroupListBox.getSelectedBmObject();
+					if (bmoOrderGroup.getDiscountApplies().toBoolean()) {
+						discountAply.setEnabled(true);
+						discountAply.setValue(true);
+					} else {
+						discountAply.setEnabled(false);
+						discountAply.setValue(false);
+					}
+				} 
+			}
+		}
+		
 
 		private void statusEffect() {
 			nameTextBox.setText("");

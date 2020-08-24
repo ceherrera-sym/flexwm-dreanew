@@ -334,13 +334,26 @@ permissionPrint = "oncopy='return false' oncut='return false' onpaste='return fa
 		                  <tr>
 			                  <td class="reportHeaderCell" colspan="5" style="white-space: normal">
 			                  	<%= i++ %>. <%= bmoOrderGroup.getName().toHtml() %>
+			                  		<% if (bmoOrderGroup.getIsKit().toBoolean()) {  %>
+			                  			(<%= bmoOrderGroup.getDays().toDouble()%>
+			                  				<% if (bmoOrderGroup.getDays().toDouble() > 1) {%>
+			                  					D&iacute;as
+			                  				<% } else { %>
+			                  					D&iacute;a
+			                  				<% } %>
+			                  			)
+			                  		<% } %>
 			                  	<%	if (bmoOrderGroup.getDescription().toString().length() > 0) { %>
 			                  		<br><%= bmoOrderGroup.getDescription().toHtml() %>
 	                            <%	} %>
 			                  </td>
 			                  <td  class="reportHeaderCellRight">
 			                  	<% if (bmoOrderGroup.getShowAmount().toBoolean()) { %>
-			                  		<%= formatCurrency.format(bmoOrderGroup.getAmount().toDouble()) %>&nbsp;
+			                  		<% if (!bmoOrderGroup.getIsKit().toBoolean()) { %>
+			                  			<%= formatCurrency.format(bmoOrderGroup.getAmount().toDouble()) %>&nbsp;
+			                  		<% } else { %>
+			                  			<%= formatCurrency.format(bmoOrderGroup.getTotal().toDouble()) %>&nbsp;
+			                  		<% } %>
 			                  	<% } %>
 			                  </td>
 		                  </tr> 

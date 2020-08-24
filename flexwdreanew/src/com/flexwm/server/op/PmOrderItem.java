@@ -95,6 +95,7 @@ public class PmOrderItem extends PmObject {
 	@Override
 	public BmUpdateResult save(PmConn pmConn, BmObject bmObject, BmUpdateResult bmUpdateResult) throws SFException {
 		bmoOrderItem = (BmoOrderItem)bmObject;
+		
 		boolean newRecord = false;
 		if (!(bmoOrderItem.getId() > 0)) 
 			newRecord = true;
@@ -233,6 +234,18 @@ public class PmOrderItem extends PmObject {
 			bmoOrderItem.getIndex().setValue(nextIndex(pmConn, bmoOrderItem));
 		}
 
+		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			double discount = 0;
+			//Descuento
+			if (bmoOrderItem.getDiscountApplies().toBoolean()) {					
+					discount = bmoOrderItem.getAmount().toDouble() * (bmoOrderGroup.getDiscountRate().toDouble()/100);
+					bmoOrderItem.getDiscount().setValue(discount);
+			} else {
+				bmoOrderItem.getDiscount().setValue(0);
+			}		
+			bmoOrderItem.getAmount().setValue(bmoOrderItem.getAmount().toDouble() - discount );
+		}
+		
 		// Primero agrega el ultimo valor
 		super.save(pmConn, bmoOrderItem, bmUpdateResult);
 
@@ -481,11 +494,19 @@ public class PmOrderItem extends PmObject {
 		}
 
 		// Calcula el valor del item
-		bmoOrderItem.getAmount().setValue(
-				bmoOrderItem.getPrice().toDouble() * 
-				bmoOrderItem.getQuantity().toDouble() * 
-				bmoOrderItem.getDays().toDouble()
-				);
+		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			bmoOrderItem.getAmount().setValue((
+					bmoOrderItem.getPrice().toDouble() * 
+					bmoOrderItem.getQuantity().toDouble() * 
+					bmoOrderItem.getDays().toDouble()) - bmoOrderItem.getDiscount().toDouble()
+					);
+		} else {
+			bmoOrderItem.getAmount().setValue(
+					bmoOrderItem.getPrice().toDouble() * 
+					bmoOrderItem.getQuantity().toDouble() * 
+					bmoOrderItem.getDays().toDouble()
+					);
+		}
 
 		// Primero agrega el ultimo valor
 		super.save(pmConn, bmoOrderItem, bmUpdateResult);

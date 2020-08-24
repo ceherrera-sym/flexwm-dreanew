@@ -27,6 +27,7 @@ import com.flexwm.shared.fi.BmoCurrency;
 import com.flexwm.shared.cm.BmoQuote;
 import com.flexwm.shared.cm.BmoQuoteGroup;
 import com.flexwm.shared.cm.BmoQuoteItem;
+import com.flexwm.shared.cm.BmoQuoteMainGroup;
 import com.flexwm.shared.cm.BmoQuoteProperty;
 import com.flexwm.shared.op.BmoOrderType;
 import com.flexwm.shared.op.BmoProduct;
@@ -43,6 +44,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.cellview.client.CellBrowser;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -108,6 +110,8 @@ public class UiQuoteForm extends UiForm {
 	CheckBox showEquipmentPriceCheckBox = new CheckBox();
 	CheckBox showStaffQuantityCheckBox = new CheckBox();
 	CheckBox showStaffPriceCheckBox = new CheckBox();
+	
+	private UiFormFlexTable summaryFlexTable = new UiFormFlexTable(getUiParams());
 
 	protected FlowPanel formatPanel;
 
@@ -121,11 +125,16 @@ public class UiQuoteForm extends UiForm {
 	BmoQuoteGroup bmoQuoteGroup = new BmoQuoteGroup();
 	private HashMap<String, UiQuoteGroupGrid> quoteGroupUiMap = new HashMap<String, UiQuoteGroupGrid>();
 	private FlowPanel quoteGroupsPanel = new FlowPanel();
+	private FlowPanel quoteMainGroupsPanel = new FlowPanel();
 	private QuoteUpdater quoteUpdater = new QuoteUpdater();
 	private int selectedQuoteGroupId;
-	private Button addQuoteGroupButton = new Button("+GRUPO");
+	private Button addMainGroupButton = new Button("+GRUPO");
+	private Button addQuoteGroupButton = new Button();
+	private Button editGroupsButton = new Button("EDITAR GRUPOS");
 	private BmFilter bmoFilterQuoteGroup;
 	protected DialogBox quoteGroupDialogBox;
+	protected DialogBox mainGroupDialogBox;
+	protected DialogBox editMainGroupDialogBox;
 	private int quoteIdRpc = 0;
 	private int quoteIdRpcAttempt = 0;
 	private int quoteGroupsRpcAttempt = 0;
@@ -148,12 +157,12 @@ public class UiQuoteForm extends UiForm {
 	private FlowPanel productCellPanel = new FlowPanel();
 
 //	// Recursos
-	private UiQuoteEquipmentGrid quoteEquipmentGrid;
-	private FlowPanel quoteEquipmentPanel = new FlowPanel();
+//	private UiQuoteEquipmentGrid quoteEquipmentGrid;
+//	private FlowPanel quoteEquipmentPanel = new FlowPanel();
 
 	// Personal
-	private UiQuoteStaffGrid quoteStaffGrid;
-	private FlowPanel quoteStaffPanel = new FlowPanel();
+//	private UiQuoteStaffGrid quoteStaffGrid;
+//	private FlowPanel quoteStaffPanel = new FlowPanel();
 
 	// Inmuebles
 	private UiQuotePropertyGrid quotePropertyGrid;
@@ -185,6 +194,7 @@ public class UiQuoteForm extends UiForm {
 	private String propertySection = "Inmueble";
 	private String extrasSection = "Extras";
 	private String paritySection = "Moneda y Tipo de Cambio";
+	private String summarySection = "Resumen";
 	private String totalSection = "Totales";
 	private String statusSection = "Estatus";
 
@@ -253,7 +263,25 @@ public class UiQuoteForm extends UiForm {
 				addQuoteGroupDialog();
 			}
 		});
-
+		//Boton +grupo Dreanew
+		addMainGroupButton.setStyleName("formSaveButton");
+		addMainGroupButton.addClickHandler(new ClickHandler() {			
+			@Override
+			public void onClick(ClickEvent event) {
+				addMainGroupDialog();
+				
+			}
+		});
+		
+		//Editar Grupos Drea
+		
+		editGroupsButton.setStyleName("formSaveButton");
+		editGroupsButton.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				editMainGroupDialog();
+			}
+		});
+		
 		// Todas las operaciones con los items de productos 
 		addQuoteItemButton.setStyleName("formSaveButton");
 		addQuoteItemButton.addClickHandler(new ClickHandler() {
@@ -464,42 +492,51 @@ public class UiQuoteForm extends UiForm {
 					formFlexTable.addPanel(15, 0, quoteButtonPanel);
 				}
 				quoteButtonPanel.clear();
+				if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+					addQuoteGroupButton.setText("+SUBGRUPO");
+					quoteButtonPanel.add(addMainGroupButton);
+				}else {
+					addQuoteGroupButton.setText("+GRUPO");
+				}
 				quoteButtonPanel.add(addQuoteGroupButton);
 				quoteButtonPanel.add(addQuoteItemButton);
-				quoteButtonPanel.add(addKitButton);
+				quoteButtonPanel.add(addKitButton);				
 				quoteButtonPanel.add(copyQuoteDialogButton);
+				if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+					quoteButtonPanel.add(editGroupsButton);
+				}
 				formFlexTable.addPanel(16, 0, quoteGroupsPanel, 2);
 			}
 
 //			// Recursos
-			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
-				formFlexTable.addSectionLabel(17, 0, equipmentSection, 2);
-				// Panel de Checkboxes
-				FlowPanel checkBoxPanel = new FlowPanel();
-				checkBoxPanel.setWidth("100%");
-				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showEquipmentQuantityCheckBox, bmoQuote.getShowEquipmentQuantity()));
-				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showEquipmentPriceCheckBox, bmoQuote.getShowEquipmentPrice()));
-				formFlexTable.addLabelCell(18, 0, "Mostrar:");
-				formFlexTable.addPanel(18, 1, checkBoxPanel, 1);
-				formFlexTable.addPanel(19, 0, quoteEquipmentPanel, 2);
-				quoteEquipmentGrid = new UiQuoteEquipmentGrid(getUiParams(), quoteEquipmentPanel, bmoQuote, quoteUpdater);
-				quoteEquipmentGrid.show();
-			}
+//			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+//				formFlexTable.addSectionLabel(17, 0, equipmentSection, 2);
+//				// Panel de Checkboxes
+//				FlowPanel checkBoxPanel = new FlowPanel();
+//				checkBoxPanel.setWidth("100%");
+//				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showEquipmentQuantityCheckBox, bmoQuote.getShowEquipmentQuantity()));
+//				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showEquipmentPriceCheckBox, bmoQuote.getShowEquipmentPrice()));
+//				formFlexTable.addLabelCell(18, 0, "Mostrar:");
+//				formFlexTable.addPanel(18, 1, checkBoxPanel, 1);
+//				formFlexTable.addPanel(19, 0, quoteEquipmentPanel, 2);
+//				quoteEquipmentGrid = new UiQuoteEquipmentGrid(getUiParams(), quoteEquipmentPanel, bmoQuote, quoteUpdater);
+//				quoteEquipmentGrid.show();
+//			}
 //
 //			// Personal
-			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
-				formFlexTable.addSectionLabel(21, 0, staffSection, 2);
-				// Panel de Checkboxes
-				FlowPanel checkBoxPanel = new FlowPanel();
-				checkBoxPanel.setWidth("100%");
-				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showStaffQuantityCheckBox, bmoQuote.getShowStaffQuantity()));
-				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showStaffPriceCheckBox, bmoQuote.getShowStaffPrice()));
-				formFlexTable.addLabelCell(22, 0, "Mostrar:");
-				formFlexTable.addPanel(22, 1, checkBoxPanel, 1);
-				formFlexTable.addPanel(23, 0, quoteStaffPanel, 2);
-				quoteStaffGrid = new UiQuoteStaffGrid(getUiParams(), quoteStaffPanel, bmoQuote, quoteUpdater);
-				quoteStaffGrid.show();
-			}
+//			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+//				formFlexTable.addSectionLabel(21, 0, staffSection, 2);
+//				// Panel de Checkboxes
+//				FlowPanel checkBoxPanel = new FlowPanel();
+//				checkBoxPanel.setWidth("100%");
+//				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showStaffQuantityCheckBox, bmoQuote.getShowStaffQuantity()));
+//				checkBoxPanel.add(formFlexTable.getCheckBoxPanel(showStaffPriceCheckBox, bmoQuote.getShowStaffPrice()));
+//				formFlexTable.addLabelCell(22, 0, "Mostrar:");
+//				formFlexTable.addPanel(22, 1, checkBoxPanel, 1);
+//				formFlexTable.addPanel(23, 0, quoteStaffPanel, 2);
+//				quoteStaffGrid = new UiQuoteStaffGrid(getUiParams(), quoteStaffPanel, bmoQuote, quoteUpdater);
+//				quoteStaffGrid.show();
+//			}
 
 			// Inmuebles
 			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_PROPERTY)) {
@@ -518,27 +555,34 @@ public class UiQuoteForm extends UiForm {
 			formFlexTable.addField(29, 0, coveregeParityCheckBox, bmoQuote.getCoverageParity());
 			formFlexTable.addField(30, 0, currencyListBox, bmoQuote.getCurrencyId());
 			formFlexTable.addField(31, 0, currencyParityTextBox, bmoQuote.getCurrencyParity());
+			
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				formFlexTable.addSectionLabel(32, 0,summarySection, 2);
+				formFlexTable.addPanel(33, 0, quoteMainGroupsPanel, 2);
+				quoteMainGroupsPanel.add(summaryFlexTable);
+			}
 
-			formFlexTable.addSectionLabel(32, 0, totalSection, 2);
-			formFlexTable.addFieldReadOnly(33, 0, amountTextBox, bmoQuote.getAmount());
-			formFlexTable.addField(34, 0, discountTextBox, bmoQuote.getDiscount());
-			formFlexTable.addButtonCell(34, 0, extrasButton);
-			formFlexTable.addField(35, 0, taxAppliesCheckBox, bmoQuote.getTaxApplies());
-			formFlexTable.addFieldReadOnly(36, 0, taxTextBox, bmoQuote.getTax());
-			formFlexTable.addFieldReadOnly(37, 0, totalTextBox, bmoQuote.getTotal());
-			formFlexTable.addField(38, 0, descriptionTextArea, bmoQuote.getDescription());
-			formFlexTable.addField(39, 0, commentsTextArea, bmoQuote.getComments());
+			formFlexTable.addSectionLabel(34, 0, totalSection, 2);
+			formFlexTable.addFieldReadOnly(35, 0, amountTextBox, bmoQuote.getAmount());
+			formFlexTable.addField(36, 0, discountTextBox, bmoQuote.getDiscount());
+			formFlexTable.addButtonCell(37, 0, extrasButton);
+			formFlexTable.addField(38, 0, taxAppliesCheckBox, bmoQuote.getTaxApplies());
+			formFlexTable.addFieldReadOnly(39, 0, taxTextBox, bmoQuote.getTax());
+			formFlexTable.addFieldReadOnly(40, 0, totalTextBox, bmoQuote.getTotal());
+			formFlexTable.addField(41, 0, descriptionTextArea, bmoQuote.getDescription());
+			formFlexTable.addField(42, 0, commentsTextArea, bmoQuote.getComments());
 
-			formFlexTable.addSectionLabel(40, 0, statusSection, 2);
-			formFlexTable.addLabelField(41, 0, bmoQuote.getAuthNum());			
+			formFlexTable.addSectionLabel(43, 0, statusSection, 2);
+			formFlexTable.addLabelField(44, 0, bmoQuote.getAuthNum());			
 			if (bmoQuote.getStatus().toChar() == BmoQuote.STATUS_AUTHORIZED) 
-				formFlexTable.addLabelField(42, 0, bmoQuote.getAuthorizedDate());
+				formFlexTable.addLabelField(45, 0, bmoQuote.getAuthorizedDate());
 			else if (bmoQuote.getStatus().toChar() == BmoQuote.STATUS_CANCELLED)
-				formFlexTable.addLabelField(43, 0, bmoQuote.getCancelledDate());
-			formFlexTable.addField(44, 0, statusListBox, bmoQuote.getStatus());
+				formFlexTable.addLabelField(46, 0, bmoQuote.getCancelledDate());
+			formFlexTable.addField(47, 0, statusListBox, bmoQuote.getStatus());
 			
 			listQuoteGroups();
 			reset();
+			quoteMainGroupsPanel.add(new UiFormFlexTable(getUiParams()));
 
 		} else {
 			formFlexTable.addField(12, 0, currencyListBox, bmoQuote.getCurrencyId());
@@ -692,6 +736,7 @@ public class UiQuoteForm extends UiForm {
 			showEquipmentPriceCheckBox.setEnabled(false);
 			showStaffQuantityCheckBox.setEnabled(false);
 			showStaffPriceCheckBox.setEnabled(false);
+			
 			
 			if (bmoQuote.getStatus().equals(BmoQuote.STATUS_AUTHORIZED) 
 					&& getSFParams().hasSpecialAccess(BmoOpportunity.ACCESS_CHANGESALESMANINQUOTAUT)
@@ -876,15 +921,16 @@ public class UiQuoteForm extends UiForm {
 			quoteGroupListStatusEffect();
 		}
 
-		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
-			quoteEquipmentGrid.show();
-			quoteStaffGrid.show();
-		}
+//		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+//			quoteEquipmentGrid.show();
+//			quoteStaffGrid.show();			
+//		}
 
 		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_PROPERTY)) {
 			quotePropertyGrid.show();
 			quotePropertyModelExtraGrid.show();
 		}
+		
 	}
 
 	public void updateQuoteGroup(String quoteGroupId) {
@@ -912,6 +958,12 @@ public class UiQuoteForm extends UiForm {
 	public void setUpdateDataQuote(BmoQuote bmoQuote) {
 		nameTextBox.setText(bmoQuote.getName().toString());
 		companyListBox.setSelectedId(bmoQuote.getCompanyId().toString());
+// 		Solo para Drea
+		if (bmoOpportunity.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL) ) {
+			BmFilter bmFilter = new BmFilter();
+			bmFilter.setValueFilter(new BmoQuoteMainGroup().getKind(), new BmoQuoteMainGroup().getQuoteId(), bmoOpportunity.getQuoteId().toInteger());
+			getMainGroups(bmFilter,new BmoQuoteMainGroup());
+		}
 //		if (((BmoFlexConfig) getSFParams().getBmoAppConfig()).getEnableWorkBudgetItem().toBoolean()) {
 //			budgetItemUiListBox.setSelectedId(bmoQuote.getBudgetItemId().toString());
 //			populateBudgetItems(bmoQuote.getCompanyId().toInteger());
@@ -1109,6 +1161,8 @@ public class UiQuoteForm extends UiForm {
 		quoteGroupGrid.show();
 
 		quoteGroupUiMap.put("" + quoteGroupId, quoteGroupGrid);
+		
+		
 	}
 
 	//	public void listQuoteGroups(){
@@ -1175,6 +1229,46 @@ public class UiQuoteForm extends UiForm {
 			}
 		}
 	}
+	public void setMainQuoteGroupList(ArrayList<BmObject> quoteMainGroupList) {
+		BmoQuoteMainGroup bmoQuoteMainGroup =  new BmoQuoteMainGroup();
+		quoteMainGroupsPanel.setWidth("100%");
+		quoteMainGroupsPanel.addStyleName("separator");
+		int row = 0;
+		Iterator<BmObject> quoteMainGroupIterator = quoteMainGroupList.iterator();
+		while (quoteMainGroupIterator.hasNext()) {
+			bmoQuoteMainGroup = (BmoQuoteMainGroup)quoteMainGroupIterator.next();
+			TextBox amounTextBox = new TextBox();
+			TextBox discountTextBox = new TextBox();
+			TextBox feeTextBox = new TextBox();
+			TextBox commissionTextBox = new TextBox();
+			TextBox totalTextBox = new TextBox();
+			
+			//Total de Grupo
+			try {
+				bmoQuoteMainGroup.getTotal().setValue(bmoQuoteMainGroup.getAmount().toDouble() - bmoQuoteMainGroup.getDiscount().toDouble() + bmoQuoteMainGroup.getProductionFee().toDouble() - bmoQuoteMainGroup.getCommission().toDouble());
+			} catch (BmException e) {
+				e.printStackTrace();
+			}
+			
+			summaryFlexTable.addSectionLabel(row++,0, bmoQuoteMainGroup.getName().toString(),  2);
+			summaryFlexTable.addFieldReadOnly(row++, 0, amounTextBox,bmoQuoteMainGroup.getAmount());
+			summaryFlexTable.addFieldReadOnly(row++, 0, discountTextBox,bmoQuoteMainGroup.getDiscount());
+			summaryFlexTable.addFieldReadOnly(row++, 0, feeTextBox,bmoQuoteMainGroup.getProductionFee());
+			summaryFlexTable.addFieldReadOnly(row++, 0, commissionTextBox,bmoQuoteMainGroup.getCommission());		
+			summaryFlexTable.addFieldReadOnly(row++, 0, totalTextBox,bmoQuoteMainGroup.getTotal());
+			
+			numberFormat = NumberFormat.getCurrencyFormat();
+			
+			amounTextBox.setText(numberFormat.format(bmoQuoteMainGroup.getAmount().toDouble()));
+			discountTextBox.setText(numberFormat.format(bmoQuoteMainGroup.getDiscount().toDouble()));
+			feeTextBox.setText(numberFormat.format(bmoQuoteMainGroup.getProductionFee().toDouble()));
+			commissionTextBox.setText(numberFormat.format(bmoQuoteMainGroup.getCommission().toDouble()));
+			totalTextBox.setText(numberFormat.format(bmoQuoteMainGroup.getTotal().toDouble()));
+			
+			summaryFlexTable.hideSection(bmoQuoteMainGroup.getName().toString());
+			
+		}
+	}
 
 	public void setQuoteGroupList(ArrayList<BmObject> quoteGroupList) {
 		quoteGroupsPanel.clear();
@@ -1183,6 +1277,41 @@ public class UiQuoteForm extends UiForm {
 		while (quoteGroupIterator.hasNext()) {
 			BmoQuoteGroup bmoQuoteGroup = (BmoQuoteGroup)quoteGroupIterator.next();
 			addQuoteGroup(bmoQuoteGroup.getId());
+		}
+		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			BmoQuoteMainGroup bmoQuoteMainGroup = new BmoQuoteMainGroup();
+			BmFilter mainGroupsFilter = new BmFilter();
+			summaryFlexTable.clear();
+			mainGroupsFilter.setValueFilter(bmoQuoteMainGroup.getKind(), bmoQuoteMainGroup.getQuoteId(), bmoQuote.getId());
+			getMainGroups(mainGroupsFilter,bmoQuoteMainGroup);
+			
+		}
+	}
+	
+	public void getMainGroups(BmFilter bmFilter, BmoQuoteMainGroup bmoQuoteMainGroup) {
+		
+		AsyncCallback<ArrayList<BmObject>> callback = new AsyncCallback<ArrayList<BmObject>>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				stopLoading();				
+				showErrorMessage(this.getClass().getName() + "-listQuoteGroups() ERROR: " + caught.toString());		
+			}
+			@Override
+			public void onSuccess(ArrayList<BmObject> result) {
+				stopLoading();
+				setMainQuoteGroupList(result);	
+			}
+		};
+		try {
+			if (!isLoading()) {
+				startLoading();
+				getUiParams().getBmObjectServiceAsync().list(bmoQuoteMainGroup.getPmClass(), bmFilter, callback);
+			} else {
+				showSystemMessage("No se puede mostrar listado, esta cargando...");
+			}
+		} catch (SFException e) {
+			stopLoading();
+			showErrorMessage(this.getClass().getName() + "-listQuoteGroups() ERROR: " + e.toString());
 		}
 	}
 
@@ -1193,7 +1322,11 @@ public class UiQuoteForm extends UiForm {
 	public void addQuoteGroupDialog() {
 		quoteGroupDialogBox = new DialogBox(true);
 		quoteGroupDialogBox.setGlassEnabled(true);
-		quoteGroupDialogBox.setText("Grupo de Cotización");
+		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			quoteGroupDialogBox.setText("Sub-Grupo de Cotización");
+		} else {
+			quoteGroupDialogBox.setText("Grupo de Cotización");
+		}
 
 		VerticalPanel vp = new VerticalPanel();
 		vp.setSize("400px", "150px");
@@ -1205,6 +1338,40 @@ public class UiQuoteForm extends UiForm {
 
 		quoteGroupDialogBox.center();
 		quoteGroupDialogBox.show();
+	}
+	public void editMainGroupDialog() {
+		editMainGroupDialogBox = new DialogBox();
+		editMainGroupDialogBox.setGlassEnabled(true);
+		editMainGroupDialogBox.setText("Editar Grupos");
+		
+		VerticalPanel vp = new VerticalPanel();
+		vp.setSize("400px", "150px");
+		
+		editMainGroupDialogBox.setWidget(vp);
+		
+		UiEditMainGroup uiEditMainGroup = new UiEditMainGroup(getUiParams(), vp,bmoOpportunity.getQuoteId().toInteger());
+		uiEditMainGroup.show();
+		
+		editMainGroupDialogBox.center();
+		editMainGroupDialogBox.show();
+		
+		
+	}
+	public void addMainGroupDialog() {
+		mainGroupDialogBox = new DialogBox(true);
+		mainGroupDialogBox.setGlassEnabled(true);
+		mainGroupDialogBox.setText("Grupo de Cotización");
+
+		VerticalPanel vp = new VerticalPanel();
+		vp.setSize("400px", "150px");
+
+		mainGroupDialogBox.setWidget(vp);
+
+		UiMainGroupForm uiMainGroupForm = new UiMainGroupForm(getUiParams(), vp, bmoQuote.getId());
+		uiMainGroupForm.show();
+
+		mainGroupDialogBox.center();
+		mainGroupDialogBox.show();
 	}
 
 	public void addProduct(BmoProduct bmoProduct) {
@@ -1341,7 +1508,234 @@ public class UiQuoteForm extends UiForm {
 	public void setQuoteGroupsRpcAttempt(int quoteGroupsRpcAttempt) {
 		this.quoteGroupsRpcAttempt = quoteGroupsRpcAttempt;
 	}
+	private class UiEditMainGroup extends Ui{
+		private UiFormFlexTable formTable = new UiFormFlexTable(getUiParams());
+		private BmoQuoteMainGroup  bmoQuoteMainGroup;
+		private TextBox nameTextBox = new TextBox();
+		private Button saveButton = new Button("GUARDAR");
+		private Button deleteButton = new Button("ELIMINAR");
+		private Button closeButton  = new Button("CERRAR");
+		private HorizontalPanel buttonPanel = new HorizontalPanel();
+		
+		UiListBox mainGroupListBox ;		
+		
+		public UiEditMainGroup(UiParams uiParams,Panel defaultPanel,int quoteId) {
+			super(uiParams, defaultPanel);
+			bmoQuoteMainGroup = new BmoQuoteMainGroup();
+			
+			defaultPanel.add(formTable);
+			
+			BmFilter bmFilter = new BmFilter();
+			bmFilter.setValueFilter(bmoQuoteMainGroup.getKind(), bmoQuoteMainGroup.getQuoteId(), quoteId);
+			mainGroupListBox = new UiListBox(getUiParams(), bmoQuoteMainGroup, bmFilter);
+			
+			deleteButton.setStyleName("formSaveButton");
+			deleteButton.addClickHandler(new ClickHandler() {
+				public void onClick(ClickEvent event) {
+					if (Window.confirm("Desea eliminar el Grupo?"))
+						deleteMainGroup();
+				}
+			});
+			
+			closeButton.setStyleName("formSaveButton");
+			closeButton.addClickHandler(new ClickHandler() {
+				public void onClick(ClickEvent event) {
+					editMainGroupDialogBox.hide();
+				}
+			});
+			
+			saveButton.setStyleName("formSaveButton");
+			saveButton.addClickHandler(new ClickHandler() {
+				public void onClick(ClickEvent event) {
+					prepareSave();
+				}
+			});
+			
+			mainGroupListBox.addChangeHandler(new ChangeHandler() {				
+				@Override
+				public void onChange(ChangeEvent event) {
+					changeMainGroup();
+				}
+			});
+			
+			buttonPanel.add(saveButton);
+			buttonPanel.add(deleteButton);
+			buttonPanel.add(closeButton);
+		}
+		
+		public void show(){
+			formTable.addField(0, 0, mainGroupListBox, bmoQuoteMainGroup.getIdField());
+			formTable.addField(1, 0, nameTextBox, bmoQuoteMainGroup.getName());
+			
+			nameTextBox.setEnabled(false);
+			
+			formTable.addButtonPanel(buttonPanel);
+		}
+		private void changeMainGroup() {
+		
+			if (mainGroupListBox.getBmObject() != null) {
+				bmoQuoteMainGroup = (BmoQuoteMainGroup)mainGroupListBox.getSelectedBmObject() ;
+				nameTextBox.setText(bmoQuoteMainGroup.getName().toString());
+				nameTextBox.setEnabled(true);
+			}
+		}
+		private void prepareSave() {
+			try {
+				bmoQuoteMainGroup.setId(mainGroupListBox.getSelectedId());
+				bmoQuoteMainGroup.getName().setValue(nameTextBox.getText());
+				bmoQuoteMainGroup.getQuoteId().setValue(bmoOpportunity.getQuoteId().toInteger());
+				save();
+			}catch (Exception e) {
+				showErrorMessage(this.getClass().getName() + "-prepareSave() ERROR: " + e.toString());
+			}
+		}
+		
+		private void save() {
+			// Establece eventos ante respuesta de servicio
+			AsyncCallback<BmUpdateResult> callback = new AsyncCallback<BmUpdateResult>() {
+				public void onFailure(Throwable caught) {
+					stopLoading();
+					showErrorMessage(this.getClass().getName() + "-save() ERROR: " + caught.toString());
+				}
 
+				public void onSuccess(BmUpdateResult result) {
+					stopLoading();
+					processUpdateResult(result);
+				}
+			};
+
+			// Llamada al servicio RPC
+			try {
+				if (!isLoading()) {
+					startLoading();
+					getUiParams().getBmObjectServiceAsync().save(bmoQuoteMainGroup.getPmClass(), bmoQuoteMainGroup, callback);
+				}
+			} catch (SFException e) {
+				stopLoading();
+				showErrorMessage(this.getClass().getName() + "-save() ERROR: " + e.toString());
+			}
+		}
+		
+		private void deleteMainGroup() {
+			if(mainGroupListBox.getSelectedBmObject() != null) {
+				AsyncCallback<BmUpdateResult> callback = new AsyncCallback<BmUpdateResult>() {
+					public void onFailure(Throwable caught) {
+						stopLoading();
+						showErrorMessage(this.getClass().getName() + "-deleteMainGroup() ERROR: " + caught.toString());
+					}
+
+					public void onSuccess(BmUpdateResult result) {
+						stopLoading();
+						processUpdateResult(result);
+						reset();
+						
+					}
+				};
+
+				// Llamada al servicio RPC
+				try {
+					if (!isLoading()) {
+						startLoading();
+						getUiParams().getBmObjectServiceAsync().delete(bmoQuoteMainGroup.getPmClass(), bmoQuoteMainGroup, callback);
+					}
+				} catch (SFException e) {
+					stopLoading();
+					showErrorMessage(this.getClass().getName() + "-deleteMainGroup() ERROR: " + e.toString());
+				}
+			} else {
+				showErrorMessage("Seleccione un Grupo");
+			}
+		}
+		
+		public void processUpdateResult(BmUpdateResult bmUpdateResult) {
+			if (bmUpdateResult.hasErrors()) showErrorMessage(this.getClass().getName() + "-processUpdateResult() ERROR: " + bmUpdateResult.errorsToString());
+			else {
+				editMainGroupDialogBox.hide();
+				listQuoteGroups();
+			}
+		}
+		
+	}
+	//From nuevo nivel grupo Dreanew
+	private class UiMainGroupForm extends Ui {
+		private UiFormFlexTable formTable = new UiFormFlexTable(getUiParams());
+		private TextBox nameTextBox = new TextBox();
+		private BmoQuoteMainGroup  bmoQuoteMainGroup;
+		private int quoteId;
+		private Button saveButton = new Button("AGREGAR");
+		private HorizontalPanel buttonPanel = new HorizontalPanel();
+		
+		public UiMainGroupForm(UiParams uiParams, Panel defaultPanel, int quoteId) {
+			super(uiParams, defaultPanel);
+			bmoQuoteMainGroup = new BmoQuoteMainGroup();
+			this.quoteId = quoteId;
+			
+			saveButton.setStyleName("formSaveButton");
+			saveButton.addClickHandler(new ClickHandler() {
+				public void onClick(ClickEvent event) {
+					prepareSave();
+				}
+			});
+			
+			saveButton.setVisible(false);
+			if (getSFParams().hasWrite(bmoQuoteGroup.getProgramCode())) saveButton.setVisible(true);
+			buttonPanel.add(saveButton);
+			
+			defaultPanel.add(formTable);
+		}
+		
+		public void show(){
+			bmoQuoteMainGroup = new BmoQuoteMainGroup();
+			formTable.addField(1, 0, nameTextBox, bmoQuoteMainGroup.getName());
+			
+			formTable.addButtonPanel(buttonPanel);
+		}
+		
+		public void prepareSave() {
+			try {
+				bmoQuoteMainGroup = new BmoQuoteMainGroup();
+				
+				bmoQuoteMainGroup.getName().setValue(nameTextBox.getText());
+				bmoQuoteMainGroup.getQuoteId().setValue(quoteId);
+				
+				save();
+			} catch (BmException e) {
+				showErrorMessage(this.getClass().getName() + "-prepareSave() ERROR: " + e.toString());
+			}
+		}
+		public void save() {
+			// Establece eventos ante respuesta de servicio
+			AsyncCallback<BmUpdateResult> callback = new AsyncCallback<BmUpdateResult>() {
+				public void onFailure(Throwable caught) {
+					stopLoading();
+					showErrorMessage(this.getClass().getName() + "-save() ERROR: " + caught.toString());
+				}
+
+				public void onSuccess(BmUpdateResult result) {
+					stopLoading();
+					processUpdateResult(result);
+				}
+			};
+
+			// Llamada al servicio RPC
+			try {
+				if (!isLoading()) {
+					startLoading();
+					getUiParams().getBmObjectServiceAsync().save(bmoQuoteMainGroup.getPmClass(), bmoQuoteMainGroup, callback);
+				}
+			} catch (SFException e) {
+				stopLoading();
+				showErrorMessage(this.getClass().getName() + "-save() ERROR: " + e.toString());
+			}
+		}
+		public void processUpdateResult(BmUpdateResult bmUpdateResult) {
+			if (bmUpdateResult.hasErrors()) showErrorMessage(this.getClass().getName() + "-processUpdateResult() ERROR: " + bmUpdateResult.errorsToString());
+			else {
+				mainGroupDialogBox.hide();
+				listQuoteGroups();
+			}
+		}
+	}
 
 	private class UiQuoteGroupForm extends Ui {
 		private UiFormFlexTable formTable = new UiFormFlexTable(getUiParams());
@@ -1349,6 +1743,7 @@ public class UiQuoteForm extends UiForm {
 		private CheckBox showQuantityCheckBox = new CheckBox();
 		private CheckBox showPriceCheckBox = new CheckBox();
 		private CheckBox showAmountCheckBox = new CheckBox();
+		private UiSuggestBox mainGroupIdSuggestBox = new UiSuggestBox(new BmoQuoteMainGroup());
 		private CheckBox showProductImageCheckBox = new CheckBox();
 		private CheckBox showGroupImageCheckBox = new CheckBox();
 		private UiFileUploadBox imageFileUpload = new UiFileUploadBox(getUiParams());
@@ -1356,8 +1751,9 @@ public class UiQuoteForm extends UiForm {
 		private BmoQuoteGroup bmoQuoteGroup;
 		private Button saveButton = new Button("AGREGAR");
 		private HorizontalPanel buttonPanel = new HorizontalPanel();
-		private int quoteId;
-
+		private int quoteId; 
+		
+		
 		public UiQuoteGroupForm(UiParams uiParams, Panel defaultPanel, int quoteId) {
 			super(uiParams, defaultPanel);
 			bmoQuoteGroup = new BmoQuoteGroup();
@@ -1374,10 +1770,11 @@ public class UiQuoteForm extends UiForm {
 			buttonPanel.add(saveButton);
 
 			defaultPanel.add(formTable);
+			
+			
 		}
 
-		public void show(){
-
+		public void show(){			
 			// Por defecto mostrar Cantidad, Precio, Subtotal y Img. Prod
 			try {
 				bmoQuoteGroup.getShowQuantity().setValue(true);
@@ -1391,7 +1788,16 @@ public class UiQuoteForm extends UiForm {
 			} catch (BmException e) {
 				showSystemMessage("No se pudo validar, valídelo manual: " + e.toString());
 			}	
-
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				//filtro solo grupos de la cotización
+				BmFilter quotMainGroupFilter = new BmFilter();
+				BmoQuoteMainGroup bmoQuoteMainGroup = new BmoQuoteMainGroup();				
+				quotMainGroupFilter.setValueFilter(bmoQuoteMainGroup.getKind(), bmoQuoteMainGroup.getQuoteId(), quoteId);
+				mainGroupIdSuggestBox = new UiSuggestBox(bmoQuoteMainGroup , quotMainGroupFilter);
+				formTable.addField(0, 0, mainGroupIdSuggestBox,bmoQuoteGroup.getMainGroupId());
+			}
+			
+			
 			formTable.addField(1, 0, nameTextBox, bmoQuoteGroup.getName());
 			formTable.addField(2, 0, showQuantityCheckBox, bmoQuoteGroup.getShowQuantity());
 			formTable.addField(3, 0, showAmountCheckBox, bmoQuoteGroup.getShowAmount());
@@ -1426,6 +1832,9 @@ public class UiQuoteForm extends UiForm {
 				bmoQuoteGroup.getPayConditionId().setValue(payConditionUiListBox.getSelectedId());
 				bmoQuoteGroup.getQuoteId().setValue(quoteId);
 				bmoQuoteGroup.getAmount().setValue(0);
+				if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+					bmoQuoteGroup.getMainGroupId().setValue(mainGroupIdSuggestBox.getSelectedId());
+				}
 				save();
 			} catch (BmException e) {
 				showErrorMessage(this.getClass().getName() + "-prepareSave() ERROR: " + e.toString());
@@ -1468,6 +1877,7 @@ public class UiQuoteForm extends UiForm {
 		private TextArea descriptionTextArea = new TextArea();
 		private TextBox priceTextBox = new TextBox();
 		private CheckBox commissionCheckBox = new CheckBox();
+		private CheckBox discountAply = new CheckBox();
 		private BmoQuoteItem bmoQuoteItem;
 		private Button saveButton = new Button("AGREGAR");
 		private HorizontalPanel buttonPanel = new HorizontalPanel();
@@ -1499,7 +1909,16 @@ public class UiQuoteForm extends UiForm {
 				}
 			};
 			formTable.setUiSuggestBoxAction(uiSuggestBoxAction);
+			
+			listChangeHandler = new ChangeHandler() {
+				@Override
+				public void onChange(ChangeEvent event) {
+					formListChangeItem(event);
+				}
+			};
 
+			formTable.setListChangeHandler(listChangeHandler);
+			
 			saveButton.setStyleName("formSaveButton");
 			saveButton.addClickHandler(new ClickHandler() {
 				public void onClick(ClickEvent event) {
@@ -1552,25 +1971,27 @@ public class UiQuoteForm extends UiForm {
 			formTable.addField(1, 0, productSuggestBox, bmoQuoteItem.getProductId());
 			formTable.addLabelField(2, 0, "En Almacén", stockQuantity);
 			formTable.addLabelField(3, 0, "En Cotización", lockedQuantity);
-			formTable.addField(4, 0, nameTextBox, bmoQuoteItem.getName());
-			formTable.addField(5, 0, descriptionTextArea, bmoQuoteItem.getDescription());
-			formTable.addField(6, 0, quantityTextBox, bmoQuoteItem.getQuantity());
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL))
+				formTable.addField(4, 0, discountAply,bmoQuoteItem.getDiscountApplies()); 
+			formTable.addField(5, 0, nameTextBox, bmoQuoteItem.getName());
+			formTable.addField(6, 0, descriptionTextArea, bmoQuoteItem.getDescription());
+			formTable.addField(7, 0, quantityTextBox, bmoQuoteItem.getQuantity());
 			// Si es de renta, mostrar días
 			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) 
-				formTable.addField(7, 0, daysTextBox, bmoQuoteItem.getDays());
+				formTable.addField(8, 0, daysTextBox, bmoQuoteItem.getDays());
 			if (getSFParams().isFieldEnabled(bmoQuoteItem.getCommission()))
-				formTable.addField(8, 0, commissionCheckBox, bmoQuoteItem.getCommission());
-			formTable.addField(9, 0, priceTextBox, bmoQuoteItem.getPrice());
+				formTable.addField(9, 0, commissionCheckBox, bmoQuoteItem.getCommission());
+			formTable.addField(10, 0, priceTextBox, bmoQuoteItem.getPrice());
 			if ((((BmoFlexConfig)getSFParams().getBmoAppConfig()).getEnableWorkBudgetItem().toInteger() > 0)) {
 				setBudgetItemsListBoxFilters(bmoQuote.getCompanyId().toInteger());
-				formTable.addField(10, 0, budgetItemUiListBox, bmoQuoteItem.getBudgetItemId());
-				formTable.addField(11, 0, areaUiListBox, bmoQuoteItem.getAreaId());
+				formTable.addField(11, 0, budgetItemUiListBox, bmoQuoteItem.getBudgetItemId());
+				formTable.addField(12, 0, areaUiListBox, bmoQuoteItem.getAreaId());
 			}
 			
-			formTable.addField(12, 0, quoteGroupListBox, bmoQuoteItem.getQuoteGroupId());
+			formTable.addField(13, 0, quoteGroupListBox, bmoQuoteItem.getQuoteGroupId());
 
 			formTable.addButtonPanel(buttonPanel);
-
+			discountAply.setEnabled(false);
 			statusEffect();
 		}
 		
@@ -1621,17 +2042,33 @@ public class UiQuoteForm extends UiForm {
 						else 
 							commissionCheckBox.setValue(false);
 					}
-				}
+				}				
 				statusEffect();
+			}			
+		}
+		public void formListChangeItem(ChangeEvent event) {			
+			if (event.getSource() == quoteGroupListBox) {
+				if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+					bmoQuoteGroup = (BmoQuoteGroup)quoteGroupListBox.getSelectedBmObject();
+					if (bmoQuoteGroup.getDiscountApplies().toBoolean()) {
+						discountAply.setEnabled(true);
+						discountAply.setValue(true);
+					} else {
+						discountAply.setEnabled(false);
+						discountAply.setValue(false);
+					}
+				} 
 			}
 		}
+		
 
 		public void statusEffect() {	
-
+			
 			nameTextBox.setText("");
 			nameTextBox.setEnabled(false);
 			priceTextBox.setText("");
 			priceTextBox.setEnabled(false);
+			
 
 			if (productSuggestBox.getSelectedId() > 0) {
 				productId = "" + productSuggestBox.getSelectedId();
@@ -1901,7 +2338,7 @@ public class UiQuoteForm extends UiForm {
 					bmoQuoteItem.getBudgetItemId().setValue(budgetItemUiListBox.getSelectedId());
 					bmoQuoteItem.getAreaId().setValue(areaUiListBox.getSelectedId());
 				}
-				
+				bmoQuoteItem.getDiscountApplies().setValue(discountAply.getValue());
 				if (!quoteGroupListBox.getSelectedId().equals(""))
 					selectedQuoteGroupId = Integer.parseInt(quoteGroupListBox.getSelectedId());
 
@@ -2051,7 +2488,8 @@ public class UiQuoteForm extends UiForm {
 		private UiListBox productKitListBox = new UiListBox(getUiParams(), new BmoProductKit());
 		private BmoProductKit bmoProductKit;
 		private TextArea descriptionTextArea = new TextArea();
-		private TextBox amountTextBox  = new TextBox();
+		private TextBox amountTextBox  = new TextBox();		
+		private UiSuggestBox mainGroupSuggestBox = new UiSuggestBox(new BmoQuoteMainGroup());
 		private int quoteId;
 
 		public UiQuoteKitForm(UiParams uiParams, Panel defaultPanel, int quoteId, BmoProductKit bmoProductKit) {
@@ -2088,6 +2526,14 @@ public class UiQuoteForm extends UiForm {
 		}
 
 		public void show(){
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				BmFilter bmFilter = new BmFilter();
+				BmoQuoteMainGroup bmoQuoteMainGroup = new BmoQuoteMainGroup();
+				
+				bmFilter.setValueFilter(bmoQuoteMainGroup.getKind(), bmoQuoteMainGroup.getQuoteId(), quoteId);
+				mainGroupSuggestBox = new UiSuggestBox(bmoQuoteMainGroup , bmFilter);
+				formTable.addField(0, 0, mainGroupSuggestBox, bmoQuoteGroup.getMainGroupId());
+			}
 			formTable.addField(1, 0, productKitListBox, bmoProductKit.getIdField());
 			formTable.addField(2, 0, descriptionTextArea, bmoProductKit.getDescription());
 			formTable.addField(3, 0, amountTextBox, bmoProductKit.getAmount());
@@ -2126,6 +2572,7 @@ public class UiQuoteForm extends UiForm {
 				bmoQuoteGroup.getShowPrice().setValue(false);
 				bmoQuoteGroup.getShowAmount().setValue(true);
 				bmoQuoteGroup.getQuoteId().setValue(quoteId);
+				bmoQuoteGroup.getMainGroupId().setValue(mainGroupSuggestBox.getSelectedId());
 				addKitAction();
 			} catch (BmException e) {
 				showErrorMessage(this.getClass().getName() + "-prepareAddKitAction() ERROR: " + e.toString());
@@ -2162,7 +2609,7 @@ public class UiQuoteForm extends UiForm {
 			if (bmUpdateResult.hasErrors()) showErrorMessage(this.getClass().getName() + "-processAddKitActionUpdateResult() ERROR: " + bmUpdateResult.errorsToString());
 			else {
 				quoteItemDialogBox.hide();
-				listQuoteGroups();
+				listQuoteGroups();				
 				reset();
 			}
 		}

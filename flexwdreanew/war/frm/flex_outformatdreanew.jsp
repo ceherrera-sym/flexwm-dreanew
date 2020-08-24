@@ -1,3 +1,7 @@
+<%@page import="com.flexwm.server.cm.PmProjectStaff"%>
+<%@page import="com.flexwm.shared.cm.BmoProjectStaff"%>
+<%@page import="com.flexwm.server.cm.PmProjectDetail"%>
+<%@page import="com.flexwm.shared.cm.BmoProjectDetail"%>
 <%@page import="com.flexwm.server.op.PmOrderStaff"%>
 <%@page import="com.flexwm.shared.op.BmoOrderStaff"%>
 <%@page import="com.flexwm.server.cm.PmOpportunity"%>
@@ -85,6 +89,8 @@ body {
 	<% 
 		NumberFormat formatCurrency = NumberFormat.getCurrencyInstance(Locale.US);
 		bmoProject = (BmoProject)pmProject.get(Integer.parseInt(request.getParameter("foreignId")));
+		
+		BmoProjectDetail bmoProjectDetail = (BmoProjectDetail)new PmProjectDetail(sFParams).getBy(bmoProject.getId(), new BmoProjectDetail().getProjectId().getName());
 		//Empresa
 		BmoCompany bmoCompany = new BmoCompany();
 		PmCompany pmCompany = new PmCompany(sFParams);
@@ -174,7 +180,39 @@ body {
 					<tr>
 						<th align="left" class="reportCellEven">Direcci&oacute;n:</th>
 						<td class="reportCellEven"><%=direction%></td>
-					</tr>		
+					</tr>	
+					<tr>
+						<th align="left"  class="reportCellEven"> Carga de equipo</th>
+						<td class="reportCellEven"><%=bmoProjectDetail.getEquipmentLoadDate().toString().substring(0, 10)%></td>
+					</tr>	
+					<tr>
+						<th align="left"  class="reportCellEven"> Salida de bodega</th>
+						<td class="reportCellEven"><%=bmoProjectDetail.getExitDate().toString().substring(0, 10)%></td>
+					</tr>
+					<tr>
+						<th align="left"  class="reportCellEven"> Montaje</th>
+						<td class="reportCellEven"><%=bmoProjectDetail.getLoadStartDate().toString().substring(0, 10)%></td>
+					</tr>
+					<tr>
+						<th align="left"  class="reportCellEven"> Pruebas</th>
+						<td class="reportCellEven"><%=bmoProjectDetail.getTestDate().toString().substring(0, 10)%></td>
+					</tr>
+					<tr>
+						<th align="left"  class="reportCellEven"> Entrega</th>
+						<td class="reportCellEven"><%=bmoProjectDetail.getDeliveryDate().toString().substring(0, 10)%></td>
+					</tr>
+					<tr>
+						<th align="left"  class="reportCellEven"> Evento</th>
+						<td class="reportCellEven"><%=bmoProject.getStartDate().toString().substring(0, 10)%></td>
+					</tr>
+					<tr>
+						<th align="left"  class="reportCellEven"> Desmontaje</th>
+						<td class="reportCellEven"><%=bmoProjectDetail.getUnloadStartDate().toString().substring(0, 10)%></td>
+					</tr>
+					<tr>
+						<th align="left"  class="reportCellEven"> Regreso</th>
+						<td class="reportCellEven"><%=bmoProjectDetail.getReturnDate().toString().substring(0, 10)%></td>
+					</tr>
 				</table>
 			</td>
 			<td > &nbsp;</td>
@@ -223,24 +261,25 @@ body {
 		</tr>
 		<%
 		
-			BmoOrderStaff bmoOrderStaff = new BmoOrderStaff();
-			PmOrderStaff pmOrderStaff = new PmOrderStaff(sFParams);
+			BmoProjectStaff bmoProjectStaff = new BmoProjectStaff();
+			PmProjectStaff pmProjectStaff = new PmProjectStaff(sFParams);
 			BmFilter filterStaff = new BmFilter();
-			filterStaff.setValueFilter(bmoOrderStaff.getKind(), bmoOrderStaff.getOrderId(), bmoProject.getOrderId().toInteger());
+			filterStaff.setValueFilter(bmoProjectStaff.getKind(), bmoProjectStaff.getProjectId(), bmoProject.getId());
 			
-			Iterator<BmObject> staffIterator = pmOrderStaff.list(filterStaff).iterator();
+			Iterator<BmObject> staffIterator = pmProjectStaff.list(filterStaff).iterator();
 			int i=0;
 			while (staffIterator.hasNext()){
 				i ++;
-				BmoOrderStaff nextBmoOrderStaff = (BmoOrderStaff)staffIterator.next();
+				BmoProjectStaff nextBmoProjectStaff = (BmoProjectStaff)staffIterator.next();
 		
 		%>
 				<tr>
 					<td class="reportCellEven" align="center" width="5px" ><%=i%></td>
-					<td class="reportCellEven" align="left" width="25%" ><%=nextBmoOrderStaff.getName()%></td>
-					<td class="reportCellEven" align="left" width="25%" ><%=i%></td>
-					<td class="reportCellEven" align="left" width="25%" ><%=nextBmoOrderStaff.getBmoProfile().getName().toHtml()%></td>
-					<td class="reportCellEven" align="left" width="25%" ><%=i%></td>
+					<td class="reportCellEven" align="left" width="25%" ><%=nextBmoProjectStaff.getBmoUser().getFirstname().toHtml() + " " 
+						+ nextBmoProjectStaff.getBmoUser().getMotherlastname().toHtml() + " " + nextBmoProjectStaff.getBmoUser().getFatherlastname().toHtml() %></td>
+					<td class="reportCellEven" align="left" width="25%" ><%=nextBmoProjectStaff.getBmoProfile().getName().toHtml()%></td>
+					<td class="reportCellEven" align="left" width="25%" ><%=nextBmoProjectStaff.getBmoUser().getBmoArea().getName().toHtml()%></td>
+					<td class="reportCellEven" align="left" width="25%" ><%=nextBmoProjectStaff.getNotes().toHtml()%></td>
 					
 				</tr>
 		

@@ -93,7 +93,7 @@ public class PmQuoteItem extends PmObject {
 	@Override
 	public BmUpdateResult save(PmConn pmConn, BmObject bmObject, BmUpdateResult bmUpdateResult) throws SFException {
 		bmoQuoteItem = (BmoQuoteItem)bmObject;
-
+	
 		// Operaciones con el Grupo de Items de la cotizacion
 		PmQuoteGroup pmQuoteGroup = new PmQuoteGroup(getSFParams());
 		BmoQuoteGroup bmoQuoteGroup = new BmoQuoteGroup();
@@ -214,11 +214,33 @@ public class PmQuoteItem extends PmObject {
 				bmoQuoteItem.getIndex().setValue(nextIndex(pmConn, bmoQuoteItem));
 			}
 			
+			//Calcular descuento drea
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				double discount = 0;
+				double feeProduction = 0;
+				double commission = 0;
+				//Descuento
+				if (bmoQuoteItem.getDiscountApplies().toBoolean()) {					
+						discount = bmoQuoteItem.getAmount().toDouble() * (bmoQuoteGroup.getDiscountRate().toDouble()/100);
+					bmoQuoteItem.getDiscount().setValue(discount);
+				} else {
+					bmoQuoteItem.getDiscount().setValue(0);
+				}				
+				
+				
+				bmoQuoteItem.getAmount().setValue(bmoQuoteItem.getAmount().toDouble() - discount + feeProduction - commission);				
+				
+			}
+			
 			// Primero agrega el ultimo valor
-			super.save(pmConn, bmObject, bmUpdateResult);
+			super.save(pmConn, bmoQuoteItem, bmUpdateResult);
 
 			// Recalcula el subtotal
 			pmQuoteGroup.calculateAmount(pmConn, bmoQuoteGroup, bmUpdateResult);
+			
+			if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				pmQuoteGroup.updateMainGroup(pmConn, bmoQuoteGroup.getMainGroupId().toInteger(),bmUpdateResult );
+			}
 		}
 
 		return bmUpdateResult;
@@ -369,7 +391,12 @@ public class PmQuoteItem extends PmObject {
 
 				// Recalcula el subtotal tomando en cuenta el item eliminado
 				pmQuoteGroup.calculateAmount(pmConn, bmoQuoteGroup, bmUpdateResult);
+				
+				if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+					pmQuoteGroup.updateMainGroup(pmConn, bmoQuoteGroup.getMainGroupId().toInteger(),bmUpdateResult );
+				}
 
+				pmQuoteGroup.updateMainGroup(pmConn, bmoQuoteGroup.getMainGroupId().toInteger(),bmUpdateResult );
 				if (!bmUpdateResult.hasErrors()) pmConn.commit();
 			}
 		} catch (SFPmException e) {

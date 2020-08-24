@@ -7,6 +7,7 @@ import com.flexwm.client.wf.UiWFlowLog;
 import com.flexwm.client.wf.UiWFlowPhaseBar;
 import com.flexwm.shared.cm.BmoProject;
 import com.flexwm.shared.cm.BmoProjectDetail;
+import com.flexwm.shared.cm.BmoProjectStaff;
 import com.flexwm.shared.op.BmoProjectEquipment;
 import com.flexwm.shared.wf.BmoWFlowDocument;
 import com.flexwm.shared.wf.BmoWFlowLog;
@@ -75,6 +76,19 @@ public class UiProjectStart extends Ui {
 			uiProjectEquipment.show();
 			flexTable.setWidget(2, 0, ProjectEquipment);	
 		}
+		
+		//Personal
+		BmoProjectStaff bmoProjectStaff = new BmoProjectStaff();		
+		if (getUiParams().getSFParams().hasRead(bmoProjectStaff.getProgramCode())) {
+			FlowPanel projectStaff = new FlowPanel();
+			BmFilter filterStaff = new BmFilter();
+			filterStaff.setValueFilter(bmoProjectStaff.getKind(), bmoProjectStaff.getProjectId(), bmoProject.getId());
+			getUiParams().setForceFilter(bmoProjectStaff.getProgramCode(), filterStaff);
+			UiProjectStaff uiProjectStaff = new UiProjectStaff(getUiParams(), projectStaff, bmoProject);
+			setUiType(bmoProjectStaff.getProgramCode(),UiParams.MINIMALIST);
+			uiProjectStaff.show();
+			flexTable.setWidget(3, 0, projectStaff);
+		}
 
 		// Vista detalle proyecto
 		BmoProjectDetail bmoProjectDetail = new BmoProjectDetail();
@@ -86,7 +100,7 @@ public class UiProjectStart extends Ui {
 			UiProjectDetailForm2 uiProjectDetailsForm = new UiProjectDetailForm2(getUiParams(), projectDetailDP, bmoProject);
 			//setUiType(bmoProjectDetail.getProgramCode(), UiParams.SINGLESLAVE);		
 			uiProjectDetailsForm.show();
-			flexTable.setWidget(3, 0, projectDetailDP);
+			flexTable.setWidget(4, 0, projectDetailDP);
 		}
 
 		// Documentos
@@ -99,7 +113,7 @@ public class UiProjectStart extends Ui {
 			UiWFlowDocument uiWFlowDocument = new UiWFlowDocument(getUiParams(), wFlowDocumentFP, bmoProject.getWFlowId().toInteger());
 			setUiType(bmoWFlowDocument.getProgramCode(), UiParams.MINIMALIST);
 			uiWFlowDocument.show();
-			flexTable.setWidget(4, 0, wFlowDocumentFP);
+			flexTable.setWidget(5, 0, wFlowDocumentFP);
 		}
 
 		// Formatos
@@ -113,7 +127,7 @@ public class UiProjectStart extends Ui {
 			uiProgramParams.setForceFilter(filterFormats);
 			setUiType(bmoFormat.getProgramCode(), UiParams.MINIMALIST);
 			uiFormatDisplayList.show();
-			flexTable.setWidget(5, 0, formatFP);
+			flexTable.setWidget(6, 0, formatFP);
 		}
 
 		// Bitacora
@@ -126,7 +140,7 @@ public class UiProjectStart extends Ui {
 			UiWFlowLog uiWFlowLog = new UiWFlowLog(getUiParams(), WFlowLogFP, bmoProject.getWFlowId().toInteger(), -1);
 			setUiType(bmoWFlowLog.getProgramCode(), UiParams.MINIMALIST);
 			uiWFlowLog.show();
-			flexTable.setWidget(6, 0, WFlowLogFP);
+			flexTable.setWidget(7, 0, WFlowLogFP);
 		}
 
 		addToDP(flexTable);

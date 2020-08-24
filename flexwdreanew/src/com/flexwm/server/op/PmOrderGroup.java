@@ -72,12 +72,28 @@ public class PmOrderGroup extends PmObject {
 				bmoOrderGroup.getTotal().setValue(bmoOrderGroup.getDays().toDouble() * bmoOrderGroup.getAmount().toDouble());
 				updateItems(pmConn,bmoOrderGroup, bmUpdateResult);
 			}
+			//calcular descuento y fee
+			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				if(bmoOrderGroup.getIsKit().toBoolean()) {
+					bmoOrderGroup.getFeeProduction().setValue(bmoOrderGroup.getTotal().toDouble() * (bmoOrderGroup.getFeeProductionRate().toDouble()/100));
+					bmoOrderGroup.getCommissionAmount().setValue((bmoOrderGroup.getTotal().toDouble() + bmoOrderGroup.getFeeProduction().toDouble())* (bmoOrderGroup.getCommissionRate().toDouble()/100));					
+				} else {
+					bmoOrderGroup.getFeeProduction().setValue(bmoOrderGroup.getAmount().toDouble() * (bmoOrderGroup.getFeeProductionRate().toDouble()/100));
+					bmoOrderGroup.getCommissionAmount().setValue((bmoOrderGroup.getAmount().toDouble() + bmoOrderGroup.getFeeProduction().toDouble()) * (bmoOrderGroup.getCommissionRate().toDouble()/100));				
+				}
 
+			}
 			super.save(pmConn, bmoOrderGroup, bmUpdateResult);
 			
 			// Recalcular el pedido completo
 			pmOrder.updateBalance(pmConn, bmoOrder, bmUpdateResult);
 			
+			//Acciones Drea
+			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				
+				if (!bmoOrderGroup.getIsKit().toBoolean())
+					updateDiscountitems(pmConn, bmoOrderGroup, bmUpdateResult);
+			}
 			// Aplicar si esta activo en el tipo de pedido
 			if (bmoOrder.getBmoOrderType().getAtmCCRevision().toInteger() > 0) {
 				// Se asegura que se generen en automatico todas las CxC segun monto del Pedido
@@ -86,6 +102,23 @@ public class PmOrderGroup extends PmObject {
 			}
 		}
 		return bmUpdateResult;
+	}
+	//Dar guardar a los items para recalcular valores
+	public void updateDiscountitems(PmConn pmConn, BmoOrderGroup bmoOrderGroup,BmUpdateResult bmUpdateResult) throws SFException {
+		BmoOrderItem bmoOrderItem = new BmoOrderItem();
+		PmOrderItem pmOrderItem = new PmOrderItem(getSFParams());
+		BmFilter bmFilter = new BmFilter();
+
+		bmFilter.setValueFilter(bmoOrderItem.getKind(), bmoOrderItem.getOrderGroupId(), bmoOrderGroup.getId());
+		Iterator<BmObject> iterator = pmOrderItem.list(bmFilter).iterator();
+		while (iterator.hasNext()) {
+			BmoOrderItem nextBmoOrderItem = (BmoOrderItem)iterator.next();
+			if (!bmoOrderGroup.getDiscountApplies().toBoolean())
+				nextBmoOrderItem.getDiscountApplies().setValue(bmoOrderGroup.getDiscountApplies().toBoolean());
+
+			pmOrderItem.save(pmConn, nextBmoOrderItem, bmUpdateResult);
+		}
+
 	}
 	public void updateItems(PmConn pmConn, BmoOrderGroup bmoOrderGroup, BmUpdateResult bmUpdateResult) throws SFException {
 		String sql = "SELECT ordi_orderitemid FROM orderitems  WHERE ordi_ordergroupid =  " + bmoOrderGroup.getId();
@@ -392,6 +425,19 @@ public class PmOrderGroup extends PmObject {
 			if (pmConn.next()) amount = pmConn.getDouble(1);
 
 			bmoOrderGroup.getAmount().setValue(amount);
+			
+//			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+//				pmConn.doFetch("SELECT sum(ordi_discount) AS dicount,sum(qoit_feeproduction) AS feeSum,sum(qoit_comission) sumCom ,sum(qoit_price) sumPrice FROM quoteitems "
+//						+ " WHERE qoit_quotegroupid = " + bmoOrderGroup.getId());
+//				double discount = 0;
+//				double price = 0;
+//				if (pmConn.next()) {
+//					discount = pmConn.getDouble("dicount");
+//					price = pmConn.getDouble("sumPrice");
+//				}
+//				bmoOrderGroup.getDiscount().setValue(discount);
+//				bmoOrderGroup.getPrice().setValue(price);
+//			}
 		}
 
 		super.save(pmConn, bmoOrderGroup, bmUpdateResult);

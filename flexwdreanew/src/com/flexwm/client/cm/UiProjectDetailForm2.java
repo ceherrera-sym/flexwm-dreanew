@@ -30,6 +30,8 @@ public class UiProjectDetailForm2 extends UiForm{
 	UiDateTimeBox unloadStartDateBox = new UiDateTimeBox();
 	UiDateTimeBox exitDateBox = new UiDateTimeBox();
 	UiDateTimeBox returnDateBox = new UiDateTimeBox();
+	UiDateTimeBox testDateTimeBox = new UiDateTimeBox();
+	UiDateTimeBox equipmentLoadDateTimeBox = new UiDateTimeBox();
 	
 	Button copyDates = new Button("Copiar");
 	String projectId;
@@ -64,10 +66,12 @@ public class UiProjectDetailForm2 extends UiForm{
 		formFlexTable.addButtonCell(2, 1, copyDates);
 		
 		formFlexTable.addField(3, 0, prepDateBox, bmoProjectDetail.getPrepDate());
-		formFlexTable.addField(4, 0, exitDateBox, bmoProjectDetail.getExitDate());
-		formFlexTable.addField(5, 0, loadStartDateBox, bmoProjectDetail.getLoadStartDate());
-		formFlexTable.addField(6, 0, unloadStartDateBox, bmoProjectDetail.getUnloadStartDate());
-		formFlexTable.addField(8, 0, returnDateBox, bmoProjectDetail.getReturnDate());
+		formFlexTable.addField(4, 0, equipmentLoadDateTimeBox, bmoProjectDetail.getEquipmentLoadDate());
+		formFlexTable.addField(5, 0, exitDateBox, bmoProjectDetail.getExitDate());
+		formFlexTable.addField(6, 0, loadStartDateBox, bmoProjectDetail.getLoadStartDate());
+		formFlexTable.addField(7, 0, testDateTimeBox, bmoProjectDetail.getTestDate());
+		formFlexTable.addField(8, 0, unloadStartDateBox, bmoProjectDetail.getUnloadStartDate());
+		formFlexTable.addField(9, 0, returnDateBox, bmoProjectDetail.getReturnDate());
 		
 	}
 	
@@ -83,6 +87,8 @@ public class UiProjectDetailForm2 extends UiForm{
 			returnDateBox.setEnabled(false);
 			saveButton.setVisible(false);
 			copyDates.setVisible(false);
+			equipmentLoadDateTimeBox.setEnabled(false);
+			testDateTimeBox.setEnabled(false);
 		}
 	}
 
@@ -96,6 +102,8 @@ public class UiProjectDetailForm2 extends UiForm{
 		bmoProjectDetail.getUnloadStartDate().setValue(unloadStartDateBox.getDateTime());
 		bmoProjectDetail.getExitDate().setValue(exitDateBox.getDateTime());
 		bmoProjectDetail.getReturnDate().setValue(returnDateBox.getDateTime());
+		bmoProjectDetail.getEquipmentLoadDate().setValue(equipmentLoadDateTimeBox.getDateTime());
+		bmoProjectDetail.getTestDate().setValue(testDateTimeBox.getDateTime());
 		return bmoProjectDetail;
 	}
 	

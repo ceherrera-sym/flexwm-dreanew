@@ -29,10 +29,8 @@ import com.flexwm.server.cm.PmOpportunityDetail;
 import com.flexwm.server.cm.PmProject;
 //import com.flexwm.server.cm.PmProjectStep;
 import com.flexwm.server.cm.PmQuote;
-import com.flexwm.server.cm.PmQuoteEquipment;
 import com.flexwm.server.cm.PmQuoteGroup;
 import com.flexwm.server.cm.PmQuoteItem;
-import com.flexwm.server.cm.PmQuoteStaff;
 import com.flexwm.server.co.PmOrderProperty;
 import com.flexwm.server.co.PmOrderPropertyModelExtra;
 import com.flexwm.server.co.PmOrderPropertyTax;
@@ -60,10 +58,8 @@ import com.flexwm.shared.cm.BmoOpportunityDetail;
 import com.flexwm.shared.cm.BmoProject;
 //import com.flexwm.shared.cm.BmoProjectStep;
 import com.flexwm.shared.cm.BmoQuote;
-import com.flexwm.shared.cm.BmoQuoteEquipment;
 import com.flexwm.shared.cm.BmoQuoteGroup;
 import com.flexwm.shared.cm.BmoQuoteItem;
-import com.flexwm.shared.cm.BmoQuoteStaff;
 import com.flexwm.shared.co.BmoOrderProperty;
 import com.flexwm.shared.co.BmoOrderPropertyModelExtra;
 import com.flexwm.shared.co.BmoOrderPropertyTax;
@@ -81,10 +77,8 @@ import com.flexwm.shared.op.BmoConsultancy;
 import com.flexwm.shared.op.BmoExtraOrderProfile;
 import com.flexwm.shared.op.BmoOrder;
 import com.flexwm.shared.op.BmoOrderDetail;
-import com.flexwm.shared.op.BmoOrderEquipment;
 import com.flexwm.shared.op.BmoOrderGroup;
 import com.flexwm.shared.op.BmoOrderItem;
-import com.flexwm.shared.op.BmoOrderStaff;
 import com.flexwm.shared.op.BmoOrderType;
 import com.flexwm.shared.op.BmoProduct;
 import com.flexwm.shared.op.BmoRequisition;
@@ -1176,6 +1170,7 @@ public class PmOrder extends PmObject {
 						+ " " + bmoUser.getFatherlastname().toString()));
 			}
 		}
+		BmoUser userCreator = (BmoUser)pmUser.get(pmConn, bmoOrder.getUserCreateId().toInteger());
 		bmoProject = (BmoProject)pmProject.getBy(pmConn, bmoOrder.getOriginRenewOrderId().toInteger(), bmoProject.getOrderId().getName());
 		
 		String subject = "Autorización Pedido Extra " + bmoOrder.getCode().toString();
@@ -1183,7 +1178,9 @@ public class PmOrder extends PmObject {
 		msg = " <p style=\"font-size:12px\"> " 
 				+ " <b>Pedido:</b> " + bmoOrder.getCode().toHtml() + " " + bmoOrder.getName().toHtml() 
 				+ "<br>"
-				+ " <b>Proyecto</b> " + bmoProject.getCode().toHtml() + " " + bmoProject.getName().toHtml()
+				+ " <b>Proyecto: </b> " + bmoProject.getCode().toHtml() + " " + bmoProject.getName().toHtml()
+				+ "<br>"
+				+ " <b>Creador de Pedido Extra: </b> " + userCreator.getFirstname().toHtml() + " " + userCreator.getMotherlastname().toHtml() + " " + userCreator.getFatherlastname().toHtml()
 				+ "</p>";
 		msg += "	<p align=\"left\" style=\"font-size:12px\"> "
 				+ " Este mensaje podría contener información confidencial, si tú no eres el destinatario por favor reporta esta situación a los datos de contacto "
@@ -1325,6 +1322,15 @@ public class PmOrder extends PmObject {
 			bmoOrderGroup.getPayConditionId().setValue(bmoQuoteGroup.getPayConditionId().toInteger());
 			bmoOrderGroup.getIndex().setValue(bmoQuoteGroup.getIndex().toInteger());
 			bmoOrderGroup.getOrderId().setValue(bmoOrder.getId());
+			
+			bmoOrderGroup.getDiscountApplies().setValue(bmoQuoteGroup.getDiscountApplies().toInteger());
+			bmoOrderGroup.getDiscountRate().setValue(bmoQuoteGroup.getDiscountRate().toDouble());
+			bmoOrderGroup.getFeeProductionApply().setValue(bmoQuoteGroup.getFeeProductionApply().toInteger());
+			bmoOrderGroup.getFeeProductionRate().setValue(bmoQuoteGroup.getFeeProductionRate().toDouble());
+			bmoOrderGroup.getFeeProduction().setValue(bmoQuoteGroup.getFeeProduction().toDouble());
+			bmoOrderGroup.getCommissionApply().setValue(bmoQuoteGroup.getCommissionApply().toInteger());
+			bmoOrderGroup.getCommissionRate().setValue(bmoQuoteGroup.getCommissionRate().toDouble());
+			bmoOrderGroup.getCommissionAmount().setValue(bmoQuoteGroup.getCommissionAmount().toDouble());
 
 			pmOrderGroup.saveSimple(pmConn, bmoOrderGroup, bmUpdateResult);
 
@@ -1354,6 +1360,9 @@ public class PmOrder extends PmObject {
 				bmoOrderItem.getOrderGroupId().setValue(orderGroupId);
 				bmoOrderItem.getCommission().setValue(bmoQuoteItem.getCommission().toInteger());
 				bmoOrderItem.getIndex().setValue(bmoQuoteItem.getIndex().toInteger());
+				
+				bmoOrderItem.getDiscountApplies().setValue(bmoQuoteItem.getDiscountApplies().toInteger());
+				bmoOrderItem.getDiscount().setValue(bmoQuoteItem.getDiscount().toDouble());
 
 				// Pasar datos de control presupuestal
 				if (((BmoFlexConfig) getSFParams().getBmoAppConfig()).getEnableWorkBudgetItem().toBoolean()) {
@@ -1383,72 +1392,72 @@ public class PmOrder extends PmObject {
 		}
 
 		// Lista de recursos
-		PmOrderEquipment pmOrderEquipment = new PmOrderEquipment(getSFParams());
-		PmQuoteEquipment pmQuoteEquipment = new PmQuoteEquipment(getSFParams());
-		BmoQuoteEquipment bmoQuoteEquipment = new BmoQuoteEquipment();
-		BmFilter byQuoteFilter = new BmFilter();
-		byQuoteFilter.setValueFilter(bmoQuoteEquipment.getKind(), bmoQuoteEquipment.getQuoteId().getName(),
-				bmoQuote.getId());
-		Iterator<BmObject> quoteEquipmentIterator = pmQuoteEquipment.list(byQuoteFilter).iterator();
-		while (quoteEquipmentIterator.hasNext()) {
-			bmoQuoteEquipment = (BmoQuoteEquipment) quoteEquipmentIterator.next();
-			BmoOrderEquipment bmoOrderEquipment = new BmoOrderEquipment();
-			bmoOrderEquipment.getName().setValue(bmoQuoteEquipment.getName().toString());
-			bmoOrderEquipment.getQuantity().setValue(bmoQuoteEquipment.getQuantity().toInteger());
-			bmoOrderEquipment.getDays().setValue(bmoQuoteEquipment.getDays().toDouble());
-			bmoOrderEquipment.getBasePrice().setValue(bmoQuoteEquipment.getBasePrice().toDouble());
-			bmoOrderEquipment.getPrice().setValue(bmoQuoteEquipment.getPrice().toDouble());
-			bmoOrderEquipment.getLockStart().setValue(bmoOrder.getLockStart().toString());
-			bmoOrderEquipment.getLockEnd().setValue(bmoOrder.getLockEnd().toString());
-			bmoOrderEquipment.getAmount().setValue(bmoQuoteEquipment.getAmount().toDouble());
-			bmoOrderEquipment.getEquipmentId().setValue(bmoQuoteEquipment.getEquipmentId().toInteger());
-			bmoOrderEquipment.getOrderId().setValue(bmoOrder.getId());
-
-			pmOrderEquipment.createFromQuote(pmConn, bmoOrderEquipment, bmoOrder, bmUpdateResult);
-		}
+//		PmOrderEquipment pmOrderEquipment = new PmOrderEquipment(getSFParams());
+//		PmQuoteEquipment pmQuoteEquipment = new PmQuoteEquipment(getSFParams());
+//		BmoQuoteEquipment bmoQuoteEquipment = new BmoQuoteEquipment();
+//		BmFilter byQuoteFilter = new BmFilter();
+//		byQuoteFilter.setValueFilter(bmoQuoteEquipment.getKind(), bmoQuoteEquipment.getQuoteId().getName(),
+//				bmoQuote.getId());
+//		Iterator<BmObject> quoteEquipmentIterator = pmQuoteEquipment.list(byQuoteFilter).iterator();
+//		while (quoteEquipmentIterator.hasNext()) {
+//			bmoQuoteEquipment = (BmoQuoteEquipment) quoteEquipmentIterator.next();
+//			BmoOrderEquipment bmoOrderEquipment = new BmoOrderEquipment();
+//			bmoOrderEquipment.getName().setValue(bmoQuoteEquipment.getName().toString());
+//			bmoOrderEquipment.getQuantity().setValue(bmoQuoteEquipment.getQuantity().toInteger());
+//			bmoOrderEquipment.getDays().setValue(bmoQuoteEquipment.getDays().toDouble());
+//			bmoOrderEquipment.getBasePrice().setValue(bmoQuoteEquipment.getBasePrice().toDouble());
+//			bmoOrderEquipment.getPrice().setValue(bmoQuoteEquipment.getPrice().toDouble());
+//			bmoOrderEquipment.getLockStart().setValue(bmoOrder.getLockStart().toString());
+//			bmoOrderEquipment.getLockEnd().setValue(bmoOrder.getLockEnd().toString());
+//			bmoOrderEquipment.getAmount().setValue(bmoQuoteEquipment.getAmount().toDouble());
+//			bmoOrderEquipment.getEquipmentId().setValue(bmoQuoteEquipment.getEquipmentId().toInteger());
+//			bmoOrderEquipment.getOrderId().setValue(bmoOrder.getId());
+//
+//			pmOrderEquipment.createFromQuote(pmConn, bmoOrderEquipment, bmoOrder, bmUpdateResult);
+//		}
 
 		// Lista de personal
-		PmOrderStaff pmOrderStaff = new PmOrderStaff(getSFParams());
-		PmQuoteStaff pmQuoteStaff = new PmQuoteStaff(getSFParams());
-		BmoQuoteStaff bmoQuoteStaff = new BmoQuoteStaff();
-		byQuoteFilter.setValueFilter(bmoQuoteStaff.getKind(), bmoQuoteStaff.getQuoteId().getName(), bmoQuote.getId());
-		Iterator<BmObject> quoteStaffIterator = pmQuoteStaff.list(byQuoteFilter).iterator();
-		while (quoteStaffIterator.hasNext()) {
-			bmoQuoteStaff = (BmoQuoteStaff) quoteStaffIterator.next();
-
-			if (bmoQuoteStaff.getProfileId().toInteger() > 0) {
-				// No tiene grupo asignado
-				BmoOrderStaff bmoOrderStaff = new BmoOrderStaff();
-				bmoOrderStaff.getName().setValue(bmoQuoteStaff.getName().toString());
-				bmoOrderStaff.getDescription().setValue(bmoQuoteStaff.getDescription().toString());
-				bmoOrderStaff.getQuantity().setValue(bmoQuoteStaff.getQuantity().toInteger());
-				bmoOrderStaff.getDays().setValue(bmoQuoteStaff.getDays().toDouble());
-				bmoOrderStaff.getBasePrice().setValue(bmoQuoteStaff.getBasePrice().toDouble());
-				bmoOrderStaff.getPrice().setValue(bmoQuoteStaff.getPrice().toDouble());
-				bmoOrderStaff.getLockStart().setValue(bmoOrder.getLockStart().toString());
-				bmoOrderStaff.getLockEnd().setValue(bmoOrder.getLockEnd().toString());
-				bmoOrderStaff.getAmount().setValue(bmoQuoteStaff.getAmount().toDouble());
-				bmoOrderStaff.getOrderId().setValue(bmoOrder.getId());
-				bmoOrderStaff.getProfileId().setValue(bmoQuoteStaff.getProfileId().toInteger());
-
-				pmOrderStaff.createFromQuote(pmConn, bmoOrderStaff, bmoOrder, bmUpdateResult);
-
-			} else {
-				// No tiene grupo asignado
-				BmoOrderStaff bmoOrderStaff = new BmoOrderStaff();
-				bmoOrderStaff.getName().setValue(bmoQuoteStaff.getName().toString());
-				bmoOrderStaff.getDescription().setValue(bmoQuoteStaff.getDescription().toString());
-				bmoOrderStaff.getQuantity().setValue(bmoQuoteStaff.getQuantity().toInteger());
-				bmoOrderStaff.getDays().setValue(bmoQuoteStaff.getDays().toDouble());
-				bmoOrderStaff.getPrice().setValue(bmoQuoteStaff.getPrice().toDouble());
-				bmoOrderStaff.getLockStart().setValue(bmoOrder.getLockStart().toString());
-				bmoOrderStaff.getLockEnd().setValue(bmoOrder.getLockEnd().toString());
-				bmoOrderStaff.getAmount().setValue(bmoQuoteStaff.getAmount().toDouble());
-				bmoOrderStaff.getOrderId().setValue(bmoOrder.getId());
-
-				pmOrderStaff.createFromQuote(pmConn, bmoOrderStaff, bmoOrder, bmUpdateResult);
-			}
-		}
+//		PmOrderStaff pmOrderStaff = new PmOrderStaff(getSFParams());
+//		PmQuoteStaff pmQuoteStaff = new PmQuoteStaff(getSFParams());
+//		BmoQuoteStaff bmoQuoteStaff = new BmoQuoteStaff();
+//		byQuoteFilter.setValueFilter(bmoQuoteStaff.getKind(), bmoQuoteStaff.getQuoteId().getName(), bmoQuote.getId());
+//		Iterator<BmObject> quoteStaffIterator = pmQuoteStaff.list(byQuoteFilter).iterator();
+//		while (quoteStaffIterator.hasNext()) {
+//			bmoQuoteStaff = (BmoQuoteStaff) quoteStaffIterator.next();
+//
+//			if (bmoQuoteStaff.getProfileId().toInteger() > 0) {
+//				// No tiene grupo asignado
+//				BmoOrderStaff bmoOrderStaff = new BmoOrderStaff();
+//				bmoOrderStaff.getName().setValue(bmoQuoteStaff.getName().toString());
+//				bmoOrderStaff.getDescription().setValue(bmoQuoteStaff.getDescription().toString());
+//				bmoOrderStaff.getQuantity().setValue(bmoQuoteStaff.getQuantity().toInteger());
+//				bmoOrderStaff.getDays().setValue(bmoQuoteStaff.getDays().toDouble());
+//				bmoOrderStaff.getBasePrice().setValue(bmoQuoteStaff.getBasePrice().toDouble());
+//				bmoOrderStaff.getPrice().setValue(bmoQuoteStaff.getPrice().toDouble());
+//				bmoOrderStaff.getLockStart().setValue(bmoOrder.getLockStart().toString());
+//				bmoOrderStaff.getLockEnd().setValue(bmoOrder.getLockEnd().toString());
+//				bmoOrderStaff.getAmount().setValue(bmoQuoteStaff.getAmount().toDouble());
+//				bmoOrderStaff.getOrderId().setValue(bmoOrder.getId());
+//				bmoOrderStaff.getProfileId().setValue(bmoQuoteStaff.getProfileId().toInteger());
+//
+//				pmOrderStaff.createFromQuote(pmConn, bmoOrderStaff, bmoOrder, bmUpdateResult);
+//
+//			} else {
+//				// No tiene grupo asignado
+//				BmoOrderStaff bmoOrderStaff = new BmoOrderStaff();
+//				bmoOrderStaff.getName().setValue(bmoQuoteStaff.getName().toString());
+//				bmoOrderStaff.getDescription().setValue(bmoQuoteStaff.getDescription().toString());
+//				bmoOrderStaff.getQuantity().setValue(bmoQuoteStaff.getQuantity().toInteger());
+//				bmoOrderStaff.getDays().setValue(bmoQuoteStaff.getDays().toDouble());
+//				bmoOrderStaff.getPrice().setValue(bmoQuoteStaff.getPrice().toDouble());
+//				bmoOrderStaff.getLockStart().setValue(bmoOrder.getLockStart().toString());
+//				bmoOrderStaff.getLockEnd().setValue(bmoOrder.getLockEnd().toString());
+//				bmoOrderStaff.getAmount().setValue(bmoQuoteStaff.getAmount().toDouble());
+//				bmoOrderStaff.getOrderId().setValue(bmoOrder.getId());
+//
+//				pmOrderStaff.createFromQuote(pmConn, bmoOrderStaff, bmoOrder, bmUpdateResult);
+//			}
+//		}
 
 		// Traer descuento
 		bmoOrder.getDiscount().setValue(bmoQuote.getDiscount().toDouble());
@@ -2964,6 +2973,9 @@ public class PmOrder extends PmObject {
 		double orderItemAmount = 0, orderEquipmentAmount = 0, orderStaffAmount = 0, orderPropertyAmount = 0,
 				orderPropertyTaxAmount = 0, orderPropertyModelExtraAmount = 0, orderSessionExtra = 0,
 				orderSessionTypePackageAmount = 0, amount = 0, orderCreditAmount = 0;
+		
+		//Drea
+		double comission = 0.0,feeProduction = 0.0;
 		String sql = "";
 
 		// Obtener el tipo de pedido por default
@@ -2991,35 +3003,40 @@ public class PmOrder extends PmObject {
 			}
 		}
 		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {		
-			pmConn.doFetch("SELECT ordg_amount AS sumAmount,ordg_total AS sumTotal,ordg_iskit FROM ordergroups "
+			pmConn.doFetch("SELECT ordg_amount AS sumAmount,ordg_total AS sumTotal,ordg_iskit "
+					+ ",ordg_comission,ordg_feeproduction FROM ordergroups "
 					+ " WHERE ordg_orderid = " + bmoOrder.getId() );
 			while (pmConn.next()) {
 				if (pmConn.getInt("ordg_iskit") > 0)
 					orderItemAmount += pmConn.getDouble("sumTotal");
 				else
 					orderItemAmount += pmConn.getDouble("sumAmount");
-			}
+				
+				comission += pmConn.getDouble("ordg_comission");
+				feeProduction += pmConn.getDouble("ordg_feeproduction");
+			}		
+			
 			 System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
 		}
 
 
 		// Suma de recursos y equipos de renta
-		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
-			sql = "SELECT sum(ordq_amount) FROM orderequipments " + " WHERE ordq_orderid = " + bmoOrder.getId();
-			pmConn.doFetch(sql);
-			if (pmConn.next())
-				orderEquipmentAmount = pmConn.getDouble(1);
-			if (!getSFParams().isProduction())
-				System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
-
-			// Suma de personal
-			sql = "SELECT sum(ords_amount) FROM orderstaff " + " WHERE ords_orderid = " + bmoOrder.getId();
-			pmConn.doFetch(sql);
-			if (pmConn.next())
-				orderStaffAmount = pmConn.getDouble(1);
-			if (!getSFParams().isProduction())
-				System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
-		}
+//		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+//			sql = "SELECT sum(ordq_amount) FROM orderequipments " + " WHERE ordq_orderid = " + bmoOrder.getId();
+//			pmConn.doFetch(sql);
+//			if (pmConn.next())
+//				orderEquipmentAmount = pmConn.getDouble(1);
+//			if (!getSFParams().isProduction())
+//				System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
+//
+//			// Suma de personal
+//			sql = "SELECT sum(ords_amount) FROM orderstaff " + " WHERE ords_orderid = " + bmoOrder.getId();
+//			pmConn.doFetch(sql);
+//			if (pmConn.next())
+//				orderStaffAmount = pmConn.getDouble(1);
+//			if (!getSFParams().isProduction())
+//				System.out.println(this.getClass().getName() + "-calculateAmount() SQL: " + sql);
+//		}
 
 		// Suma de inmuebles
 		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_PROPERTY)) {
@@ -3108,6 +3125,9 @@ public class PmOrder extends PmObject {
 				+ orderPropertyTaxAmount + orderPropertyModelExtraAmount + orderSessionTypePackageAmount
 				+ orderCreditAmount + orderSessionExtra;
 
+		if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			amount = amount + feeProduction - comission;
+		}
 		// Calcular montos
 		if (amount == 0) {
 			bmoOrder.getAmount().setValue(0);
