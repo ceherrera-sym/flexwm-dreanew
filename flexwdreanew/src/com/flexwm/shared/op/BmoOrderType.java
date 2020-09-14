@@ -29,7 +29,7 @@ public class BmoOrderType extends BmObject implements Serializable {
 	scheduleStart, scheduleEnd, enableReqiOrderFinish, hasTaxes, defaultBudgetItemId, requiredLoseComments,
 	defaultAreaId, enableExtraOrder, wFlowTypeId, filterOnScrum,remindDaysBeforeRentIncrease, remindDaysBeforeRentIncreaseTwo,
 	dataFiscal,remindDaysBeforeEndContractDate, remindDaysBeforeEndContractDateTwo,emailReminderContractEnd, atmCCRevision,statusDefaultDetail,
-	areaDefaultDetail,remindDaysBeforeEndContractDateThree, requiredPropertyModel, defaultWFlowTypeId,sendExtraMail;
+	areaDefaultDetail,remindDaysBeforeEndContractDateThree, requiredPropertyModel, defaultWFlowTypeId,sendExtraMail,sendMissingMail;
 
 	public static final char TYPE_SALE = 'S';
 	public static final char TYPE_RENTAL = 'R';
@@ -93,6 +93,7 @@ public class BmoOrderType extends BmObject implements Serializable {
 		enableExtraOrder= setField("enableextraorder", "false", "Permitir pedido Extra", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 		wFlowTypeId = setField("wflowtypeid", "", "Tipo Flujo Extra", 20, Types.INTEGER, true, BmFieldType.ID, false);
 		sendExtraMail = setField("sendextramail", "", "Notificar Aut. Extra?", 5, Types.INTEGER, false, BmFieldType.BOOLEAN, false);
+		sendMissingMail = setField("sendmissingmail", "", "Notificar Faltantes", 5, Types.INTEGER, false, BmFieldType.BOOLEAN, false);
 		
 		filterOnScrum = setField("filteronscrum", "false", "Filtrar en SCRUM", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 	
@@ -432,4 +433,14 @@ public class BmoOrderType extends BmObject implements Serializable {
 	public void setDefaultWFlowTypeId(BmField defaultWFlowTypeId) {
 		this.defaultWFlowTypeId = defaultWFlowTypeId;
 	}
+
+	public BmField getSendMissingMail() {
+		return sendMissingMail;
+	}
+
+	public void setSendMissingMail(BmField sendMissingMail) {
+		this.sendMissingMail = sendMissingMail;
+	}
+	
+	
 }

@@ -42,6 +42,7 @@ public class UiRequisitionType extends UiList {
 		CheckBox enableSendCheckBox = new CheckBox();
 		CheckBox createPaccountCheckBox = new CheckBox();
 		CheckBox viewformatChechBox = new CheckBox();
+		CheckBox outFormatCheckBox = new CheckBox();
 		UiListBox devolutionBankmovTypeIdUiListBox = new UiListBox(getUiParams(), new BmoBankMovType());
 		UiListBox paymentBankmovTypeIdListBox = new UiListBox(getUiParams(), new BmoBankMovType());
 		BmoRequisitionType bmoRequisitionType;
@@ -65,11 +66,11 @@ public class UiRequisitionType extends UiList {
 			formFlexTable.addField(8, 0, viewformatChechBox, bmoRequisitionType.getViewFormat());
 			formFlexTable.addField(9, 0, devolutionBankmovTypeIdUiListBox, bmoRequisitionType.getDevolutionBankmovTypeId());
 			formFlexTable.addField(10, 0, paymentBankmovTypeIdListBox, bmoRequisitionType.getPaymentBankmovTypeId());
-
+			formFlexTable.addField(11, 0, outFormatCheckBox,bmoRequisitionType.getOutFormat());
 			statusEffect();
 		}
 
-		@Override
+		@Override	
 		public void formListChange(ChangeEvent event) {
 
 			if (event.getSource() == typeListBox) {
@@ -100,6 +101,7 @@ public class UiRequisitionType extends UiList {
 			bmoRequisitionType.getViewFormat().setValue(viewformatChechBox.getValue());
 			bmoRequisitionType.getDevolutionBankmovTypeId().setValue(devolutionBankmovTypeIdUiListBox.getSelectedId());
 			bmoRequisitionType.getPaymentBankmovTypeId().setValue(paymentBankmovTypeIdListBox.getSelectedId());
+			bmoRequisitionType.getOutFormat().setValue(outFormatCheckBox.getValue());
 			return bmoRequisitionType;
 		}
 

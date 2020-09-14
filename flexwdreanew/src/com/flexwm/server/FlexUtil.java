@@ -9,6 +9,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import com.symgae.server.HtmlUtil;
@@ -450,4 +451,38 @@ public class FlexUtil {
 				return time * to.convert(1, from);
 		}
 	}
+	// regresa rango de fechas string (5 a 6 de agosto de 2020,5 de julio a 6 de agosto de 2020 ó 5 de julio de 2019 a 6 de agosto de 2020)
+	public static String parseRangeDateTimeToString(SFParams sfParams,String startDate, String endDate) throws SFException {
+		//Variable para resultado
+		String dateResult = "";
+		//Pasar fechas string a Date
+		Date start = SFServerUtil.stringToDate(sfParams.getDateFormat(), startDate);
+		Date end = SFServerUtil.stringToDate(sfParams.getDateFormat(), endDate);
+
+		Calendar calStart = Calendar.getInstance(TimeZone.getTimeZone(sfParams.getTimeZone()));
+		//Asignar fecha inicio
+		calStart.setTime(start);		
+		Calendar calEnd = Calendar.getInstance(TimeZone.getTimeZone(sfParams.getTimeZone()));
+		//Asignar fecha fin
+		calEnd.setTime(end);		
+		//Agrgar dia inicio al resultado
+		dateResult += calStart.get(Calendar.DAY_OF_MONTH);
+		//si es de año diferente agrega nombre de mes y año
+		if (calStart.get(Calendar.YEAR) != calEnd.get(Calendar.YEAR)) {
+
+			dateResult += " de " + getMonthName(sfParams, startDate);
+			dateResult += " de " + calStart.get(Calendar.YEAR);
+
+		} else {
+			//si el mes diferente agrega el nombre del mes
+			if (calStart.get(Calendar.MONTH) != calEnd.get(Calendar.MONTH)) {
+				dateResult += " de " + getMonthName(sfParams, endDate);
+			}
+		}
+		//Agregar fecha fin
+		dateResult += " al " + calEnd.get(Calendar.DAY_OF_MONTH) + " de " + getMonthName(sfParams,endDate) + " de " + calEnd.get(Calendar.YEAR);
+
+		return dateResult;
+	}
+
 }

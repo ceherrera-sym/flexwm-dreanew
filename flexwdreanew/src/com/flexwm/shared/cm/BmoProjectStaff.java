@@ -23,7 +23,7 @@ public class BmoProjectStaff extends BmObject implements Serializable {
 	public BmoProjectStaff() {
 		super("com.flexwm.server.cm.PmProjectStaff", "projectstaff", "projectstaffid", "PSTF", "Personal del Proyecto");
 		
-		code = setField("code", "", "Clave Personal", 10, Types.VARCHAR, false, BmFieldType.CODE, false);
+		code = setField("code", "", "Clave Personal",50 , Types.VARCHAR, false, BmFieldType.CODE, false);
 		notes = setField("notes", "", "Notas", 1000, Types.VARCHAR, true, BmFieldType.STRING, false);
 		
 		projectId = setField("projectid", "", "Proyecto", 5, Types.INTEGER, false, BmFieldType.ID, false);

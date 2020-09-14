@@ -1,6 +1,6 @@
 package com.flexwm.client.op;
 
-import com.flexwm.shared.op.BmoExtraOrderProfile;
+import com.flexwm.shared.op.BmoMissingProfile;
 import com.symgae.client.ui.UiFormLabelList;
 import com.symgae.client.ui.UiListBox;
 import com.symgae.client.ui.UiParams;
@@ -9,38 +9,36 @@ import com.symgae.shared.BmFilter;
 import com.symgae.shared.BmObject;
 import com.symgae.shared.sf.BmoProfile;
 
-public class UiExtraOrderProfileLabelList  extends UiFormLabelList  {
-	BmoExtraOrderProfile bmoExtraOrderProfile;
+public class UiMissingProfileLabelList extends UiFormLabelList {
+	BmoMissingProfile bmoMissingProfile;
 	UiListBox profileListBox = new UiListBox(getUiParams(),new BmoProfile());
 	int orderTypeId;
 	BmoProfile bmoProfile;
 	
-	public UiExtraOrderProfileLabelList(UiParams uiParams, int id) {
-		super(uiParams, new BmoExtraOrderProfile());
-		bmoExtraOrderProfile = (BmoExtraOrderProfile)getBmObject();
+	public UiMissingProfileLabelList(UiParams uiParams,int id) {
+		super(uiParams, new BmoMissingProfile());		
+		bmoMissingProfile = (BmoMissingProfile)getBmObject();
 		this.orderTypeId = id;
 		
 		forceFilter = new BmFilter();		
-		forceFilter.setValueLabelFilter(bmoExtraOrderProfile.getKind(), 
-				bmoExtraOrderProfile.getOrderTypeId().getName(), 
-				bmoExtraOrderProfile.getOrderTypeId().getLabel(), 
+		forceFilter.setValueLabelFilter(bmoMissingProfile.getKind(), 
+				bmoMissingProfile.getOrderTypeId().getName(), 
+				bmoMissingProfile.getOrderTypeId().getLabel(), 
 				BmFilter.EQUALS, 
 				orderTypeId,
-				bmoExtraOrderProfile.getOrderTypeId().getName());
+				bmoMissingProfile.getOrderTypeId().getName());
 	}
 	@Override
 	public void populateFields() {
-		bmoExtraOrderProfile = (BmoExtraOrderProfile)getBmObject();
+		bmoMissingProfile = (BmoMissingProfile)getBmObject();
 		setProfileListBoxFilters(id);
 		
-		formFlexTable.addField(1, 0, profileListBox,bmoExtraOrderProfile.getProfileId());
+		formFlexTable.addField(1, 0, profileListBox,bmoMissingProfile.getProfileId());
 		
 		// DesHabilitar seleccion si es un registro, es decir; no se puede cambiar
-				if (id > 0) profileListBox.setEnabled(false);
-				else profileListBox.setEnabled(true);
+		if (id > 0) profileListBox.setEnabled(false);
+		else profileListBox.setEnabled(true);
 	}
-
-	// Asigna filtros al listado de empresa
 	private void setProfileListBoxFilters(int idExist) {
 
 		// Si es nuevo, asignar filtros, si no limpiarlos
@@ -48,10 +46,10 @@ public class UiExtraOrderProfileLabelList  extends UiFormLabelList  {
 			// Preparar filtro para mostrar solo categorias NO previamente asignados a este registro
 			BmoProfile bmoProfile = new BmoProfile();
 			BmFilter bmoProfileListFilter = new BmFilter();
-			bmoProfileListFilter.setNotInFilter(bmoExtraOrderProfile.getKind(), 
+			bmoProfileListFilter.setNotInFilter(bmoMissingProfile.getKind(), 
 					bmoProfile.getIdFieldName(), 
-					bmoExtraOrderProfile.getProfileId().getName(),
-					bmoExtraOrderProfile.getOrderTypeId().getName(),
+					bmoMissingProfile.getProfileId().getName(),
+					bmoMissingProfile.getOrderTypeId().getName(),
 					"" + orderTypeId
 					);
 			profileListBox = new UiListBox(getUiParams(), bmoProfile, bmoProfileListFilter);
@@ -60,15 +58,14 @@ public class UiExtraOrderProfileLabelList  extends UiFormLabelList  {
 			profileListBox.clearFilters();
 		}
 	}
-	
 	@Override
 	public BmObject populateBObject() throws BmException {
-		bmoExtraOrderProfile = new BmoExtraOrderProfile();
-		bmoExtraOrderProfile.setId(id);
-		bmoExtraOrderProfile.getProfileId().setValue(profileListBox.getSelectedId());		
-		bmoExtraOrderProfile.getOrderTypeId().setValue(orderTypeId);
+		bmoMissingProfile = new BmoMissingProfile();
+		bmoMissingProfile.setId(id);
+		bmoMissingProfile.getProfileId().setValue(profileListBox.getSelectedId());		
+		bmoMissingProfile.getOrderTypeId().setValue(orderTypeId);
 
-		return bmoExtraOrderProfile;
+		return bmoMissingProfile;
 	}
 
 }

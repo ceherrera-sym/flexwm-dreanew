@@ -30,7 +30,7 @@ public class BmoRequisition extends BmObject implements Serializable {
 	amount, discount, taxApplies, tax, total, payments, balance, paymentStatus, supplierId, requestedBy, 
 	authorizedUser, authorizedDate,	orderCommissionAmountId, areaId, reqPayTypeId, orderId, warehouseId, 
 	companyId, requisitionTypeId, contractEstimationId,	budgetItemId, holdBack, currencyId, currencyParity,
-	loanId,	propertyId, file, wFlowTypeId, wFlowId,oportunityId;
+	loanId,	propertyId, file, wFlowTypeId, wFlowId,oportunityId,deliveryTime,responsibleId,observations, showOnOutFormat;
 
 	private BmoCompany bmoCompany = new BmoCompany();
 	private BmoSupplier bmoSupplier = new BmoSupplier();	
@@ -67,6 +67,7 @@ public class BmoRequisition extends BmObject implements Serializable {
 	public static final String ACCESS_AUTMIN = "RQAUTMIN";
 	public static final String ACCESS_AUTMAX = "RQAUTMAX";
 	public static final String ACCESS_REQCHSERVICE = "RQCHSERV"; // Modificar Items de oc de tipo servicio
+	public static final String ACCESS_OUTDATA = "OUTDATA";
 
 	// pagar de mas/modificar items
 
@@ -94,7 +95,12 @@ public class BmoRequisition extends BmObject implements Serializable {
 		requestDate = setField("requestdate", "", "Fecha Solicitud", 20, 0, false, BmFieldType.DATE, false);
 		deliveryDate = setField("deliverydate", "", "Fecha Entrega", 20, 0, false, BmFieldType.DATE, false);
 		paymentDate = setField("paymentdate", "", "Fecha Pago", 20, 0, false, BmFieldType.DATE, false);
-
+		//Campos Drea
+		deliveryTime = setField("deliverytime", "", "Hora de Entrega",20, Types.TIMESTAMP, true, BmFieldType.DATETIME, false);
+		responsibleId = setField("responsibleid", "", "Responsable", 5, Types.INTEGER, true, BmFieldType.ID, false);
+		observations = setField("observations", "", "Observaciones", 1000, Types.VARCHAR, true, BmFieldType.STRING, false);
+		showOnOutFormat = setField("showonoutformat", "", "Formato de Salida?", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+		
 		status = setField("status", "" + STATUS_EDITION, "Status", 1, Types.CHAR, false, BmFieldType.OPTIONS, false);
 		status.setOptionList(new ArrayList<BmFieldOption>(Arrays.asList(
 				new BmFieldOption(STATUS_EDITION, "En Edición", "./icons/status_edition.png"),
@@ -197,7 +203,6 @@ public class BmoRequisition extends BmObject implements Serializable {
 				new BmSearchField(getBmoSupplier().getName())
 				));
 	}
-
 	@Override
 	public ArrayList<BmOrder> getOrderFields() {
 		return new ArrayList<BmOrder>(Arrays.asList(new BmOrder(getKind(), getIdField(), BmOrder.ASC)));
@@ -660,7 +665,39 @@ public class BmoRequisition extends BmObject implements Serializable {
 
 	public void setOportunityId(BmField oportunityId) {
 		this.oportunityId = oportunityId;
+	}
+
+	public BmField getDeliveryTime() {
+		return deliveryTime;
+	}
+
+	public void setDeliveryTime(BmField deliveryTime) {
+		this.deliveryTime = deliveryTime;
+	}	
+
+	public BmField getResponsibleId() {
+		return responsibleId;
+	}
+
+	public void setResponsibleId(BmField responsibleId) {
+		this.responsibleId = responsibleId;
+	}
+
+	public BmField getObservations() {
+		return observations;
+	}
+
+	public void setObservations(BmField observations) {
+		this.observations = observations;
+	}
+
+	public BmField getShowOnOutFormat() {
+		return showOnOutFormat;
+	}
+
+	public void setShowOnOutFormat(BmField showOnOutFormat) {
+		this.showOnOutFormat = showOnOutFormat;
 	}	
 	
-
+	
 }

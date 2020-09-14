@@ -261,6 +261,17 @@ public class PmRequisition extends PmObject {
 		BmoRequisitionType bmoRequisitionType = (BmoRequisitionType)pmRequisitionType.get(pmConn, bmoRequisition.getRequisitionTypeId().toInteger());
 
 		PmWFlowLog pmWFlowLog = new PmWFlowLog(getSFParams());
+		
+		if (bmoRequisition.getBmoRequisitionType().getOutFormat().toBoolean()) {
+			if (bmoRequisition.getShowOnOutFormat().toBoolean()) {
+				if (bmoRequisition.getDeliveryTime().toString().equals("")) {
+					bmUpdateResult.addError(bmoRequisition.getDeliveryTime().getName(), "Complete este campo");
+				}
+				if (bmoRequisition.getResponsibleId().toInteger() <= 0) {
+					bmUpdateResult.addError(bmoRequisition.getResponsibleId().getName(), "Complete este campo");
+				}
+			}
+		}
 
 		// Se almacena de forma preliminar para asignar ID y la Clave
 		if (!(bmoRequisition.getId() > 0)) {

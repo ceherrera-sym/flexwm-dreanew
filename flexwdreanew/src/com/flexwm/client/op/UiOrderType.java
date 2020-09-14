@@ -56,6 +56,7 @@ public class UiOrderType extends UiList {
 		CheckBox filterOnScrumCheckBox = new CheckBox();
 		CheckBox endContractCheckBox = new CheckBox();
 		CheckBox sendExtraMailCheckBox = new CheckBox();
+		CheckBox sendMissingMailCheckBox = new CheckBox();
 
 		CheckBox enableSendDeliveryCheckBox = new CheckBox();
 		CheckBox enableReqiOrderFinishCheckBox = new CheckBox();
@@ -147,18 +148,25 @@ public class UiOrderType extends UiList {
 			// Renta
 			formFlexTable.addField(32, 0, enableExtraOrderCheckBox, bmoOrderType.getEnableExtraOrder());
 			formFlexTable.addField(33, 0, wFlowTypeListBox, bmoOrderType.getwFlowTypeId());
+			//Enviar correo al autorizar un pedido extra
 			formFlexTable.addField(34, 0, sendExtraMailCheckBox,bmoOrderType.getSendExtraMail());
 			if (!newRecord) {
 				formFlexTable.addField(35, 0, new UiExtraOrderProfileLabelList(getUiParams(), id));
 			}
-			formFlexTable.addField(36, 0, areaDefaultDetailUiList, bmoOrderType.getAreaDefaultDetail());
-			formFlexTable.addField(37, 0, statusDefaultDetailUiList, bmoOrderType.getStatusDefaultDetail());
+			//Notificar faltantes a los perfiles seleccionados
+			formFlexTable.addField(36, 0, sendMissingMailCheckBox,bmoOrderType.getSendMissingMail());
+			if (!newRecord) {
+				formFlexTable.addField(37, 0, new UiMissingProfileLabelList(getUiParams(), id));
+			}
+			
+			formFlexTable.addField(38, 0, areaDefaultDetailUiList, bmoOrderType.getAreaDefaultDetail());
+			formFlexTable.addField(39, 0, statusDefaultDetailUiList, bmoOrderType.getStatusDefaultDetail());
 			// todos
-			formFlexTable.addSectionLabel(38, 0, financesSection, 2);
-			formFlexTable.addField(39, 0, hasTaxes, bmoOrderType.getHasTaxes());
+			formFlexTable.addSectionLabel(40, 0, financesSection, 2);
+			formFlexTable.addField(41, 0, hasTaxes, bmoOrderType.getHasTaxes());
 			if ((((BmoFlexConfig) getSFParams().getBmoAppConfig()).getEnableWorkBudgetItem().toInteger() > 0)) {
-				formFlexTable.addField(40, 0, defaultBudgetItemSuggestBox, bmoOrderType.getDefaultBudgetItemId());
-				formFlexTable.addField(41, 0, defaultAreaSuggestBox, bmoOrderType.getDefaultAreaId());
+				formFlexTable.addField(42, 0, defaultBudgetItemSuggestBox, bmoOrderType.getDefaultBudgetItemId());
+				formFlexTable.addField(43, 0, defaultAreaSuggestBox, bmoOrderType.getDefaultAreaId());
 			}
 
 			statusEffect();
@@ -364,6 +372,7 @@ public class UiOrderType extends UiList {
 			bmoOrderType.getRequiredPropertyModel().setValue(requiredPropertyModelCheckBox.getValue());
 			bmoOrderType.getDefaultWFlowTypeId().setValue(defaultWFlowTypeListBox.getSelectedId());
 			bmoOrderType.getSendExtraMail().setValue(sendExtraMailCheckBox.getValue());
+			bmoOrderType.getSendMissingMail().setValue(sendMissingMailCheckBox.getValue());
 			return bmoOrderType;
 		}
 

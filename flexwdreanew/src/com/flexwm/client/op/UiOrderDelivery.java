@@ -55,6 +55,7 @@ import com.google.gwt.user.cellview.client.LoadingStateChangeEvent;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -142,7 +143,8 @@ public class UiOrderDelivery extends UiList {
 		UiSuggestBox customerSuggestBox = new UiSuggestBox(new BmoCustomer());
 		UiSuggestBox toWhSectionSuggestBox = new UiSuggestBox(new BmoWhSection());
 		UiSuggestBox projectSuggestBox = new UiSuggestBox(new BmoProject());
-
+		
+		CheckBox acceptMissingCheckBox = new CheckBox();
 		UiListBox currencyListBox;
 		TextBox currencyParityTextBox = new TextBox();
 		UiListBox companyListBox;
@@ -298,9 +300,11 @@ public class UiOrderDelivery extends UiList {
 				formFlexTable.addField(16, 0, amountTextBox, bmoOrderDelivery.getAmount());
 				formFlexTable.addField(17, 0, taxTextBox, bmoOrderDelivery.getTax());
 				formFlexTable.addField(18, 0, totalTextBox, bmoOrderDelivery.getTotal());
-				formFlexTable.addLabelField(19, 0, bmoOrderDelivery.getPayment());
-				
-				formFlexTable.addField(20, 0, statusListBox, bmoOrderDelivery.getStatus());			
+				if (bmoOrderDelivery.getType().equals(BmoOrderDelivery.TYPE_RETURN)) {
+					formFlexTable.addField(19, 0, acceptMissingCheckBox,bmoOrderDelivery.getAcceptMissing());
+				}
+				formFlexTable.addLabelField(20, 0, bmoOrderDelivery.getPayment());							
+				formFlexTable.addField(21, 0, statusListBox, bmoOrderDelivery.getStatus());			
 
 				reset();
 
@@ -575,6 +579,8 @@ public class UiOrderDelivery extends UiList {
 			//projectSuggestBox.setEnabled(false);
 			notesTextArea.setEnabled(false);
 			
+			acceptMissingCheckBox.setEnabled(false);
+			
 			formFlexTable.hideField(bmoOrderDelivery.getCurrencyId());
 			formFlexTable.hideField(bmoOrderDelivery.getCurrencyParity());
 			formFlexTable.hideField(bmoOrderDelivery.getAmount());
@@ -588,6 +594,7 @@ public class UiOrderDelivery extends UiList {
 				addOrderDeliveryItemButton.setVisible(true);
 				barcodeDialogButton.setVisible(true);
 				notesTextArea.setEnabled(true);
+				acceptMissingCheckBox.setEnabled(true);
 			}else {
 				notesTextArea.setEnabled(false);
 			}
@@ -660,6 +667,7 @@ public class UiOrderDelivery extends UiList {
 			bmoOrderDelivery.getCurrencyParity().setValue(currencyParityTextBox.getText());
 			bmoOrderDelivery.getProjectId().setValue(projectSuggestBox.getSelectedId());
 			bmoOrderDelivery.getNotes().setValue(notesTextArea.getText());
+			bmoOrderDelivery.getAcceptMissing().setValue(acceptMissingCheckBox.getValue());
 			return bmoOrderDelivery;
 		}
 

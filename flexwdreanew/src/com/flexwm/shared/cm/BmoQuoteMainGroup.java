@@ -14,7 +14,7 @@ import com.symgae.shared.BmSearchField;
 public class BmoQuoteMainGroup extends BmObject implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private BmField name,quoteId,total,discount,productionFee,amount,
-	commission;
+	commission,showCommission;
 
 	public BmoQuoteMainGroup() {
 		super("com.flexwm.server.cm.PmQuoteMainGroup", "quotemaingroups", "quotemaingroupid", "QMGR", "Grupo de Cotización");
@@ -28,6 +28,7 @@ public class BmoQuoteMainGroup extends BmObject implements Serializable {
 		productionFee = setField("productionfee", "0", "Fee de Prodcucción", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
 		amount = setField("amount", "0", "Subtotal", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
 		commission = setField("commission", "0", "Comisión", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
+		showCommission = setField("showcommission", "0", "Mostrar Comisión?", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 	}
 	@Override
 	public ArrayList<BmField> getDisplayFieldList() {
@@ -87,6 +88,12 @@ public class BmoQuoteMainGroup extends BmObject implements Serializable {
 	}
 	public void setCommission(BmField commission) {
 		this.commission = commission;
+	}
+	public BmField getShowCommission() {
+		return showCommission;
+	}
+	public void setShowCommission(BmField showCommission) {
+		this.showCommission = showCommission;
 	}
 	
 	

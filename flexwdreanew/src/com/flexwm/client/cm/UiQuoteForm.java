@@ -1512,6 +1512,7 @@ public class UiQuoteForm extends UiForm {
 		private UiFormFlexTable formTable = new UiFormFlexTable(getUiParams());
 		private BmoQuoteMainGroup  bmoQuoteMainGroup;
 		private TextBox nameTextBox = new TextBox();
+		private CheckBox showCommisionCheckBox = new CheckBox();
 		private Button saveButton = new Button("GUARDAR");
 		private Button deleteButton = new Button("ELIMINAR");
 		private Button closeButton  = new Button("CERRAR");
@@ -1566,8 +1567,10 @@ public class UiQuoteForm extends UiForm {
 		public void show(){
 			formTable.addField(0, 0, mainGroupListBox, bmoQuoteMainGroup.getIdField());
 			formTable.addField(1, 0, nameTextBox, bmoQuoteMainGroup.getName());
+			formTable.addField(2, 0, showCommisionCheckBox,bmoQuoteMainGroup.getShowCommission());
 			
 			nameTextBox.setEnabled(false);
+			showCommisionCheckBox.setEnabled(false);
 			
 			formTable.addButtonPanel(buttonPanel);
 		}
@@ -1577,12 +1580,20 @@ public class UiQuoteForm extends UiForm {
 				bmoQuoteMainGroup = (BmoQuoteMainGroup)mainGroupListBox.getSelectedBmObject() ;
 				nameTextBox.setText(bmoQuoteMainGroup.getName().toString());
 				nameTextBox.setEnabled(true);
+				showCommisionCheckBox.setEnabled(true);
+				showCommisionCheckBox.setValue(bmoQuoteMainGroup.getShowCommission().toBoolean());
+			} else {
+				nameTextBox.setEnabled(false);
+				nameTextBox.setText("");
+				showCommisionCheckBox.setEnabled(false);
+				showCommisionCheckBox.setValue(false);
 			}
 		}
 		private void prepareSave() {
 			try {
 				bmoQuoteMainGroup.setId(mainGroupListBox.getSelectedId());
 				bmoQuoteMainGroup.getName().setValue(nameTextBox.getText());
+				bmoQuoteMainGroup.getShowCommission().setValue(showCommisionCheckBox.getValue());
 				bmoQuoteMainGroup.getQuoteId().setValue(bmoOpportunity.getQuoteId().toInteger());
 				save();
 			}catch (Exception e) {
@@ -1660,6 +1671,7 @@ public class UiQuoteForm extends UiForm {
 	private class UiMainGroupForm extends Ui {
 		private UiFormFlexTable formTable = new UiFormFlexTable(getUiParams());
 		private TextBox nameTextBox = new TextBox();
+		private CheckBox showCommissionCheckBox = new CheckBox();
 		private BmoQuoteMainGroup  bmoQuoteMainGroup;
 		private int quoteId;
 		private Button saveButton = new Button("AGREGAR");
@@ -1687,6 +1699,7 @@ public class UiQuoteForm extends UiForm {
 		public void show(){
 			bmoQuoteMainGroup = new BmoQuoteMainGroup();
 			formTable.addField(1, 0, nameTextBox, bmoQuoteMainGroup.getName());
+			formTable.addField(2, 0, showCommissionCheckBox,bmoQuoteMainGroup.getShowCommission());
 			
 			formTable.addButtonPanel(buttonPanel);
 		}
@@ -1697,6 +1710,7 @@ public class UiQuoteForm extends UiForm {
 				
 				bmoQuoteMainGroup.getName().setValue(nameTextBox.getText());
 				bmoQuoteMainGroup.getQuoteId().setValue(quoteId);
+				bmoQuoteMainGroup.getShowCommission().setValue(showCommissionCheckBox.getValue());
 				
 				save();
 			} catch (BmException e) {

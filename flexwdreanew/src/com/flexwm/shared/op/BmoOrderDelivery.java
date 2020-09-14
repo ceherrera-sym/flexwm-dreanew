@@ -24,7 +24,7 @@ import com.symgae.shared.BmSearchField;
 
 public class BmoOrderDelivery extends BmObject implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private BmField code, name, deliveryDate, orderId, type, status, payment, companyId, 
+	private BmField code, name, deliveryDate, orderId, type, status, payment, companyId, acceptMissing,
 	amount, discount, tax, total, customerId, toWhSectionId, currencyId, currencyParity, projectId,notes,userCreate;
 
 	BmoOrder bmoOrder = new BmoOrder();
@@ -85,7 +85,9 @@ public class BmoOrderDelivery extends BmObject implements Serializable {
 		companyId = setField("companyid", "", "Empresa", 20, Types.INTEGER, false, BmFieldType.ID, false);
 		projectId = setField("projectid", "", "Proyecto", 20, Types.INTEGER, true, BmFieldType.ID, false);
 		notes = setField("notes", "", "Notas", 1024, Types.VARCHAR, true, BmFieldType.STRING, false);
-		userCreate = setField("usercreate", "", "", 60, Types.VARCHAR, true, BmFieldType.STRING, false);
+		userCreate = setField("usercreate", "", "", 60, Types.VARCHAR, true, BmFieldType.STRING, false);		
+
+		acceptMissing = setField("acceptmissing", "0", "Acepta Faltantes?", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 	}
 
 	public String getCodeFormat() {
@@ -167,6 +169,14 @@ public class BmoOrderDelivery extends BmObject implements Serializable {
 	 */
 	public void setName(BmField name) {
 		this.name = name;
+	}
+
+	public BmField getAcceptMissing() {
+		return acceptMissing;
+	}
+
+	public void setAcceptMissing(BmField acceptMissing) {
+		this.acceptMissing = acceptMissing;
 	}
 
 	/**

@@ -1,3 +1,12 @@
+<%@page import="com.flexwm.server.op.PmRequisition"%>
+<%@page import="com.flexwm.shared.op.BmoRequisitionType"%>
+<%@page import="com.flexwm.shared.op.BmoRequisition"%>
+<%@page import="com.flexwm.server.FlexUtil"%>
+<%@page import="com.flexwm.shared.op.BmoEquipment"%>
+<%@page import="com.flexwm.server.op.PmEquipmentType"%>
+<%@page import="com.flexwm.shared.op.BmoEquipmentType"%>
+<%@page import="com.flexwm.server.op.PmProjectEquipment"%>
+<%@page import="com.flexwm.shared.op.BmoProjectEquipment"%>
 <%@page import="com.flexwm.server.cm.PmProjectStaff"%>
 <%@page import="com.flexwm.shared.cm.BmoProjectStaff"%>
 <%@page import="com.flexwm.server.cm.PmProjectDetail"%>
@@ -90,7 +99,8 @@ body {
 		NumberFormat formatCurrency = NumberFormat.getCurrencyInstance(Locale.US);
 		bmoProject = (BmoProject)pmProject.get(Integer.parseInt(request.getParameter("foreignId")));
 		
-		BmoProjectDetail bmoProjectDetail = (BmoProjectDetail)new PmProjectDetail(sFParams).getBy(bmoProject.getId(), new BmoProjectDetail().getProjectId().getName());
+		PmProjectDetail pmProjectDetail = new PmProjectDetail(sFParams);		
+		BmoProjectDetail bmoProjectDetail = (BmoProjectDetail)pmProjectDetail.getBy(bmoProject.getId(), new BmoProjectDetail().getProjectId().getName());
 		//Empresa
 		BmoCompany bmoCompany = new BmoCompany();
 		PmCompany pmCompany = new PmCompany(sFParams);
@@ -183,66 +193,116 @@ body {
 					</tr>	
 					<tr>
 						<th align="left"  class="reportCellEven"> Carga de equipo</th>
-						<td class="reportCellEven"><%=bmoProjectDetail.getEquipmentLoadDate().toString().substring(0, 10)%></td>
+						<td class="reportCellEven">
+							<% if (!bmoProjectDetail.getEquipmentLoadDate().toString().equals("")){ %>
+								<%= FlexUtil.dateToLongDate(sFParams, bmoProjectDetail.getEquipmentLoadDate().toString()) %>
+							<% } %>
+						</td>
 					</tr>	
 					<tr>
 						<th align="left"  class="reportCellEven"> Salida de bodega</th>
-						<td class="reportCellEven"><%=bmoProjectDetail.getExitDate().toString().substring(0, 10)%></td>
+						<td class="reportCellEven">
+							<% if (!bmoProjectDetail.getExitDate().toString().equals("")){ %>
+								<%= FlexUtil.dateToLongDate (sFParams,bmoProjectDetail.getExitDate().toString())%>
+							<% } %>
+						</td>
 					</tr>
 					<tr>
 						<th align="left"  class="reportCellEven"> Montaje</th>
-						<td class="reportCellEven"><%=bmoProjectDetail.getLoadStartDate().toString().substring(0, 10)%></td>
+						<td class="reportCellEven">
+							<% if (!bmoProjectDetail.getLoadStartDate().toString().equals("")){ %>
+								<%= FlexUtil.dateToLongDate(sFParams, bmoProjectDetail.getLoadStartDate().toString())%>
+							<% } %>
+						</td>
 					</tr>
 					<tr>
 						<th align="left"  class="reportCellEven"> Pruebas</th>
-						<td class="reportCellEven"><%=bmoProjectDetail.getTestDate().toString().substring(0, 10)%></td>
+						<td class="reportCellEven">
+							<% if (!bmoProjectDetail.getTestDate().toString().equals("")){ %>
+								<%= FlexUtil.dateToLongDate(sFParams, bmoProjectDetail.getTestDate().toString())%>
+							<% } %>
+						</td>
 					</tr>
 					<tr>
 						<th align="left"  class="reportCellEven"> Entrega</th>
-						<td class="reportCellEven"><%=bmoProjectDetail.getDeliveryDate().toString().substring(0, 10)%></td>
-					</tr>
+						<td class="reportCellEven">
+							<% if (!bmoProjectDetail.getDeliveryDate().toString().equals("")){ %>
+								<%= FlexUtil.dateToLongDate(sFParams, bmoProjectDetail.getDeliveryDate().toString())%>
+							<% } %>
+						</td>
+					</tr>					
 					<tr>
-						<th align="left"  class="reportCellEven"> Evento</th>
-						<td class="reportCellEven"><%=bmoProject.getStartDate().toString().substring(0, 10)%></td>
+						<th align="left"  class="reportCellEven"> Evento </th>
+						<td class="reportCellEven">
+							<% if (!bmoProjectDetail.getEventStartDate().toString().equals("") & bmoProjectDetail.getEventEndDate().toString().equals("")){ %>
+								<%= FlexUtil.parseRangeDateTimeToString(sFParams,bmoProjectDetail.getEventStartDate().toString()
+									,bmoProjectDetail.getEventEndDate().toString()) %>
+							<% } %>
+						</td>
 					</tr>
 					<tr>
 						<th align="left"  class="reportCellEven"> Desmontaje</th>
-						<td class="reportCellEven"><%=bmoProjectDetail.getUnloadStartDate().toString().substring(0, 10)%></td>
+						<td class="reportCellEven">
+							<% if (!bmoProjectDetail.getUnloadStartDate().toString().equals("")){ %>
+								<%= FlexUtil.dateToLongDate(sFParams, bmoProjectDetail.getUnloadStartDate().toString())%>
+							<% } %>
+						</td>
 					</tr>
 					<tr>
 						<th align="left"  class="reportCellEven"> Regreso</th>
-						<td class="reportCellEven"><%=bmoProjectDetail.getReturnDate().toString().substring(0, 10)%></td>
+						<td class="reportCellEven">
+							<% if (!bmoProjectDetail.getReturnDate().toString().equals("")){ %>
+								<%= FlexUtil.dateToLongDate(sFParams, bmoProjectDetail.getReturnDate().toString())%>
+							<% } %>
+						</td>
 					</tr>
 				</table>
 			</td>
 			<td > &nbsp;</td>
 			<td width="50%" valign="top">
 				<table border="0" cellspacing="0" width="100%" cellpadding="0" style="font-size: 12px">
-					<tr>
-						<td class="reportHeaderCellCenter" width="50%"  colspan="4">TRANSPORTE</td>
-					</tr>
-					
 					<%
-						BmoOrderEquipment bmoOrderEquipment = new BmoOrderEquipment();
-						PmOrderEquipment pmOrderEquipment = new PmOrderEquipment(sFParams);
-						BmFilter filterEquipment = new BmFilter();
-						filterEquipment.setValueFilter(bmoOrderEquipment.getKind(), bmoOrderEquipment.getOrderId(), bmoProject.getOrderId().toInteger());
+						PmEquipmentType pmEquipmentType = new PmEquipmentType(sFParams);
 						
-						Iterator<BmObject> equipmentIterator = pmOrderEquipment.list(filterEquipment).iterator();
-						while (equipmentIterator.hasNext()){
-							BmoOrderEquipment nextBmoOrderEquipment = (BmoOrderEquipment)equipmentIterator.next();
+						Iterator<BmObject> equipmentTypeIterator = pmEquipmentType.list().iterator();
+						PmConn pmConn2 = new PmConn(sFParams);
+						pmConn2.open();
+						
+						while (equipmentTypeIterator.hasNext()){
+							BmoEquipmentType nextBmoEquipmentType = (BmoEquipmentType)equipmentTypeIterator.next();
+							 String sql = "SELECT peqi_projectequipmentid FROM projectequipment LEFT JOIN equipments ON (peqi_equipmentid = equi_equipmentid) "
+									+ " LEFT JOIN equipmenttypes ON (equi_equipmenttypeid = eqty_equipmenttypeid) "
+									+ " WHERE peqi_projectid = " + bmoProject.getId() + " AND eqty_equipmenttypeid = " + nextBmoEquipmentType.getId();
+							 
+							 pmConn2.doFetch(sql);
 					%>
 							<tr>
-								<th align="left" class="reportCellEven">Chofer:</th>
-								<td align="left" class="reportCellEven"><%=nextBmoOrderEquipment.getBmoEquipment().getBmoUser().getCode() %></td>
-								<th align="left" class="reportCellEven">Veh&iacute;culo:</th>
-								<td align="left" class="reportCellEven"><%=nextBmoOrderEquipment.getBmoEquipment().getCode() %></td>
-							</tr>	
-							
+								<td class="reportHeaderCellCenter" width="50%"  colspan="4"><%=nextBmoEquipmentType.getName().toHtml() %></td>
+							</tr>
 					<%
-						}
+					
+							while (pmConn2.next()){
+								PmProjectEquipment pmProjectEquipment = new PmProjectEquipment(sFParams);
+								BmoProjectEquipment nextBmoProjectEquipment = (BmoProjectEquipment)pmProjectEquipment.get(pmConn2.getInt("peqi_projectequipmentid"));
+								BmoEquipment nexbmoEquipment = (BmoEquipment)new PmEquipment(sFParams).get(nextBmoProjectEquipment.getEquipmentId().toInteger());
 					%>
+								<tr>
+									<th align="left" class="reportCellEven">Nombre:</th>
+									<td align="left" class="reportCellEven"><%=nexbmoEquipment.getName().toHtml()%></td>
+								</tr>
+								<tr>
+									<th align="left" class="reportCellEven">Descripci&oacute;n:</th>
+									<td align="left" class="reportCellEven">
+										<%= nexbmoEquipment.getDescription().toHtml() %>									
+									</td>
+								</tr>
+					<%
+							}
 							
+						}
+						pmConn2.close();
+					
+					%>							
 				</table>
 			</td>
 		</tr>
@@ -290,7 +350,7 @@ body {
 	<br>
 	<table border="0" cellspacing="0" width="100%" cellpadding="0" style="font-size: 12px">
 		<tr>
-			<td class="reportHeaderCellCenter" colspan="5">Porveedores Externos</td>
+			<td class="reportHeaderCellCenter" colspan="5">Proveedores Externos</td>
 		</tr>
 		<tr>
 			<td class="reportHeaderCell " align="left"  >Nombre</td>
@@ -299,13 +359,41 @@ body {
 			<td class="reportHeaderCell " align="right"  >Encargado</td>	
 			<td class="reportHeaderCell " align="right"  >Observaciones</td>	
 		</tr>
-		<tr>
-			<td class="reportCellEven " align="left"  >Gennie x 1 semana</td>
-			<td class="reportCellEven " >EXPO</td>
-			<td class="reportCellEven " >1 Pm</td>
-			<td class="reportCellEven " >Luis</td>	
-			<td class="reportCellEven " >500 x persona (pruebas) 4 dias x 1000</td>
-		</tr>
+		<%
+			BmFilter requisitionFilter = new BmFilter();
+			BmFilter requisitionTypeFilter = new BmFilter();
+			BmFilter orderFilter = new BmFilter();
+			ArrayList<BmFilter> filterList = new ArrayList<BmFilter>();
+			BmoRequisition bmoRequisition = new BmoRequisition();
+			PmRequisition pmRequisition = new PmRequisition(sFParams);
+			
+			requisitionTypeFilter.setValueFilter(bmoRequisition.getBmoRequisitionType().getKind(), bmoRequisition.getBmoRequisitionType().getOutFormat(), 1);
+			filterList.add(requisitionTypeFilter);
+			
+			requisitionFilter.setValueFilter(bmoRequisition.getKind(), bmoRequisition.getShowOnOutFormat(), 1);
+			filterList.add(requisitionFilter);
+			
+			orderFilter.setValueFilter(bmoRequisition.getKind(), bmoRequisition.getOrderId(), bmoProject.getOrderId().toInteger());
+			filterList.add(orderFilter);
+			
+			Iterator<BmObject> requiIterator = pmRequisition.list(filterList).iterator();
+		
+			while (requiIterator.hasNext()){
+				BmoRequisition nextBmoRequisition = (BmoRequisition)requiIterator.next();
+				BmoUser responsibleUser = (BmoUser)new PmUser(sFParams).get(nextBmoRequisition.getResponsibleId().toInteger());
+		%>
+				<tr>
+					<td class="reportCellEven " align="left"  ><%= nextBmoRequisition.getBmoSupplier().getName().toHtml() %></td>
+					<td class="reportCellEven " ><%= bmoProject.getBmoVenue().getName().toHtml() %></td>
+					<td class="reportCellEven " ><%= nextBmoRequisition.getDeliveryTime().toHtml() %></td>
+					<td class="reportCellEven " >
+						<%= responsibleUser.getFirstname().toHtml() + " " + responsibleUser.getFatherlastname().toHtml() + " " + responsibleUser.getMotherlastname().toHtml() %>					
+					</td>	
+					<td class="reportCellEven " ><%= nextBmoRequisition.getObservations().toHtml() %></td>
+				</tr>
+		<%
+			}
+		%>
 	</table>
 </body>
 </html>

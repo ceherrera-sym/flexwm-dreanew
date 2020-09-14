@@ -13,6 +13,8 @@ package com.flexwm.server.op;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+
+import com.flexwm.server.cm.PmProject;
 import com.flexwm.server.cr.PmCredit;
 import com.flexwm.server.fi.PmBankAccount;
 import com.flexwm.server.fi.PmBankMovConcept;
@@ -22,7 +24,9 @@ import com.flexwm.server.fi.PmFiscalPeriod;
 import com.flexwm.server.fi.PmRaccount;
 import com.flexwm.server.fi.PmRaccountItem;
 import com.flexwm.server.fi.PmRaccountType;
+import com.flexwm.server.wf.PmWFlowLog;
 import com.flexwm.shared.BmoFlexConfig;
+import com.flexwm.shared.cm.BmoProject;
 import com.flexwm.shared.cr.BmoCredit;
 import com.flexwm.shared.fi.BmoBankAccount;
 import com.flexwm.shared.fi.BmoBankMovConcept;
@@ -31,6 +35,7 @@ import com.flexwm.shared.fi.BmoBankMovement;
 import com.flexwm.shared.fi.BmoRaccount;
 import com.flexwm.shared.fi.BmoRaccountItem;
 import com.flexwm.shared.fi.BmoRaccountType;
+import com.flexwm.shared.op.BmoMissingProfile;
 import com.flexwm.shared.op.BmoOrder;
 import com.flexwm.shared.op.BmoOrderDelivery;
 import com.flexwm.shared.op.BmoOrderDeliveryItem;
@@ -38,18 +43,24 @@ import com.flexwm.shared.op.BmoOrderType;
 import com.flexwm.shared.op.BmoWhBoxTrack;
 import com.flexwm.shared.op.BmoWhMovement;
 import com.flexwm.shared.op.BmoWhSection;
+import com.flexwm.shared.wf.BmoWFlowLog;
+import com.symgae.server.HtmlUtil;
 import com.symgae.server.PmConn;
 import com.symgae.server.PmJoin;
 import com.symgae.server.PmObject;
+import com.symgae.server.SFSendMail;
 import com.symgae.server.SFServerUtil;
+import com.symgae.server.sf.PmUser;
 import com.symgae.shared.BmFilter;
 import com.symgae.shared.BmObject;
 import com.symgae.shared.BmUpdateResult;
 import com.symgae.shared.SFException;
+import com.symgae.shared.SFMailAddress;
 import com.symgae.shared.SFParams;
 import com.symgae.shared.SFPmException;
 import com.symgae.shared.SQLUtil;
 import com.symgae.shared.sf.BmoCompany;
+import com.symgae.shared.sf.BmoUser;
 
 
 public class PmOrderDelivery extends PmObject {
@@ -176,6 +187,28 @@ public class PmOrderDelivery extends PmObject {
 				bmUpdateResult.addError(bmoOrderDelivery.getDeliveryDate().getName(), 
 						"El Periodo Operativo está Cerrado en la fecha del Documento (" + bmoOrderDelivery.getDeliveryDate().toString().substring(0, 10) + ").");
 		}
+		//permitir faltantes pero gurdar resitro de quien acepta los faltantes
+		if (getSFParams().isFieldEnabled(bmoOrderDelivery.getAcceptMissing()) && bmoOrderDelivery.getType().equals(BmoOrderDelivery.TYPE_RETURN)) {
+			if (bmoOrderDelivery.getStatus().equals(BmoOrderDelivery.STATUS_AUTHORIZED)) {
+				BmoOrderDelivery bmoOrderDeliveryPrev = (BmoOrderDelivery)new PmOrderDelivery(getSFParams()).get(pmConn,bmoOrderDelivery.getId());
+				if (existMissings(pmConn, bmoOrderDelivery)){
+					if (!bmoOrderDelivery.getAcceptMissing().toBoolean()) {
+						bmUpdateResult.addError(bmoOrderDelivery.getAcceptMissing().getName(), "Existen faltantes en la devolución");
+					} else {
+						if (bmoOrderDeliveryPrev.getStatus().toChar() != bmoOrderDelivery.getStatus().toChar()) {
+							PmWFlowLog pmWFlowLog = new PmWFlowLog(getSFParams());
+							pmWFlowLog.addDataLog(pmConn, bmUpdateResult, bmoOrderDelivery.getBmoOrder().getWFlowId().toInteger(),
+									BmoWFlowLog.TYPE_OTHER, "Autorización de Devolución con faltantes", "");
+							
+							//Enviar notificación a los perfiles configurados
+							if (bmoOrderDelivery.getBmoOrder().getBmoOrderType().getSendMissingMail().toBoolean()) {
+								sendMissingMail(pmConn, bmoOrderDelivery);
+							}
+						}						
+					}
+				}
+			}
+		}
 
 		// Actualiza registros actuales
 		super.save(pmConn, bmoOrderDelivery, bmUpdateResult);
@@ -196,6 +229,96 @@ public class PmOrderDelivery extends PmObject {
 
 		return bmUpdateResult;
 	}	
+	private void sendMissingMail(PmConn pmConn, BmoOrderDelivery bmoOrderDelivery) throws SFException {
+		if (bmoOrderDelivery.getBmoOrder().getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+			BmoProject bmoProject = new BmoProject();
+			PmProject pmProject = new PmProject(getSFParams());
+			BmoMissingProfile bmoMissingProfile = new BmoMissingProfile();
+			PmMissingProfile pmMissingProfile = new PmMissingProfile(getSFParams());
+			ArrayList<SFMailAddress> mailList = new ArrayList<SFMailAddress>();
+			PmUser pmUser = new PmUser(getSFParams());
+			String msg = "";
+			String msgBody = "";
+			int i = 0;
+			boolean hasProfiles = false;
+			
+			bmoProject = (BmoProject)pmProject.getBy(pmConn, ""+bmoOrderDelivery.getOrderId().toInteger(), bmoProject.getOrderId().getName());
+			
+			BmFilter orderTypeFilter = new BmFilter();
+			orderTypeFilter.setValueFilter(bmoMissingProfile.getKind(), bmoMissingProfile.getOrderTypeId(), bmoOrderDelivery.getBmoOrder().getOrderTypeId().toInteger());
+			
+			Iterator<BmObject> missingProfiIterator = pmMissingProfile.list(orderTypeFilter).iterator();
+			
+			
+			String sql = "SELECT pfus_userid FROM profileusers WHERE ";
+			while (missingProfiIterator.hasNext()) {
+				hasProfiles = true;
+				BmoMissingProfile nextProfile = (BmoMissingProfile)missingProfiIterator.next();
+				//Agrega nuevo un OR y el id de perfil
+				if (i > 0)sql += " OR ";						
+				sql += "pfus_profileid = " + nextProfile.getProfileId().toInteger();
+
+				i++;
+			}
+			sql += " GROUP BY pfus_userid ";
+			//Si hay perfiles para mandar notificación 
+			if (hasProfiles) {
+				pmConn.doFetch(sql);
+				
+				while (pmConn.next() ) {
+					BmoUser bmoUser = (BmoUser)pmUser.get( pmConn.getInt("pfus_userid"));					
+					if (bmoUser.getStatus().equals(BmoUser.STATUS_ACTIVE)) {
+						mailList.add(new SFMailAddress(bmoUser.getEmail().toString(), 
+								bmoUser.getFirstname().toString() 
+								+ " " + bmoUser.getFatherlastname().toString()));
+					}
+					System.err.println(bmoUser.getEmail().toString());
+				}
+				
+				
+				String subject = "Autorización de Devolución con faltantes " + bmoProject.getCode().toString();
+
+				msg = " <p style=\"font-size:12px\"> " 						
+						+ " <b>Se cerró el proyecto " + bmoProject.getCode().toHtml() +  " con productos faltantes.</b> "
+						+ "<br>"
+						+ "<b>Autorizado por: </b> " + getSFParams().getLoginInfo().getBmoUser().getCode().toHtml()
+						+ "</p>";
+				msg += "	<p align=\"left\" style=\"font-size:12px\"> "
+						+ " Este mensaje podría contener información confidencial, si tú no eres el destinatario por favor reporta esta situación a los datos de contacto "
+						+ " y bórralo sin retener copia alguna." + "	</p> ";
+
+				msgBody = HtmlUtil.mailBodyFormat(getSFParams(), subject, msg);
+				
+				if (getSFParams().isProduction()) {
+					try {
+						SFSendMail.send(getSFParams(),
+								mailList, 
+								getSFParams().getBmoSFConfig().getEmail().toString(), 
+								getSFParams().getBmoSFConfig().getAppTitle().toString(), 
+								subject, 
+								msgBody);
+					} catch (Exception e) {
+						throw new SFException(this.getClass().getName() + " - sendMissingMail() - Error al enviar email: " + e.toString());
+					}
+				} else {
+					printDevLog("sendMissingMail() - Enviado a " + mailList.size() + " usuarios" );
+				}
+			}			
+		}
+	}
+	private boolean existMissings(PmConn pmConn, BmoOrderDelivery bmoOrderDelivery) throws SFPmException {
+		
+		String sql = "SELECT odyi_orderdeliveryitemid FROM orderdeliveryitems WHERE odyi_orderdeliveryid = " + bmoOrderDelivery.getId()
+					+ " AND odyi_quantity <= 0";
+		
+		pmConn.doFetch(sql);
+		
+		if (pmConn.next())
+			return true;
+		else
+			return false;
+				
+	}
 
 	public BmUpdateResult updateBalance(PmConn pmConn, BmObject bmObject, BmUpdateResult bmUpdateResult) throws SFException {
 		this.bmoOrderDelivery = (BmoOrderDelivery)bmObject;

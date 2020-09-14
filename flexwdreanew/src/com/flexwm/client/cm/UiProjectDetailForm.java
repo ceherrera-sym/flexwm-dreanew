@@ -31,6 +31,8 @@ public class UiProjectDetailForm extends UiFormDialog {
 	UiDateTimeBox returnDateBox = new UiDateTimeBox();
 	UiDateTimeBox testDateTimeBox = new UiDateTimeBox();
 	UiDateTimeBox equipmentLoadDateTimeBox = new UiDateTimeBox();
+	UiDateTimeBox eventStartDateTimeBox = new UiDateTimeBox();
+	UiDateTimeBox eventEndDateTimeBox = new UiDateTimeBox();
 
 	Button copyDates = new Button("Copiar");
 	String projectId;
@@ -77,8 +79,10 @@ public class UiProjectDetailForm extends UiFormDialog {
 		formFlexTable.addField(5, 0, exitDateBox, bmoProjectDetail.getExitDate());
 		formFlexTable.addField(6, 0, loadStartDateBox, bmoProjectDetail.getLoadStartDate());
 		formFlexTable.addField(7, 0, testDateTimeBox, bmoProjectDetail.getTestDate());
-		formFlexTable.addField(8, 0, unloadStartDateBox, bmoProjectDetail.getUnloadStartDate());
-		formFlexTable.addField(9, 0, returnDateBox, bmoProjectDetail.getReturnDate());
+		formFlexTable.addField(8, 0, eventStartDateTimeBox, bmoProjectDetail.getEventStartDate());
+		formFlexTable.addField(9, 0, eventEndDateTimeBox, bmoProjectDetail.getEventEndDate());
+		formFlexTable.addField(10, 0, unloadStartDateBox, bmoProjectDetail.getUnloadStartDate());
+		formFlexTable.addField(11, 0, returnDateBox, bmoProjectDetail.getReturnDate());
 	}
 
 	@Override
@@ -93,6 +97,8 @@ public class UiProjectDetailForm extends UiFormDialog {
 			returnDateBox.setEnabled(false);
 			equipmentLoadDateTimeBox.setEnabled(false);
 			testDateTimeBox.setEnabled(false);
+			eventStartDateTimeBox.setEnabled(false);
+			eventEndDateTimeBox.setEnabled(false);
 		}
 		deleteButton.setVisible(false);
 	}
@@ -109,6 +115,9 @@ public class UiProjectDetailForm extends UiFormDialog {
 		bmoProjectDetail.getReturnDate().setValue(returnDateBox.getDateTime());
 		bmoProjectDetail.getEquipmentLoadDate().setValue(equipmentLoadDateTimeBox.getDateTime());
 		bmoProjectDetail.getTestDate().setValue(testDateTimeBox.getDateTime());
+		bmoProjectDetail.getEventStartDate().setValue(eventStartDateTimeBox.getDateTime());
+		bmoProjectDetail.getEventEndDate().setValue(eventEndDateTimeBox.getDateTime());
+		
 		return bmoProjectDetail;
 	}
 

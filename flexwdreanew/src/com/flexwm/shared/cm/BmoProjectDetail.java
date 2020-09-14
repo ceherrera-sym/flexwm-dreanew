@@ -22,8 +22,8 @@ import com.symgae.shared.BmSearchField;
 
 public class BmoProjectDetail extends BmObject implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private BmField prepDate, deliveryDate, loadStartDate, unloadStartDate, exitDate, returnDate, equipmentLoadDate, testDate ;
-	private BmField projectId;
+	private BmField prepDate, deliveryDate, loadStartDate, unloadStartDate, exitDate, returnDate, equipmentLoadDate, testDate, eventStartDate ;
+	private BmField projectId, eventEndDate;
 
 	public BmoProjectDetail() {
 		super("com.flexwm.server.cm.PmProjectDetail", "projectdetails", "projectdetailid", "PJDE", "Detalle");
@@ -36,6 +36,8 @@ public class BmoProjectDetail extends BmObject implements Serializable {
 		returnDate = setField("returndate", "", "Regreso", 20, Types.TIMESTAMP, true, BmFieldType.DATETIME, false);		
 		equipmentLoadDate = setField("equipmentloaddate", "", "Carga de equipo", 20, Types.TIMESTAMP, true,  BmFieldType.DATETIME, false);
 		testDate = setField("testdate", "", "Pruebas", 20, Types.TIMESTAMP, true,  BmFieldType.DATETIME, false);
+		eventStartDate = setField("eventstartdate", "", "Evento Inicio", 20, Types.TIMESTAMP, true,  BmFieldType.DATETIME, false);
+		eventEndDate = setField("eventenddate", "", "Evento Fin", 20, Types.TIMESTAMP, true,  BmFieldType.DATETIME, false);
 
 		projectId = setField("projectid", "", "Proyecto", 8, Types.INTEGER, false, BmFieldType.ID, false);
 	}
@@ -128,6 +130,22 @@ public class BmoProjectDetail extends BmObject implements Serializable {
 
 	public void setTestDate(BmField testDate) {
 		this.testDate = testDate;
+	}
+
+	public BmField getEventStartDate() {
+		return eventStartDate;
+	}
+
+	public void setEventStartDate(BmField eventStartDate) {
+		this.eventStartDate = eventStartDate;
+	}
+
+	public BmField getEventEndDate() {
+		return eventEndDate;
+	}
+
+	public void setEventEndDate(BmField eventEndDate) {
+		this.eventEndDate = eventEndDate;
 	}
 	
 	

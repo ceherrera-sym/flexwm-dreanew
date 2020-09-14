@@ -56,9 +56,7 @@ public class UiProjectStaff extends UiList {
 		
 		public UiProjectStaffForm(UiParams uiParams, int id) {
 			super(uiParams, new BmoProjectStaff(), id);
-			bmoProjectStaff = (BmoProjectStaff)getBmObject();
-			
-			
+			bmoProjectStaff = (BmoProjectStaff)getBmObject();			
 		}
 		
 		@Override
@@ -79,6 +77,7 @@ public class UiProjectStaff extends UiList {
 			formFlexTable.addField(row++, 0, userUiList, bmoProjectStaff.getUserId());
 			formFlexTable.addField(row++, 0, notesTextArea, bmoProjectStaff.getNotes());
 			
+			codeTextBox.setEnabled(false);
 			
 		}
 		
@@ -102,9 +101,19 @@ public class UiProjectStaff extends UiList {
 				} else {
 					populateUserItems(bmoProfile.getId());
 				}
+			} else if ( event.getSource() == userUiList) {
+				BmoUser bmoUser = (BmoUser)userUiList.getSelectedBmObject();
+				populateCode(bmoUser);
 			}
 		}
 		
+		private void populateCode(BmoUser bmoUser) {
+			if (bmoUser == null) {
+				codeTextBox.setText("");
+			} else {
+				codeTextBox.setText(bmoUser.getCode().toString());
+			}
+		}
 		private void populateUserItems(int profileId) {
 			userUiList.clear();						
 			userUiList.clearFilters();

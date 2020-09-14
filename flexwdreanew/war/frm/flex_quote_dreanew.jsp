@@ -78,6 +78,8 @@ try {
 			    
 			    PmConn pmConn = new PmConn(sFParams);
 			    
+			    pmConn.open();
+			    
 			    BmoOpportunity bmoOpportunity = new BmoOpportunity();
 				PmOpportunity pmOpportunity = new PmOpportunity(sFParams);
 				bmoOpportunity = (BmoOpportunity)pmOpportunity.get(opportunityId);
@@ -99,41 +101,41 @@ try {
 				
 				bmoQuote = (BmoQuote)pmQuote.get(bmoOpportunity.getQuoteId().toInteger());
 			%>
-			<table border="0" cellspacing="0" width="100%" cellpadding="0" style="font-size: 12px" class="reportHeaderCell">
+			<table border="0" cellspacing="0" width="100%" cellpadding="0" style="font-size: 12px" >
 				<tr >
 				    <td align="left" width="6%" rowspan="6" valign="top">
 						<img border="0" height="120" src="<%= logoURL %>" >
 				    </td> 		
 				</tr>							
 				<tr>  
-					<td class="contracSubTitle" width="80%" align="right">					
-				    	Proyecto:&nbsp;
+					<td  width="80%" align="right">					
+				    	<b>Proyecto:&nbsp;</b>
 				    </td>
-				    <td class="reportCellEven" width="80%" align="left" style="border-bottom:none;font-weight:lighter;">
+				    <td  width="80%" align="left" style="border-bottom:none;font-weight:lighter;">
 				    	<%= bmoOpportunity.getName().toHtml() %>
 					</td>
 				</tr>
 				<tr>  
-					<td class="contracSubTitle" width="80%" align="right">					
-				    	Tipo:&nbsp;
+					<td  width="80%" align="right">					
+				    	<b>Tipo:&nbsp;</b>
 				    </td>
-				    <td class="reportCellEven" width="80%" align="left" style="border-bottom:none;font-weight:lighter">
+				    <td  width="80%" align="left" style="border-bottom:none;font-weight:lighter">
 				    	<%= bmoOpportunity.getBmoWFlowType().getBmoWFlowCategory().getName().toString() %>
 					</td>
 				</tr>
 				<tr>  
-					<td class="contracSubTitle" width="80%" align="right">					
-				    	Fecha evento:&nbsp;
+					<td  width="80%" align="right">					
+				    	<b>Fecha evento:&nbsp;</b>
 				    </td>
-				    <td class="reportCellEven" width="80%" align="left" style="border-bottom:none;font-weight:lighter">
+				    <td  width="80%" align="left" style="border-bottom:none;font-weight:lighter">
 				    	<%= bmoOpportunity.getStartDate().toString().substring(0, 10) %>
 					</td>
 				</tr>
 				<tr>  
-					<td class="contracSubTitle" width="80%" align="right">					
-				    	Ciudad:&nbsp;
+					<td  width="80%" align="right">					
+				    	<b>Ciudad:&nbsp;</b>
 				    </td>
-				     <td class="reportCellEven" width="80%" align="left" style="border-bottom:none;font-weight:lighter">
+				     <td  width="80%" align="left" style="border-bottom:none;font-weight:lighter">
 				     	<% if (bmoOpportunity.getBmoVenue().getHomeAddress().toBoolean()) { %>
 				     		Domicilio Particular
 				     	<% } else {%>
@@ -142,10 +144,10 @@ try {
 					</td>
 				</tr>
 				<tr>  
-					<td class="contracSubTitle" width="80%" align="right">					
-				    	Locaci&oacute;n:&nbsp;
+					<td  width="80%" align="right">					
+				    	<b>Locaci&oacute;n:&nbsp;</b>
 				    </td>
-				    <td class="reportCellEven" width="80%" align="left" style="border-bottom:none;font-weight:lighter">
+				    <td  width="80%" align="left" style="border-bottom:none;font-weight:lighter">
 				    	<% if (bmoOpportunity.getBmoVenue().getHomeAddress().toBoolean()) { %>
 				    		<%= bmoOpportunity.getCustomField4().toHtml() %>
 				    	<% } else { %>
@@ -169,99 +171,94 @@ try {
 					while (mainGroupsIterator.hasNext()){
 						BmoQuoteMainGroup nextBmoQuoteMainGroup = (BmoQuoteMainGroup)mainGroupsIterator.next();
 						mainGroupsList.add(nextBmoQuoteMainGroup);
-				%>
-						<tr>
-							<td class="reportHeaderCell" style="background-color:#ccc;font-weight:lighter">
-								<%= nextBmoQuoteMainGroup.getName().toHtml() %>
-							</td>
-							<td class="reportHeaderCellRight"  style="background-color:#ccc;">
-								
-								<%= SFServerUtil.formatCurrency( nextBmoQuoteMainGroup.getTotal().toDouble())%>
-							</td>
-						</tr>
-						<tr>
-							<td height="10"></td>
-						</tr>
 						
-						<tr>
-							<td align="right" colspan="2" >
-								<table border="0" cellspacing="0" width="98%" cellpadding="0"  style="font-size: 12px">
-									<tr>
-										<td class="reportHeaderCell" width="15%" style="font-weight:lighter">Nombre</td>
-										<td class="reportHeaderCell" width="25%" style="font-weight:lighter;max-width: 30%;min-width: 30%">Descripci&oacute;n</td>
-										<td class="reportHeaderCell" width="15%" style="font-weight:lighter">Cantidad</td>
-										<td class="reportHeaderCell" width="15%" style="font-weight:lighter">Dias</td>
-										<td class="reportHeaderCellRight" width="15%" style="font-weight:lighter">Precio Unitario</td>
-										<td class="reportHeaderCellRight" width="15%" style="font-weight:lighter">Descuento</td>
-										<td class="reportHeaderCellRight" width="15%" style="font-weight:lighter">Total</td>
-									</tr>
-									<%
-										BmoQuoteGroup bmoQuoteGroup = new BmoQuoteGroup();
-										PmQuoteGroup pmQuoteGroup = new PmQuoteGroup(sFParams);
-										BmFilter groupsFilter = new BmFilter();
-										
-										groupsFilter.setValueFilter(bmoQuoteGroup.getKind(), bmoQuoteGroup.getMainGroupId(), nextBmoQuoteMainGroup.getId());
-										
-										Iterator<BmObject> quoteGroupsIterator = pmQuoteGroup.list(groupsFilter).iterator();
-										
-										while (quoteGroupsIterator.hasNext()){
-											BmoQuoteGroup nextBmoQuoteGroup = (BmoQuoteGroup)quoteGroupsIterator.next();
-									%>&nbsp;
-											<tr>
-												<td height="5"></td>
-											</tr>
-											<tr>
-												 <td class="reportCellEven" style=" border-bottom: 1px solid #000000;">
-												 	<b><%=nextBmoQuoteGroup.getName().toHtml() %>
-													 	<% if (nextBmoQuoteGroup.getIsKit().toBoolean()) { %>
-													 		(<%= nextBmoQuoteGroup.getDays().toDouble()  %>
-													 			<% if (nextBmoQuoteGroup.getDays().toDouble() > 1) { %>
-													 				D&iacute;as
-													 			<% } else {%>
-													 				D&iacute;a
-													 			<% } %>
-													 		)
-													 		<br><%= nextBmoQuoteGroup.getDescription().toHtml() %>
-													 	
-													 	<% } %>
-												 	</b>
-												 </td>
-												 <td class="reportCellEven" colspan="5" style=" border-bottom: 1px solid #000000;"></td>
-												 <% if (nextBmoQuoteGroup.getIsKit().toBoolean()) { %>
-												 	<td class="reportCellEven" align="right" style=" border-bottom: 1px solid #000000;" ><b><%=SFServerUtil.formatCurrency(nextBmoQuoteGroup.getTotal().toDouble()) %></b></td>
-												 <% } else { %>
-												 	<td class="reportCellEven" align="right" style=" border-bottom: 1px solid #000000;" ><b><%=SFServerUtil.formatCurrency(nextBmoQuoteGroup.getAmount().toDouble()) %></b></td>
-												 <% } %>
-											</tr>
-										<%		
-											BmoQuoteItem bmoQuoteItem = new BmoQuoteItem();
-											PmQuoteItem pmQuoteItem = new PmQuoteItem(sFParams);
-											BmFilter itemsBmFilter = new BmFilter();
-											itemsBmFilter.setValueFilter(bmoQuoteItem.getKind(), bmoQuoteItem.getQuoteGroupId(), nextBmoQuoteGroup.getId());
+						String sql = "SELECT qogr_quotegroupid FROM quotegroups WHERE qogr_maingroupid = " + nextBmoQuoteMainGroup.getId();
+						
+						pmConn.doFetch(sql);
+						
+						if (pmConn.next()) {
+				%>
+							<tr>
+								<td class="reportHeaderCell" style="background-color:#ccc;font-weight:lighter">
+									<%= nextBmoQuoteMainGroup.getName().toHtml() %>
+								</td>
+								<td class="reportHeaderCellRight"  style="background-color:#ccc;">
+									
+									<%= SFServerUtil.formatCurrency( nextBmoQuoteMainGroup.getTotal().toDouble())%>
+								</td>
+							</tr>
+							<tr>
+								<td height="10"></td>
+							</tr>
+							
+							<tr>
+								<td align="right" colspan="2" >
+									<table border="0" cellspacing="0" width="98%" cellpadding="0"  style="font-size: 12px">
+										<tr>
+											<td class="reportHeaderCell" width="15%" style="font-weight:lighter">Nombre</td>
+											<td class="reportHeaderCell" width="25%" style="font-weight:lighter;max-width: 30%;min-width: 30%">Descripci&oacute;n</td>
+											<td class="reportHeaderCell" width="15%" style="font-weight:lighter">Cantidad</td>
+											<td class="reportHeaderCell" width="15%" style="font-weight:lighter">Dias</td>
+											<td class="reportHeaderCellRight" width="15%" style="font-weight:lighter">Precio Unitario</td>
+											<td class="reportHeaderCellRight" width="15%" style="font-weight:lighter">Descuento</td>
+											<td class="reportHeaderCellRight" width="15%" style="font-weight:lighter">Total</td>
+										</tr>
+										<%
+											BmoQuoteGroup bmoQuoteGroup = new BmoQuoteGroup();
+											PmQuoteGroup pmQuoteGroup = new PmQuoteGroup(sFParams);
+											BmFilter groupsFilter = new BmFilter();
 											
-											Iterator<BmObject> itemIterator = pmQuoteItem.list(itemsBmFilter).iterator();
+											groupsFilter.setValueFilter(bmoQuoteGroup.getKind(), bmoQuoteGroup.getMainGroupId(), nextBmoQuoteMainGroup.getId());
 											
-											 if (!nextBmoQuoteGroup.getIsKit().toBoolean()) { 											
-												while (itemIterator.hasNext()){
-													BmoQuoteItem nextBmoQuoteItem = (BmoQuoteItem)itemIterator.next();
-										%>
+											Iterator<BmObject> quoteGroupsIterator = pmQuoteGroup.list(groupsFilter).iterator();
+											
+											while (quoteGroupsIterator.hasNext()){
+												BmoQuoteGroup nextBmoQuoteGroup = (BmoQuoteGroup)quoteGroupsIterator.next();
+										%>&nbsp;
+												<tr>
+													<td height="5"></td>
+												</tr>
+												<tr>
+													 <td class="reportCellEven" style=" border-bottom: 1px solid #000000;">
+													 	<b><%=nextBmoQuoteGroup.getName().toHtml() %>
+														 	<% if (nextBmoQuoteGroup.getIsKit().toBoolean()) { %>
+														 		(<%= nextBmoQuoteGroup.getDays().toDouble()  %>
+														 			<% if (nextBmoQuoteGroup.getDays().toDouble() > 1) { %>
+														 				D&iacute;as
+														 			<% } else {%>
+														 				D&iacute;a
+														 			<% } %>
+														 		)
+														 	
+														 	<% } %>
+													 	</b>
+													 </td>
+													 <td class="reportCellEven" colspan="5" style=" border-bottom: 1px solid #000000;"></td>
+													 <% if (nextBmoQuoteGroup.getIsKit().toBoolean()) { %>
+													 	<td class="reportCellEven" align="right" style=" border-bottom: 1px solid #000000;" ><b><%=SFServerUtil.formatCurrency(nextBmoQuoteGroup.getTotal().toDouble()) %></b></td>
+													 <% } else { %>
+													 	<td class="reportCellEven" align="right" style=" border-bottom: 1px solid #000000;" ><b><%=SFServerUtil.formatCurrency(nextBmoQuoteGroup.getAmount().toDouble()) %></b></td>
+													 <% } %>
+												</tr>
+												<% if (nextBmoQuoteGroup.getIsKit().toBoolean()) {%>
 													<tr>
-														<td class="reportCellEven"><%=nextBmoQuoteItem.getName().toHtml() %></td>
-														<td class="reportCellEven"><%=nextBmoQuoteItem.getDescription().toHtml() %></td>
-														<td class="reportCellEven"><%=nextBmoQuoteItem.getQuantity().toDouble() %></td>
-														<td class="reportCellEven"><%=nextBmoQuoteItem.getDays().toDouble() %></td>
-														<td class="reportCellEven" align="right"><%= SFServerUtil.formatCurrency(nextBmoQuoteItem.getPrice().toDouble()) %></td>
-														<td class="reportCellEven" align="right"><%= SFServerUtil.formatCurrency(nextBmoQuoteItem.getDiscount().toDouble()) %></td>
-														<td class="reportCellEven" align="right"><%= SFServerUtil.formatCurrency(nextBmoQuoteItem.getAmount().toDouble()) %></td>
+														<td class="reportCellEven" style=" border-bottom: 1px solid #000000;" colspan="7">
+															<%= nextBmoQuoteGroup.getDescription().toHtml() %>
+														</td>
 													</tr>
-										<%	
-												}
-											 } else {
-												 while (itemIterator.hasNext()){
-													BmoQuoteItem nextBmoQuoteItem = (BmoQuoteItem)itemIterator.next();
-														
-													if (nextBmoQuoteGroup.getShowItems().toBoolean()) {
-										%>
+												<% } %>
+											<%		
+												BmoQuoteItem bmoQuoteItem = new BmoQuoteItem();
+												PmQuoteItem pmQuoteItem = new PmQuoteItem(sFParams);
+												BmFilter itemsBmFilter = new BmFilter();
+												itemsBmFilter.setValueFilter(bmoQuoteItem.getKind(), bmoQuoteItem.getQuoteGroupId(), nextBmoQuoteGroup.getId());
+												
+												Iterator<BmObject> itemIterator = pmQuoteItem.list(itemsBmFilter).iterator();
+												
+												 if (!nextBmoQuoteGroup.getIsKit().toBoolean()) { 											
+													while (itemIterator.hasNext()){
+														BmoQuoteItem nextBmoQuoteItem = (BmoQuoteItem)itemIterator.next();
+											%>
 														<tr>
 															<td class="reportCellEven"><%=nextBmoQuoteItem.getName().toHtml() %></td>
 															<td class="reportCellEven"><%=nextBmoQuoteItem.getDescription().toHtml() %></td>
@@ -271,21 +268,39 @@ try {
 															<td class="reportCellEven" align="right"><%= SFServerUtil.formatCurrency(nextBmoQuoteItem.getDiscount().toDouble()) %></td>
 															<td class="reportCellEven" align="right"><%= SFServerUtil.formatCurrency(nextBmoQuoteItem.getAmount().toDouble()) %></td>
 														</tr>
-										<%	
+											<%	
 													}
+												 } else {
+													 while (itemIterator.hasNext()){
+														BmoQuoteItem nextBmoQuoteItem = (BmoQuoteItem)itemIterator.next();
+															
+														if (nextBmoQuoteGroup.getShowItems().toBoolean()) {
+											%>
+															<tr>
+																<td class="reportCellEven"><%=nextBmoQuoteItem.getName().toHtml() %></td>
+																<td class="reportCellEven"><%=nextBmoQuoteItem.getDescription().toHtml() %></td>
+																<td class="reportCellEven"><%=nextBmoQuoteItem.getQuantity().toDouble() %></td>
+																<td class="reportCellEven"><%=nextBmoQuoteItem.getDays().toDouble() %></td>
+																<td class="reportCellEven" align="right"><%= SFServerUtil.formatCurrency(nextBmoQuoteItem.getPrice().toDouble()) %></td>
+																<td class="reportCellEven" align="right"><%= SFServerUtil.formatCurrency(nextBmoQuoteItem.getDiscount().toDouble()) %></td>
+																<td class="reportCellEven" align="right"><%= SFServerUtil.formatCurrency(nextBmoQuoteItem.getAmount().toDouble()) %></td>
+															</tr>
+											<%	
+														}
+													 }
+													 
 												 }
-												 
-											 }
-										}
-									%>
-								</table>
-							</td>
-						</tr>		
-						<tr>
-							<td height="15">		
-							</td>
-						</tr>
+											}
+										%>
+									</table>
+								</td>
+							</tr>		
+							<tr>
+								<td height="15">		
+								</td>
+							</tr>
 				<%
+						}
 					}
 				%>				
 			</table>
@@ -304,63 +319,119 @@ try {
 					Iterator<BmObject> mainGroupsIterator2 = mainGroupsList.iterator();
 						while(mainGroupsIterator2.hasNext()){
 							BmoQuoteMainGroup nextBmoQuoteMainGroup = (BmoQuoteMainGroup)mainGroupsIterator2.next();
+							String sql = "SELECT qogr_quotegroupid FROM quotegroups WHERE qogr_maingroupid = " + nextBmoQuoteMainGroup.getId();
+							
+							pmConn.doFetch(sql);
+							
+							if (pmConn.next()){
+									boolean discount = false, commision = false,feeProduction = false;
+									PmConn pmConn2 = new PmConn(sFParams);
+									pmConn2.open();
+									
 				%>
-							<tr>
-								<td>
-									<table border="0" cellspacing="0" width="100%" cellpadding="0"  style="font-size: 12px;" >
-										<tr>
-											<td class="reportHeaderCellRight" style="border-right: 0.5px solid #ccc;border-bottom: none;border-left: 0.5px solid #ccc;border-top: ;font-weight:lighter;padding-top: 2px;padding-bottom: 2px;">Ingresos - <%= nextBmoQuoteMainGroup.getName().toHtml()  %>&nbsp;
-											</td>								
-										</tr>
-										<tr>
-											<td class="reportHeaderCellRight" style="border-right: 0.5px solid #ccc;border-bottom: none;border-left: 0.5px solid #ccc;font-weight:lighter;padding-top: 2px;padding-bottom: 2px;">	Descuento&nbsp;
-											</td>								
-										</tr>
-										<tr>
-											<td class="reportHeaderCellRight" style="border-right: 0.5px solid #ccc;border-bottom: none;border-left: 0.5px solid #ccc;font-weight:lighter;padding-top: 2px;padding-bottom: 2px;">	Fee de producci&oacute;n&nbsp;
-											</td>								
-										</tr>
-										<tr>
-											<td class="reportHeaderCellRight" style="border-right: 0.5px solid #ccc;border-bottom: none;border-left: 0.5px solid #ccc;font-weight:lighter;padding-top: 2px;padding-bottom: 2px;">	Comisi&oacute;n&nbsp;
-											</td>								
-										</tr>
-										<tr>
-											<td class="reportHeaderCellRight" style="border-right: 0.5px solid #ccc;border-left: 0.5px solid #ccc;padding-top: 2px;padding-bottom: 2px;">Total de ingreso&nbsp;
-											</td>								
-										</tr>
-									</table>
-								</td>
-								<td>
-									<table border="0" cellspacing="0" width="100%" cellpadding="0"  style="font-size: 12px;" >
-										<tr>
-											<td class="reportHeaderCellRight" style="border: none;border-right: 0.5px solid #ccc;padding-top: 2px;padding-bottom: 2px;font-weight:lighter"><%= SFServerUtil.formatCurrency(nextBmoQuoteMainGroup.getAmount().toDouble()) %>
-											</td>								
-										</tr>
-										<tr>
-											<td class="reportHeaderCellRight" style="border: none;border-right: 0.5px solid #ccc;padding-top: 2px;padding-bottom: 2px;font-weight:lighter" ><%=  SFServerUtil.formatCurrency(nextBmoQuoteMainGroup.getDiscount().toDouble()) %> 
-											</td>								
-										</tr>
-										<tr>
-											<td class="reportHeaderCellRight"  style="border: none;border-right: 0.5px solid #ccc;padding-top: 2px;padding-bottom: 2px;font-weight:lighter"><%=  SFServerUtil.formatCurrency(nextBmoQuoteMainGroup.getProductionFee().toDouble()) %> 
-										</tr>
-										<tr>
-											<td class="reportHeaderCellRight" style="border: none;border-right: 0.5px solid #ccc;padding-top: 2px;padding-bottom: 2px;font-weight:lighter"><%=  SFServerUtil.formatCurrency(nextBmoQuoteMainGroup.getCommission().toDouble()) %> 
-											</td>								
-										</tr>
-										<tr>
-											<td class="reportHeaderCellRight" style="border: none;border-right: 0.5px solid #ccc;border-bottom: 0.5px solid #ccc;padding-top: 2px;padding-bottom: 2px; font-weight:lighter">
-												<%=  SFServerUtil.formatCurrency(nextBmoQuoteMainGroup.getAmount().toDouble() - nextBmoQuoteMainGroup.getDiscount().toDouble() + nextBmoQuoteMainGroup.getProductionFee().toDouble() -nextBmoQuoteMainGroup.getCommission().toDouble() ) %>
-											</td>								
-										</tr>
-									</table>
-								</td>
-							</tr>				
+								<tr>
+									<td>
+										<table border="0" cellspacing="0" width="100%" cellpadding="0"  style="font-size: 12px;" >
+											<tr>
+												<th class="reportCellEven" align="right"  style="padding: 0px 0px;border-bottom: 0px;"><%= nextBmoQuoteMainGroup.getName().toHtml()  %>&nbsp;
+												</th>								
+											</tr>
+											<%
+												sql = "SELECT qogr_quotegroupid FROM quotegroups "
+													 	 + " WHERE qogr_maingroupid = " + nextBmoQuoteMainGroup.getId() + " AND qogr_discountapplies = 1 ";
+												pmConn2.doFetch(sql);
+												
+												if (pmConn2.next()){
+													discount = true;
+											%>
+													<tr>
+														<th class="reportCellEven" align="right"   style="padding: 0px 0px;border-bottom: 0px;">	Descuento&nbsp;
+														</th>								
+													</tr>
+											<%
+												}
+											%>
+											<%
+												sql = "SELECT qogr_quotegroupid FROM quotegroups "
+													 	 + " WHERE qogr_maingroupid = " + nextBmoQuoteMainGroup.getId() + " AND qogr_feeproductionrate = 1 ";
+												pmConn2.doFetch(sql);
+											
+												if (pmConn2.next()){
+													feeProduction = true;
+											%>
+													<tr>
+														<th class="reportCellEven" align="right"  style="padding: 0px 0px;border-bottom: 0px;">	Fee de producci&oacute;n&nbsp;
+														</th>								
+													</tr>
+											<%
+												}
+											%>
+											<%
+												
+												sql = "SELECT qogr_quotegroupid FROM quotegroups "
+												 	 + " WHERE qogr_maingroupid = " + nextBmoQuoteMainGroup.getId() + " AND qogr_comissionapply = 1 ";
+												pmConn2.doFetch(sql);
+												
+												if (pmConn2.next()){
+													commision = true;
+													if(nextBmoQuoteMainGroup.getShowCommission().toBoolean()){
+											%>
+														<tr>
+															<th class="reportCellEven" align="right"  style="padding: 0px 0px;border-bottom: 0px;" >	Comisi&oacute;n&nbsp;
+															</th>								
+														</tr>
+												
+											<%
+													}
+												}
+											%>
+											<tr>
+												<th class="reportCellEven" align="right"   style="padding: 0px 0px;">SubTotal de <%= nextBmoQuoteMainGroup.getName().toHtml() %>
+												</th>								
+											</tr>
+										</table>
+									</td>
+									<td>
+										<table border="0" cellspacing="0" width="100%" cellpadding="0"  style="font-size: 12px;" >
+											<tr>
+												<td class="reportCellEven" align="right"  style="padding: 0px 0px;"><%= SFServerUtil.formatCurrency(nextBmoQuoteMainGroup.getAmount().toDouble()) %>
+												</td>								
+											</tr>
+											<% if (discount) { %>
+												<tr>
+													<td class="reportCellEven" align="right"   style="padding: 0px 0px;"><%=  SFServerUtil.formatCurrency(nextBmoQuoteMainGroup.getDiscount().toDouble()) %> 
+													</td>								
+												</tr>
+											<% } %>
+											<% if (feeProduction) {%>
+												<tr>
+													<td class="reportCellEven" align="right"   style="padding: 0px 0px;"><%=  SFServerUtil.formatCurrency(nextBmoQuoteMainGroup.getProductionFee().toDouble()) %> 
+												</tr>
+											<% } %>
+											<% if (commision) { %>
+												<% if(nextBmoQuoteMainGroup.getShowCommission().toBoolean()){ %>
+													<tr>
+														<td class="reportCellEven" align="right"   style="padding: 0px 0px;"><%=  SFServerUtil.formatCurrency(nextBmoQuoteMainGroup.getCommission().toDouble()) %> 
+														</td>								
+													</tr>
+												<% } %>
+											<% } %>
+											<tr>
+												<td class="reportCellEven" align="right"   style="padding: 0px 0px;">
+													<%=  SFServerUtil.formatCurrency(nextBmoQuoteMainGroup.getAmount().toDouble() - nextBmoQuoteMainGroup.getDiscount().toDouble() + nextBmoQuoteMainGroup.getProductionFee().toDouble() -nextBmoQuoteMainGroup.getCommission().toDouble() ) %>
+												</td>								
+											</tr>
+										</table>
+									</td>
+								</tr>				
 				<%
+								pmConn2.close();
+							}
 						}
 				%>
 				<tr>
 					<td class="reportHeaderCellRight" style="background-color:#ccc;" width="90%" ">
-						Total Cotizadon&nbsp;
+						Total Cotizado&nbsp;
 					</td>
 					<td class="reportHeaderCellRight" style="background-color:#ccc;" >
 						<%=SFServerUtil.formatCurrency(bmoQuote.getTotal().toDouble()) %>

@@ -788,8 +788,6 @@ public class UiOrderGroupGrid extends Ui {
 			}
 		}
 ///////////////////////////////////////////////////Descuento
-		
-
 			if (bmoOrder.getStatus().equals(BmoQuote.STATUS_AUTHORIZED)) {
 				Column<BmObject, String> discountAplyes = new Column<BmObject, String>(new  TextCell()) {
 					@Override
@@ -846,7 +844,6 @@ public class UiOrderGroupGrid extends Ui {
 			orderItemGrid.addColumn(discountItemColumn, SafeHtmlUtils.fromSafeConstant("Descuento"));
 			discountItemColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
 			orderItemGrid.setColumnWidth(discountItemColumn, 150, Unit.PX);
-			
 		// Precio
 		Column<BmObject, String> priceColumn;
 		if (bmoOrder.getStatus().equals(BmoOrder.STATUS_REVISION)) {

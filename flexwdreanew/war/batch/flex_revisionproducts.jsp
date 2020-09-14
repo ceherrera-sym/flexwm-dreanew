@@ -1,5 +1,6 @@
 
-<%@page import="com.sun.xml.internal.ws.api.pipe.NextAction"%>
+<%@page import="com.flexwm.shared.op.BmoProductCompany"%>
+<%@page import="com.flexwm.server.op.PmProductCompany"%>
 <%@include file="../inc/imports.jsp" %>
 <%@page import="com.flexwm.server.op.PmProduct"%>
 <%@page import="com.flexwm.shared.op.BmoProduct"%>
@@ -139,9 +140,8 @@ if (action.equals("revision")) { %>
         			name = tabs.nextToken();
 
         			nameLength = name.length();
-        			System.out.println("tamNombre: "+code);
         			name = name.trim();
-        			type = tabs.nextToken();
+        			type = tabs.nextToken().trim();
         			description = (tabs.nextToken()).trim();
         			brand = (tabs.nextToken()).trim();
         		    model = (tabs.nextToken()).trim();    
@@ -166,31 +166,45 @@ if (action.equals("revision")) { %>
         		    amperage110 = tabs.nextToken();
         		    amperage220 = tabs.nextToken();
         		    if(weightProduct.equals("empty"))weightProduct = "0";
+        		    
            		    if(dimensionLength.equals("empty"))dimensionLength = "0";
+           			 
            		 	if(dimensionHeight.equals("empty"))dimensionHeight = "0";
+           			 
            		 	if(dimensionWidth.equals("empty"))dimensionWidth = "0";
+           			 
            		 	if(amperage110.equals("empty"))amperage110 = "0";
+           			 
            			if(amperage220.equals("empty"))amperage220 = "0";
+           			
         		    // Metros cubicos de productoPower Distribution
         		    cubicmeter = (Double.parseDouble(dimensionLength) * Double.parseDouble(dimensionHeight) * Double.parseDouble(dimensionWidth));
         		    cubicmeter = Double.parseDouble(SFServerUtil.roundCurrencyDecimals(cubicmeter));
         		   	if (sFParams.isFieldEnabled(new BmoProduct().getUseCase())){
-        		    	useCaseString = tabs.nextToken();        		
-        		    	quantityForCase  = tabs.nextToken();
-        		    	weightCase = tabs.nextToken();
-        		    	caseLength = tabs.nextToken();
-        		    	caseHeight  = tabs.nextToken();
-        		   		caseWidth = tabs.nextToken();        	
+        		    	useCaseString = tabs.nextToken().trim();        		
+        		    	quantityForCase  = tabs.nextToken().trim();
+        		    	weightCase = tabs.nextToken().trim();
+        		    	caseLength = tabs.nextToken().trim();
+        		    	caseHeight  = tabs.nextToken().trim();
+        		   		caseWidth = tabs.nextToken().trim();        	
         		   		
         		   		if(useCaseString.equals("empty"))useCaseString = "0";
+        		   	 	
                		 	if(quantityForCase.equals("empty"))quantityForCase = "0";
+               		 	
                		 	if(weightCase.equals("empty"))weightCase = "0";
+               		 	
                		 	if(caseLength.equals("empty"))caseLength = "0";
+               		 	
                		 	if(caseHeight.equals("empty"))caseHeight = "0";
+               			 
                		 	if(caseWidth.equals("empty"))caseWidth = "0";
+               		
         		    	// Metros cubicos de case
         		    	cubicmeterCase = (Double.parseDouble(caseLength) * Double.parseDouble(caseHeight) * Double.parseDouble(caseWidth));
+        		    	
         		    	cubicmeterCase = Double.parseDouble(SFServerUtil.roundCurrencyDecimals(cubicmeterCase));
+        		    	
         		   	}
         			//Tipo
 
@@ -397,7 +411,7 @@ if (action.equals("revision")) { %>
 			//Recuperar valores   
 			code = (tabs.nextToken()).trim();
 			name = (tabs.nextToken()).trim();
-			type = tabs.nextToken();
+			type = tabs.nextToken().trim();
 			description = (tabs.nextToken()).trim();
 			brand = (tabs.nextToken()).trim();
 		    model = (tabs.nextToken()).trim();    
@@ -416,10 +430,10 @@ if (action.equals("revision")) { %>
 		    track = tabs.nextToken();
 		    unitCode = tabs.nextToken();
 		    
-		    weightProduct = tabs.nextToken();
-		    dimensionLength  = tabs.nextToken();
-		    dimensionHeight = tabs.nextToken();
-		    dimensionWidth = tabs.nextToken();
+		    weightProduct = tabs.nextToken().trim();
+		    dimensionLength  = tabs.nextToken().trim();
+		    dimensionHeight = tabs.nextToken().trim();
+		    dimensionWidth = tabs.nextToken().trim();
 		    amperage110 = (tabs.nextToken()).trim();			   
 		    amperage220 = (tabs.nextToken()).trim();	
 		    if(weightProduct.equals("empty"))weightProduct = "0";
@@ -434,12 +448,12 @@ if (action.equals("revision")) { %>
 		    cubicmeter = (Double.parseDouble(dimensionLength) * Double.parseDouble(dimensionHeight) * Double.parseDouble(dimensionWidth));
 		    cubicmeter = Double.parseDouble(SFServerUtil.roundCurrencyDecimals(cubicmeter));
 		    if(sFParams.isFieldEnabled(bmoProduct.getUseCase())){
-		    	useCaseString = tabs.nextToken();
-		    	quantityForCase  = tabs.nextToken();
-		    	weightCase = tabs.nextToken();
-		   		caseLength = tabs.nextToken();
-		    	caseHeight  = tabs.nextToken();
-		    	caseWidth = tabs.nextToken();		
+		    	useCaseString = tabs.nextToken().trim();
+		    	quantityForCase  = tabs.nextToken().trim();
+		    	weightCase = tabs.nextToken().trim();
+		   		caseLength = tabs.nextToken().trim();
+		    	caseHeight  = tabs.nextToken().trim();
+		    	caseWidth = tabs.nextToken().trim();		
 		    	if(useCaseString.equals("empty"))useCaseString = "0";
        		 	if(quantityForCase.equals("empty"))quantityForCase = "0";
        		 	if(weightCase.equals("empty"))weightCase = "0";
@@ -513,6 +527,7 @@ if (action.equals("revision")) { %>
 			bmoProduct.getName().setValue(name);
 			bmoProduct.getType().setValue(type);
 			bmoProduct.getProductFamilyId().setValue(prodFamilyId);
+			bmoProduct.getInventory().setValue(1);
 			if (prodGroupId > 0)bmoProduct.getProductGroupId().setValue(prodGroupId);
 			
 			if (!description.equals("empty")) bmoProduct.getDescription().setValue(description);
@@ -550,26 +565,24 @@ if (action.equals("revision")) { %>
 			}
 			
 			
-			pmProduct.saveSimple(pmConn, bmoProduct, bmUpdateResult);
+			pmProduct.save(pmConn, bmoProduct, bmUpdateResult);
+			
+			if (sFParams.getSelectedCompanyId() > 0){
+				PmProductCompany pmProductCompany = new PmProductCompany(sFParams);
+				BmoProductCompany bmoProductCompany = new BmoProductCompany();
+				
+				bmoProductCompany.getCompanyId().setValue(sFParams.getSelectedCompanyId());
+				bmoProductCompany.getProductId().setValue(bmoProduct.getId());
+				
+				pmProductCompany.save(pmConn, bmoProductCompany, bmUpdateResult);
+			}
 		}
+		
+		
 		
 		if (!bmUpdateResult.hasErrors()) {
 			pmConn.commit();
 		
-// 			// Actualizar consecutivo de la nomenclatura (DREA)
-			StringTokenizer tabs = new StringTokenizer(code, "-");		
-			String codeReflix = "";
-			int consecutive = 0;
-			while (tabs.hasMoreTokens()) {				
-				codeReflix = tabs.nextToken();
-				consecutive = Integer.parseInt(tabs.nextToken());
-			}
-			String sql = "UPDATE companynomenclatures LEFT JOIN  programs ON (prog_programid = cono_programid) " +
-					" LEFT JOIN companies ON (cono_companyid = comp_companyid) " +
-					" SET cono_consecutive = " + consecutive +
-					" WHERE prog_code = 'PROD' AND comp_name = 'DREA Guadalajara'";
-			pmConn.doUpdate(sql);
-			pmConn.commit();
 		} else {
 			System.out.println("Error: "+bmUpdateResult.errorsToString());
 		}

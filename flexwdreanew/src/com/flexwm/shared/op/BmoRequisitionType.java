@@ -24,7 +24,8 @@ import com.symgae.shared.BmSearchField;
 
 public class BmoRequisitionType extends BmObject implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private BmField name, description, type, createReceipt, stock, enableSend, viewFormat, createPaccount, devolutionBankmovTypeId, paymentBankmovTypeId;
+	private BmField name, description, type, createReceipt, stock, enableSend, viewFormat, createPaccount, devolutionBankmovTypeId, paymentBankmovTypeId,
+	outFormat;
 
 	// Tipo
 	public static final char TYPE_PURCHASE = 'P';
@@ -45,7 +46,8 @@ public class BmoRequisitionType extends BmObject implements Serializable {
 		createReceipt = setField("createreceipt", "", "Crear Recibo OC ?", 8, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 		createPaccount = setField("createpaccount", "", "Crear CXP ?", 8, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 		viewFormat = setField("viewformat", "", "Visualizar Formato Sin Aut.", 8, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
-
+		outFormat = setField("outformat", "", "Formato de Salida?", 8, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+		
 		stock = setField("stock", "", "A. Almacén", 8, Types.BOOLEAN, true, BmFieldType.BOOLEAN, false);
 
 		type = setField("type", "", "Tipo OC", 1, Types.CHAR, false, BmFieldType.OPTIONS, false);
@@ -170,6 +172,14 @@ public class BmoRequisitionType extends BmObject implements Serializable {
 
 	public void setViewFormat(BmField viewFormat) {
 		this.viewFormat = viewFormat;
+	}
+
+	public BmField getOutFormat() {
+		return outFormat;
+	}
+
+	public void setOutFormat(BmField outFormat) {
+		this.outFormat = outFormat;
 	}
 	
 

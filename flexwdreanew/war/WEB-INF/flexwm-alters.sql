@@ -6073,7 +6073,7 @@ UPDATE projects LEFT JOIN orders ON (orde_orderid = proj_orderid) SET proj_total
 	    FOREIGN KEY (eopr_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid)
 	);
 	
-	-- 13/08-2020
+-- 13/08-2020
 	CREATE TABLE quotemaingroups (
 		qmgr_quotemaingroupid INT NOT NULL AUTO_INCREMENT, 
 		qmgr_usercreateid INT(10),		
@@ -6129,4 +6129,64 @@ UPDATE projects LEFT JOIN orders ON (orde_orderid = proj_orderid) SET proj_total
 	ALTER TABLE orderitems ADD ordi_discountapplies INT(5);
 	ALTER TABLE orderitems ADD ordi_discount DOUBLE;
 	
+	
+	ALTER TABLE projectdetails ADD pjde_equipmentloaddate DATETIME;
+	ALTER TABLE projectdetails ADD pjde_testdate DATETIME;
+	
+	CREATE TABLE projectstaff (
+		pstf_projectstaffid INT NOT NULL AUTO_INCREMENT,
+	    pstf_usercreateid INT(10),		
+		pstf_usermodifyid INT(10),
+		pstf_datecreate DATETIME,
+		pstf_datemodify DATETIME,
+	    pstf_code VARCHAR(10),
+	    pstf_notes VARCHAR(1000),
+	    pstf_projectid INT(5),
+	    pstf_profileid INT(5),
+	    pstf_userid INT(5),
+	    PRIMARY KEY (pstf_projectstaffid),
+	    FOREIGN KEY (pstf_usercreateid) REFERENCES users(user_userid),
+		FOREIGN KEY (pstf_usermodifyid) REFERENCES users(user_userid),
+	    FOREIGN KEY (pstf_profileid) REFERENCES profiles(prof_profileid),
+	    FOREIGN KEY (pstf_userid) REFERENCES users(user_userid)   
+	);
+	
+	
+	ALTER TABLE projectdetails ADD pjde_eventstartdate DATETIME;
+	ALTER TABLE projectdetails ADD pjde_eventenddate DATETIME;
+	
+	ALTER TABLE projectequipment
+	CHANGE COLUMN peqi_datecreate peqi_datecreate DATETIME  ,
+	CHANGE COLUMN peqi_datemodify peqi_datemodify DATETIME;
+	
+	ALTER TABLE projectstaff
+	CHANGE COLUMN pstf_code pstf_code VARCHAR(50) NULL DEFAULT NULL ;
+	
+-- 1/09/2020
+	
+	ALTER TABLE orderdeliveries ADD odly_acceptmissing INT(5);
+	
+	ALTER TABLE quotemaingroups ADD qmgr_showcommission INT(5);
+	
+	CREATE TABLE missingprofiles (
+		mipr_missingprofileid INT NOT NULL AUTO_INCREMENT, 
+		mipr_usercreateid INT,		
+		mipr_usermodifyid INT,
+		mipr_datecreate DATETIME,
+		mipr_datemodify DATETIME,
+		mipr_profileid INT,	
+		mipr_ordertypeid INT,
+		PRIMARY KEY(mipr_missingprofileid),
+		FOREIGN KEY (mipr_usercreateid) REFERENCES users(user_userid),
+		FOREIGN KEY (mipr_usermodifyid) REFERENCES users(user_userid),
+		FOREIGN KEY (mipr_profileid) REFERENCES profiles(prof_profileid),
+		FOREIGN KEY (mipr_ordertypeid) REFERENCES ordertypes(ortp_ordertypeid)
+	);
+
+-- 2/09/2020
+	ALTER TABLE requisitions ADD reqi_responsibleid INT(5);
+	ALTER TABLE requisitions ADD reqi_deliverytime DATETIME;
+	ALTER TABLE requisitions ADD reqi_observations VARCHAR(1000);
+	ALTER TABLE requisitions ADD reqi_showonoutformat INT(5);
+	ALTER TABLE requisitiontypes ADD rqtp_outformat INT(8);
 	

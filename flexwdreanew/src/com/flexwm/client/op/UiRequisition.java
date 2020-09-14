@@ -78,6 +78,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.symgae.client.ui.Ui;
 import com.symgae.client.ui.UiDateBox;
+import com.symgae.client.ui.UiDateTimeBox;
 import com.symgae.client.ui.UiFormDialog;
 import com.symgae.client.ui.UiFormFlexTable;
 import com.symgae.client.ui.UiList;
@@ -262,18 +263,22 @@ public class UiRequisition extends UiList {
 		UiSuggestBox requisitionSuggestBox = new UiSuggestBox(new BmoRequisition());	
 		UiListBox requisitionTypeListBox = new UiListBox(getUiParams(), new BmoRequisitionType());	
 		UiSuggestBox supplierSuggestBox = new UiSuggestBox(new BmoSupplier());	
+		UiSuggestBox responsibleSuggestBox;
 		TextBox codeTextBox = new TextBox();	
 		TextBox nameTextBox = new TextBox();	
 		TextArea descriptionTextArea = new TextArea();
+		TextArea observationsTextArea = new TextArea();
 		UiDateBox requestDateBox= new UiDateBox();
 		UiDateBox paymentDateBox= new UiDateBox();
 		UiDateBox deliveryDateBox= new UiDateBox();
+		UiDateTimeBox deliveryTimeDateTimeBox = new UiDateTimeBox();
 		UiSuggestBox requestedBySuggestBox = new UiSuggestBox(new BmoUser());
 		UiListBox warehouseListBox = new UiListBox(getUiParams(), new BmoWarehouse());
 		UiListBox reqPayTypeListBox = new UiListBox(getUiParams(), new BmoReqPayType());
 		UiListBox areaListBox = new UiListBox(getUiParams(), new BmoArea());	
 		UiListBox statusListBox = new UiListBox(getUiParams());
 		UiSuggestBox orderSuggestBox = new UiSuggestBox(new BmoOrder());
+		
 		UiListBox contractEstimationListBox = new UiListBox(getUiParams(), new BmoContractEstimation());
 		TextBox amountTextBox = new TextBox();
 		TextBox discountTextBox = new TextBox();
@@ -294,6 +299,8 @@ public class UiRequisition extends UiList {
 		UiListBox qualityListBox = new UiListBox(getUiParams());
 		UiListBox punctualityListBox = new UiListBox(getUiParams());
 		UiListBox attentionListBox = new UiListBox(getUiParams());
+		
+		CheckBox showOnOutFormatCheckBox = new CheckBox();
 
 		private FlowPanel requisitionItemPanel = new FlowPanel();
 		private HorizontalPanel requisitionButtonPanel = new HorizontalPanel();
@@ -505,6 +512,11 @@ public class UiRequisition extends UiList {
 					taxAppliesChange();
 				}
 			});
+			//campo responsable Drea
+			BmFilter userBmFilter = new BmFilter();
+			BmoUser bmoUser = new BmoUser();
+			userBmFilter.setValueFilter(bmoUser.getKind(), bmoUser.getStatus(), "" + BmoUser.STATUS_ACTIVE);
+			responsibleSuggestBox = new UiSuggestBox(new BmoUser(), userBmFilter);
 		}
 
 		public void copyRequisitionDialog() {
@@ -710,6 +722,14 @@ public class UiRequisition extends UiList {
 			formFlexTable.addField(22, 0, descriptionTextArea, bmoRequisition.getDescription());
 			formFlexTable.addField(23, 0, currencyListBox, bmoRequisition.getCurrencyId());
 			formFlexTable.addField(24, 0, currencyParityTextBox, bmoRequisition.getCurrencyParity());
+			//campos drea
+			if (bmoRequisition.getBmoRequisitionType().getOutFormat().toBoolean()) {
+				formFlexTable.addField(25, 0, showOnOutFormatCheckBox,bmoRequisition.getShowOnOutFormat());
+			
+				formFlexTable.addField(26, 0, deliveryTimeDateTimeBox, bmoRequisition.getDeliveryTime());
+				formFlexTable.addField(27, 0, responsibleSuggestBox, bmoRequisition.getResponsibleId());
+				formFlexTable.addField(28, 0, observationsTextArea, bmoRequisition.getObservations());
+			}
 
 			if (!newRecord) {
 				showAutorizedData();
@@ -717,32 +737,32 @@ public class UiRequisition extends UiList {
 
 				// Solo permitir agregar si esta en edicion
 				if (bmoRequisition.getStatus().equals(BmoRequisition.STATUS_EDITION)) {
-					formFlexTable.addSectionLabel(27, 0, productSection, 2);
-					formFlexTable.addPanel(28, 0, productCellPanel, 2);
+					formFlexTable.addSectionLabel(31, 0, productSection, 2);
+					formFlexTable.addPanel(32, 0, productCellPanel, 2);
 				}
 
-				formFlexTable.addSectionLabel(29, 0, itemSection, 2);
-				formFlexTable.addPanel(30, 0, requisitionItemPanel, 4);
-				formFlexTable.addPanel(31, 0, requisitionButtonPanel, 2);
+				formFlexTable.addSectionLabel(33, 0, itemSection, 2);
+				formFlexTable.addPanel(34, 0, requisitionItemPanel, 4);
+				formFlexTable.addPanel(35, 0, requisitionButtonPanel, 2);
 
-				formFlexTable.addSectionLabel(32, 0, totalsSection, 2);
-				formFlexTable.addField(33, 0, amountTextBox, bmoRequisition.getAmount());
-				formFlexTable.addField(34, 0, holdBackTextBox, bmoRequisition.getHoldBack());
-				formFlexTable.addField(35, 0, discountTextBox, bmoRequisition.getDiscount());
-				formFlexTable.addField(36, 0, taxAppliesCheckBox, bmoRequisition.getTaxApplies());
-				formFlexTable.addField(37, 0, taxTextBox, bmoRequisition.getTax());
-				formFlexTable.addField(38, 0, totalTextBox, bmoRequisition.getTotal());
-				formFlexTable.addField(39, 0, paymentsTextBox, bmoRequisition.getPayments());
-				formFlexTable.addField(40, 0, balanceTextBox, bmoRequisition.getBalance());
+				formFlexTable.addSectionLabel(36, 0, totalsSection, 2);
+				formFlexTable.addField(37, 0, amountTextBox, bmoRequisition.getAmount());
+				formFlexTable.addField(38, 0, holdBackTextBox, bmoRequisition.getHoldBack());
+				formFlexTable.addField(39, 0, discountTextBox, bmoRequisition.getDiscount());
+				formFlexTable.addField(40, 0, taxAppliesCheckBox, bmoRequisition.getTaxApplies());
+				formFlexTable.addField(41, 0, taxTextBox, bmoRequisition.getTax());
+				formFlexTable.addField(42, 0, totalTextBox, bmoRequisition.getTotal());
+				formFlexTable.addField(43, 0, paymentsTextBox, bmoRequisition.getPayments());
+				formFlexTable.addField(44, 0, balanceTextBox, bmoRequisition.getBalance());
 
-				formFlexTable.addSectionLabel(41, 0, statusSection, 4);
-				formFlexTable.addLabelField(42, 0, bmoRequisition.getDeliveryStatus());
-				formFlexTable.addLabelField(43, 0, bmoRequisition.getPaymentStatus());
-				formFlexTable.addField(44, 0, statusListBox, bmoRequisition.getStatus());	
+				formFlexTable.addSectionLabel(45, 0, statusSection, 4);
+				formFlexTable.addLabelField(46, 0, bmoRequisition.getDeliveryStatus());
+				formFlexTable.addLabelField(47, 0, bmoRequisition.getPaymentStatus());
+				formFlexTable.addField(48, 0, statusListBox, bmoRequisition.getStatus());	
 
 				reset();
 			} else {
-				formFlexTable.addField(41, 0, statusListBox, bmoRequisition.getStatus());	
+				formFlexTable.addField(31, 0, statusListBox, bmoRequisition.getStatus());	
 			}
 			if (!newRecord) {
 				//formFlexTable.addSectionLabel(45, 0, wFlowLogSection, 4);
@@ -755,7 +775,7 @@ public class UiRequisition extends UiList {
 				UiWFlowLog uiWFlowLog = new UiWFlowLog(getUiParams(), WFlowLogFP, bmoRequisition.getWFlowId().toInteger(), -1);
 				setUiType(bmoWFlowLog.getProgramCode(), UiParams.MINIMALIST);
 				uiWFlowLog.show();
-				formFlexTable.addPanel(46, 0, WFlowLogFP, 2);
+				formFlexTable.addPanel(49, 0, WFlowLogFP, 2);
 			}
 
 			if (newRecord)
@@ -1243,7 +1263,29 @@ public class UiRequisition extends UiList {
 			currencyListBox.setEnabled(false);
 			currencyParityTextBox.setEnabled(false);			
 			loanListBox.setEnabled(false);
-
+			
+			showOnOutFormatCheckBox.setEnabled(false);
+			deliveryTimeDateTimeBox.setEnabled(false);
+			responsibleSuggestBox.setEnabled(false);
+			observationsTextArea.setEnabled(false);
+			if (getUiParams().getSFParams().hasSpecialAccess(BmoRequisition.ACCESS_OUTDATA)) {
+				showOnOutFormatCheckBox.setEnabled(true);
+				if (showOnOutFormatCheckBox.getValue()) {
+					deliveryTimeDateTimeBox.setEnabled(true);
+					responsibleSuggestBox.setEnabled(true);
+					observationsTextArea.setEnabled(true);
+				} else {
+					deliveryTimeDateTimeBox.setEnabled(false);
+					responsibleSuggestBox.setEnabled(false);
+					observationsTextArea.setEnabled(false);
+					deliveryTimeDateTimeBox.setDateTime("");
+					responsibleSuggestBox.setSelectedId(-1);
+					responsibleSuggestBox.setText("");					
+					observationsTextArea.setText("");
+				}				
+			} 
+			
+		
 			// Ocultar
 			formFlexTable.hideField(loanListBox);
 			formFlexTable.hideField(warehouseListBox);
@@ -1801,6 +1843,12 @@ public class UiRequisition extends UiList {
 			bmoRequisition.getCurrencyId().setValue(currencyListBox.getSelectedId());
 			bmoRequisition.getCurrencyParity().setValue(currencyParityTextBox.getText());		
 			bmoRequisition.getPropertyId().setValue(propertySuggestBox.getSelectedId());
+			//Campos drea
+			bmoRequisition.getShowOnOutFormat().setValue(showOnOutFormatCheckBox.getValue());
+			bmoRequisition.getDeliveryTime().setValue(deliveryTimeDateTimeBox.getDateTime());
+			bmoRequisition.getResponsibleId().setValue(responsibleSuggestBox.getSelectedId());
+			bmoRequisition.getObservations().setValue(observationsTextArea.getText());
+			
 			return bmoRequisition;
 		}
 
@@ -1920,8 +1968,8 @@ public class UiRequisition extends UiList {
 						setUserAutorizedRpcAttempt(0);
 						setBmObject((BmObject)result);
 						BmoUser bmoUser = (BmoUser)getBmObject();
-						formFlexTable.addLabelField(25, 0, "Autorizo:", bmoUser.getCode().toString());
-						formFlexTable.addLabelField(26, 0, bmoRequisition.getAuthorizedDate());
+						formFlexTable.addLabelField(29, 0, "Autorizo:", bmoUser.getCode().toString());
+						formFlexTable.addLabelField(30, 0, bmoRequisition.getAuthorizedDate());
 					}
 				};
 				try {

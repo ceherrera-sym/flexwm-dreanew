@@ -1135,7 +1135,6 @@ public class PmOrder extends PmObject {
 						}
 						// se agrupa por usuarios para no repetir emails
 						sql += " GROUP BY pfus_userid ";
-						System.err.println(sql);
 						if (hasProfiles) {
 							//Notificar que se autorizo un Pedido Extra
 							sendEmailAutorized(pmConn,bmoOrder,sql);
@@ -1331,6 +1330,12 @@ public class PmOrder extends PmObject {
 			bmoOrderGroup.getCommissionApply().setValue(bmoQuoteGroup.getCommissionApply().toInteger());
 			bmoOrderGroup.getCommissionRate().setValue(bmoQuoteGroup.getCommissionRate().toDouble());
 			bmoOrderGroup.getCommissionAmount().setValue(bmoQuoteGroup.getCommissionAmount().toDouble());
+			//Total de kit para Dreanew
+			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
+				if (bmoOrderGroup.getIsKit().toBoolean()) {
+					bmoOrderGroup.getTotal().setValue(bmoQuoteGroup.getTotal().toDouble());
+				}
+			}
 
 			pmOrderGroup.saveSimple(pmConn, bmoOrderGroup, bmUpdateResult);
 

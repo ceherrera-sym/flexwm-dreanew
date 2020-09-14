@@ -406,6 +406,15 @@
 				<tr>
 					<td class="reportHeaderCell" colspan="5" style="padding-left: 9px;">
 						<%= y %>.<%= i++ %>. <%= bmoQuoteGroup.getName().toHtml() %>
+						<% if (bmoQuoteGroup.getIsKit().toBoolean()) { %>
+							(<%=bmoQuoteGroup.getDays().toDouble() %>
+							<% if (bmoQuoteGroup.getDays().toDouble() > 1) { %>
+								D&iacute;as
+							<% } else {%>
+								D&iacute;a
+							<% } %>
+							)
+						<% } %>
 						<%	if (bmoQuoteGroup.getDescription().toString().length() > 0) { %>
 	                            <br><%= bmoQuoteGroup.getDescription().toHtml() %>
 	                    <%	} %>

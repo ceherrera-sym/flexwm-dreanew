@@ -1,3 +1,7 @@
+<%@page import="com.flexwm.server.cm.PmQuoteItem"%>
+<%@page import="com.flexwm.shared.cm.BmoQuoteItem"%>
+<%@page import="com.flexwm.server.cm.PmOpportunity"%>
+<%@page import="com.flexwm.shared.cm.BmoOpportunity"%>
 <%@page import="com.flexwm.shared.op.BmoProduct"%>
 <%@page import="java.text.NumberFormat"%>
 <%@page import="com.flexwm.server.op.PmOrderItem"%>
@@ -7,38 +11,37 @@
 <%@include file="../inc/login_opt.jsp"%>
 
 <%
-try {
-	String title = "Cuadro de Carga";
-	BmoProject bmoProject = new BmoProject();
-	PmProject pmProject = new PmProject(sFParams);
-	
-	BmoProgram bmoProgram = new BmoProgram();
-	PmProgram pmProgram = new PmProgram(sFParams);
-	bmoProgram = (BmoProgram) sFParams.getBmoProgram(bmoProject.getProgramCode());
+	try {
+		String title = "Cuadro de Carga";
+		BmoOpportunity bmoOpportunity = new BmoOpportunity();
+		PmOpportunity pmOpportunity = new PmOpportunity(sFParams);
 		
-	PmConn pmConn = new PmConn(sFParams);
-	pmConn.open();
+		BmoProgram bmoProgram = new BmoProgram();
+		PmProgram pmProgram = new PmProgram(sFParams);
+		bmoProgram = (BmoProgram) sFParams.getBmoProgram(bmoOpportunity.getProgramCode());
+			
+		PmConn pmConn = new PmConn(sFParams);
+		pmConn.open();
 %>
 
 <html>
 <%
 	// Imprimir
-		String print = "0", permissionPrint = "";
-		if ((String) request.getParameter("print") != null)
-			print = (String) request.getParameter("print");
+	String print = "0", permissionPrint = "";
+	if ((String) request.getParameter("print") != null)
+		print = (String) request.getParameter("print");
 
-		// Exportar a Excel
-		String exportExcel = "0";
-		if ((String) request.getParameter("exportexcel") != null)
-			exportExcel = (String) request.getParameter("exportexcel");
-		if (exportExcel.equals("1") && sFParams.hasPrint(bmoProgram.getCode().toString())) {
-			response.setContentType("application/vnd.ms-excel");
-			response.setHeader("Content-Disposition", "inline; filename=\"" + title + ".xls\"");
-		}
-
+	// Exportar a Excel
+	String exportExcel = "0";
+	if ((String) request.getParameter("exportexcel") != null)
+		exportExcel = (String) request.getParameter("exportexcel");
+	if (exportExcel.equals("1") && sFParams.hasPrint(bmoProgram.getCode().toString())) {
+		response.setContentType("application/vnd.ms-excel");
+		response.setHeader("Content-Disposition", "inline; filename=\"" + title + ".xls\"");
+	}
 		//Si se visualiza y no se tienen permisos, deshabilita: copiar, pegar, seleccionar, menÃº(clic-derecho).
 		//En caso de que mande a imprimir, deshabilita contenido
-		if (!(sFParams.hasPrint(bmoProgram.getCode().toString()))) {
+	if (!(sFParams.hasPrint(bmoProgram.getCode().toString()))) {
 %>
 <style>
 body {
@@ -77,11 +80,11 @@ body {
 <body class="default" <%=permissionPrint%>>
 	<%
 		NumberFormat formatCurrency = NumberFormat.getCurrencyInstance(Locale.US);
-		bmoProject = (BmoProject)pmProject.get(Integer.parseInt(request.getParameter("foreignId")));
+		bmoOpportunity = (BmoOpportunity)pmOpportunity.get(Integer.parseInt(request.getParameter("foreignId")));
 		//Empresa
 		BmoCompany bmoCompany = new BmoCompany();
 		PmCompany pmCompany = new PmCompany(sFParams);
-		bmoCompany = (BmoCompany) pmCompany.get(bmoProject.getCompanyId().toInteger());
+		bmoCompany = (BmoCompany) pmCompany.get(bmoOpportunity.getCompanyId().toInteger());
 		
 		BmoCity bmoCompanyCity = new BmoCity();
 		PmCity pmCity = new PmCity(sFParams);
@@ -119,11 +122,11 @@ body {
 		</tr>
 		<tr>
 			<th align="left" class="reportCellEven">Proyecto:</th>
-			<td class="reportCellEven"><%=bmoProject.getCode() + " " + bmoProject.getName()  %></td>
+			<td class="reportCellEven"><%=bmoOpportunity.getCode() + " " + bmoOpportunity.getName()  %></td>
 			<th alignpmConn="left" class="reportCellEven">Fecha/Hora:</th>
 			<td class="reportCellEven">
-				de:  <%=SFServerUtil.formatDate(sFParams, sFParams.getDateTimeFormat(), sFParams.getBmoSFConfig().getPrintDateTimeFormat().toString(),bmoProject.getStartDate().toString())%>
-				 &nbsp;a:&nbsp;<%=SFServerUtil.formatDate(sFParams, sFParams.getDateTimeFormat(), sFParams.getBmoSFConfig().getPrintDateTimeFormat().toString(), bmoProject.getEndDate().toString())%>
+				de:  <%=SFServerUtil.formatDate(sFParams, sFParams.getDateTimeFormat(), sFParams.getBmoSFConfig().getPrintDateTimeFormat().toString(),bmoOpportunity.getStartDate().toString())%>
+				 &nbsp;a:&nbsp;<%=SFServerUtil.formatDate(sFParams, sFParams.getDateTimeFormat(), sFParams.getBmoSFConfig().getPrintDateTimeFormat().toString(), bmoOpportunity.getEndDate().toString())%>
 			</td>
 		</tr>
 		
@@ -139,7 +142,8 @@ body {
 			<td class="reportHeaderCell" align="left" width="20%" >Descripcion</td>
 			<td class="reportHeaderCellRight " align="right" width="16%" >Cantidad</td>
 			<td class="reportHeaderCellRight " align="right" width="16%" >Consumo Amperes</td>
-			<td class="reportHeaderCellRight " align="right" width="16%" >Total Consumo Amperes1</td>			
+			<td class="reportHeaderCellRight " align="right" width="16%" >Total Consumo Amperes</td>	
+					
 		</tr>
 		<tr>
 			<td colspan="8">&nbsp;</td>
@@ -149,10 +153,10 @@ body {
 				double sumAmperage = 0;
 				double sumM3 = 0;
 				double sumWeigth = 0;
-				String sql = "SELECT ordg_ordergroupid FROM ordergroups where ordg_orderid = "+ bmoProject.getOrderId();
+				String sql = "SELECT qogr_quotegroupid FROM quotegroups WHERE qogr_quoteid = "+ bmoOpportunity.getQuoteId().toInteger();
 				pmConn.doFetch(sql);
-				BmoOrderItem bmoOrderItem = new BmoOrderItem();
-				PmOrderItem pmOrderItem = new PmOrderItem(sFParams);
+				BmoQuoteItem bmoQuoteItem = new BmoQuoteItem();
+				PmQuoteItem PmQuoteItem = new PmQuoteItem(sFParams);
 // 				ArrayList<BmObject> productList = new ArrayList<BmObject>();
 				 while (pmConn.next()){
 					 
@@ -160,51 +164,50 @@ body {
 					 BmFilter filterByGroup = new BmFilter();
 					 ArrayList<BmFilter> filterList = new ArrayList<BmFilter>();
 					
-					 filterByGroup.setValueFilter(bmoOrderItem.getKind(), bmoOrderItem.getOrderGroupId(), pmConn.getInt("ordg_ordergroupid"));
+					 filterByGroup.setValueFilter(bmoQuoteItem.getKind(), bmoQuoteItem.getQuoteGroupId(), pmConn.getInt("qogr_quotegroupid"));
 					 //que sean con producto
-					 filterByProduct.setValueOperatorFilter(bmoOrderItem.getKind(),
-							 bmoOrderItem.getProductId(), BmFilter.MAYOR, 1);
+					 filterByProduct.setValueOperatorFilter(bmoQuoteItem.getKind(),
+							 bmoQuoteItem.getProductId(), BmFilter.MAYOR, 1);
 					 
 					 filterList.add(filterByProduct);
 					 filterList.add(filterByGroup);
 					 
-					 Iterator<BmObject> itemIterator = pmOrderItem.list(filterList).iterator();
+					 Iterator<BmObject> itemIterator = PmQuoteItem.list(filterList).iterator();
 					  while(itemIterator.hasNext()){
-						  BmoOrderItem nextBmoOrderItem = (BmoOrderItem)itemIterator.next();
-// 						  productList.add(nextBmoOrderItem.getBmoProduct());
+						  BmoQuoteItem nextBmoQuoteItem = (BmoQuoteItem)itemIterator.next();
 						  double amparage = 0;
 						  double m3 = 0;
 						  double weigth = 0;
 						  double caseQuantity = 0;
 						  //Primero se toma el valor de Amperaje 220v si no existe se toma el de 110v
-						  if(nextBmoOrderItem.getBmoProduct().getAmperage220().toDouble() > 0){
-							  amparage = nextBmoOrderItem.getBmoProduct().getAmperage220().toDouble();
-						  } else if (nextBmoOrderItem.getBmoProduct().getAmperage110().toDouble() > 0){
-							  amparage = nextBmoOrderItem.getBmoProduct().getAmperage110().toDouble();
+						  if(nextBmoQuoteItem.getBmoProduct().getAmperage220().toDouble() > 0){
+							  amparage = nextBmoQuoteItem.getBmoProduct().getAmperage220().toDouble();
+						  } else if (nextBmoQuoteItem.getBmoProduct().getAmperage110().toDouble() > 0){
+							  amparage = nextBmoQuoteItem.getBmoProduct().getAmperage110().toDouble();
 						  } 
 						  //Si el producto usa case se calcula el peso y m3 segun el case
-						  if (nextBmoOrderItem.getBmoProduct().getUseCase().toBoolean()){
-							  caseQuantity = nextBmoOrderItem.getQuantity().toDouble()/ nextBmoOrderItem.getBmoProduct().getQuantityForCase().toDouble();
-							  if ( nextBmoOrderItem.getQuantity().toDouble() % nextBmoOrderItem.getBmoProduct().getQuantityForCase().toDouble() > 0) {
+						  if (nextBmoQuoteItem.getBmoProduct().getUseCase().toBoolean()){
+							  caseQuantity = nextBmoQuoteItem.getQuantity().toDouble()/ nextBmoQuoteItem.getBmoProduct().getQuantityForCase().toDouble();
+							  if ( nextBmoQuoteItem.getQuantity().toDouble() % nextBmoQuoteItem.getBmoProduct().getQuantityForCase().toDouble() > 0) {
 								  Math.ceil(caseQuantity);
 							  }							  
-							  m3 = nextBmoOrderItem.getBmoProduct().getCaseCubicMeter().toDouble() * caseQuantity;
-							  weigth = nextBmoOrderItem.getBmoProduct().getWeightCase().toDouble() * caseQuantity;							  
+							  m3 = nextBmoQuoteItem.getBmoProduct().getCaseCubicMeter().toDouble() * caseQuantity;
+							  weigth = nextBmoQuoteItem.getBmoProduct().getWeightCase().toDouble() * caseQuantity;			
 						  } else {
-							  m3 = nextBmoOrderItem.getBmoProduct().getCubicMeter().toDouble() * nextBmoOrderItem.getQuantity().toDouble();
-							  weigth = nextBmoOrderItem.getBmoProduct().getWeight().toDouble() * nextBmoOrderItem.getQuantity().toDouble();
+							  m3 = nextBmoQuoteItem.getBmoProduct().getCubicMeter().toDouble() * nextBmoQuoteItem.getQuantity().toDouble();
+							  weigth = nextBmoQuoteItem.getBmoProduct().getWeight().toDouble() * nextBmoQuoteItem.getQuantity().toDouble();
 						  }
 			%>	
 						<tr>
-							<td class="reportCellEven" align="left" ><b><%=nextBmoOrderItem.getBmoProduct().getCode().toHtml() %></b> <%= nextBmoOrderItem.getBmoProduct().getName().toHtml() %> 
-								[<%=nextBmoOrderItem.getBmoProduct().getDescription	().toHtml() %>]
+							<td class="reportCellEven" align="left" ><b><%=nextBmoQuoteItem.getBmoProduct().getCode().toHtml() %></b> <%= nextBmoQuoteItem.getBmoProduct().getName().toHtml() %> 
+								[<%=nextBmoQuoteItem.getBmoProduct().getDescription	().toHtml() %>]
 							</td>
-							<td class="reportCellEven" align="right" ><%=nextBmoOrderItem.getQuantity()%></td>
+							<td class="reportCellEven" align="right" ><%=nextBmoQuoteItem.getQuantity()%></td>
 							<td class="reportCellEven" align="right" ><%=amparage %></td>
-							<td class="reportCellEven" align="right" ><%=nextBmoOrderItem.getQuantity().toDouble() * amparage %></td>	
+							<td class="reportCellEven" align="right" ><%=nextBmoQuoteItem.getQuantity().toDouble() * amparage %></td>	
 						</tr>	
 			<%			//Suma total de amperaje productos
-						sumAmperage = sumAmperage + (nextBmoOrderItem.getQuantity().toDouble() * amparage);
+						sumAmperage = sumAmperage + (nextBmoQuoteItem.getQuantity().toDouble() * amparage);
 						//Suma total de M3 y peso de productos
 						sumM3 = sumM3 + m3;
 						sumWeigth = sumWeigth + weigth;
@@ -245,41 +248,6 @@ body {
 	 		</td>
  		</tr>
 	</table>
-<!-- 	<table border="0" cellspacing="0" width="100%" cellpadding="0" style="font-size: 12px"> -->
-<!-- 		<tr >			 -->
-<!-- 			<td class="reportHeaderCell" colspan="3">Peso Y Mts³</td>			 -->
-<!-- 		</tr> -->
-<!-- 		<tr> -->
-<!-- 			<td class="reportHeaderCell"  width="40%" >Descripcion</td> -->
-<!-- 			<td class="reportHeaderCellRight "  width="30%" >Peso(Kg)</td> -->
-<!-- 			<td class="reportHeaderCellRight "  width="30%" >Mts³</td>				 -->
-<!-- 		</tr> -->
-<%-- 		<%   --%>
-<!-- // 			Iterator<BmObject> pruductIterator = productList.iterator(); -->
-<!-- // 			double sumWeight = 0; -->
-<!-- // 			double sumCubicMeter = 0; -->
-<!-- // 			while (pruductIterator.hasNext()){ -->
-<!-- // 				BmoProduct nextBmoProduct = (BmoProduct)pruductIterator.next(); -->
-<%-- 		%> --%>
-<!-- 			<tr> -->
-<%-- 				<td class="reportCellEven" align="left" ><b><%=nextBmoProduct.getCode().toHtml() %></b> <%= nextBmoProduct.getName().toHtml() %> --%>
-<%-- 						[<%=nextBmoProduct.getDescription().toHtml() %>] --%>
-<!-- 				</td> -->
-<%-- 				<td class="reportCellEven" align="right" ><%=nextBmoProduct.getWeight().toDouble()%></td> --%>
-<%-- 				<td class="reportCellEven" align="right" ><%=nextBmoProduct.getCubicMeter().toDouble() %></td> --%>
-<!-- 			</tr> -->
-<%-- 		<% --%>
-<!-- // 				sumWeight = sumWeight + nextBmoProduct.getWeight().toDouble(); -->
-<!-- // 				sumCubicMeter = sumCubicMeter + nextBmoProduct.getCubicMeter().toDouble(); -->
-<!-- // 			} -->
-<%-- 		%> --%>
-<!-- 		<tr>			 -->
-<!-- 			<th class=""  align="right">Total:</th> -->
-<%-- 			<td class="reportCellEven" align="right"><b><%=String.format("%.2f", sumWeight)%></b></td> --%>
-<%-- 			<td class="reportCellEven" align="right"><b><%=String.format("%.2f", sumCubicMeter)%></b></td> --%>
-<!-- 		</tr> -->
-		
-<!-- 	</table> -->
 </body>
 </html>
 

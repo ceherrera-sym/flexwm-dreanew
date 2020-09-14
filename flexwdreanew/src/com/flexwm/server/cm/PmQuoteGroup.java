@@ -53,6 +53,12 @@ public class PmQuoteGroup extends PmObject {
 		// Obten la cotización
 		PmQuote pmQuote = new PmQuote(getSFParams());
 		BmoQuote bmoQuote = (BmoQuote)pmQuote.get(pmConn, bmoQuoteGroup.getQuoteId().toInteger());
+		
+		BmoQuoteGroup bmoQuoteGroupPrev = new BmoQuoteGroup();
+		
+		if (bmoQuoteGroup.getId() > 0) {
+			bmoQuoteGroupPrev = (BmoQuoteGroup)new PmQuoteGroup(getSFParams()).get(pmConn,bmoQuoteGroup.getId());
+		}
 		//validar grupo maestro para Dreanew
 		if (bmoQuote.getBmoOrderType().getType().equals(BmoOrderType.TYPE_RENTAL)) {
 			if (bmoQuoteGroup.getMainGroupId().toInteger() <= 0 ) {
@@ -93,6 +99,12 @@ public class PmQuoteGroup extends PmObject {
 				updateMainGroup(pmConn,bmoQuoteGroup.getMainGroupId().toInteger(),bmUpdateResult);
 				if (!bmoQuoteGroup.getIsKit().toBoolean())
 					updateDiscountitems(pmConn, bmoQuoteGroup, bmUpdateResult);
+				if (bmoQuoteGroupPrev.getId() > 0) {
+					//Actualizar totales de grupo maestro  si se cambiaron
+					if (bmoQuoteGroupPrev.getMainGroupId().toInteger() != bmoQuoteGroup.getMainGroupId().toInteger()) {
+						updateMainGroup(pmConn,bmoQuoteGroupPrev.getMainGroupId().toInteger(),bmUpdateResult);
+					}
+				}
 			}
 			
 			// Recalcular la cotizacion completa
