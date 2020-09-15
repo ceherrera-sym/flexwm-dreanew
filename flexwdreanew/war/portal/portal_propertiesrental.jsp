@@ -38,8 +38,10 @@
  <%@ page import="java.text.SimpleDateFormat"%>
 
 
-<% try{
-	
+<% try{ %>
+	<%@include file="./inc_params.jsp"%>
+<%
+
 	//Fecha hoy
 	Calendar date = new GregorianCalendar();
 	String year = Integer.toString(date.get(Calendar.YEAR));
@@ -55,7 +57,6 @@
 	String gwtCss = "gwt_standard.css";
 	String fwmCss = "flexwm.css";
 	boolean isMobile = false, filters = false;
-	SFParams sFParams = new SFParams();
 	String sql = "",filter = "";
 	String sql2 = "";
 	String customer = "",orLessor = "",sqllessors = "";
@@ -101,22 +102,12 @@
 	String where = "";
 	String initialWhere = " AND orde_status = '"+ BmoOrder.STATUS_AUTHORIZED+"'";
 	filter = "Estatus: Autorizado";
-	LoginInfo loginInfo = new LoginInfo();
-	loginInfo.setLoggedIn(true);
-	loginInfo.setEmailAddress(getServletContext().getInitParameter("systememail"));
-	SFParamsServiceImpl.fillSFParamsFromWebXML(sFParams, config.getServletContext());
-	SFParamsServiceImpl.paramsFactory(sFParams, loginInfo, config.getServletContext());
 	int id = Integer.parseInt(cust_id);
 	
 	PmConn pmConn = new PmConn(sFParams);	
 	PmConn pmConnCounter = new PmConn(sFParams);
 	PmConn pmConnLessors = new PmConn(sFParams);
-	
-	
-	
-	
-	
-	
+		
 	BmoPropertyRental bmoPropertyRental = new BmoPropertyRental();
 	BmoOrder bmoOrder = new BmoOrder ();
 	BmoProperty bmoProperty = new BmoProperty();
@@ -218,14 +209,11 @@
 			      " ORDER BY prrt_propertiesrentid ASC";
 	}
 	
-	
 	pmConn.doFetch(sql);
 	pmConnCounter.doFetch(sql2);
-%>
-	
+%>	
 
 <!doctype html>
-
 
 <html>
 <head>

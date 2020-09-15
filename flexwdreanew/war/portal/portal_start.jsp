@@ -34,10 +34,9 @@
 
 
 
-<% try{
-	
-
-	    
+<% try{ %>
+	<%@include file="./inc_params.jsp"%>	
+<%	    
 	Calendar date = new GregorianCalendar();
 	String year = Integer.toString(date.get(Calendar.YEAR));
 	String month = Integer.toString(date.get(Calendar.MONTH)+1);
@@ -56,33 +55,18 @@
 	String gwtCss = "gwt_standard.css";
 	String fwmCss = "flexwm.css",custLessor = "";
 	boolean isMobile = false;
-	SFParams sFParams = new SFParams();
 	String sql = "",program="";
 	String cust_id = (String)session.getAttribute("Id");
 	 if(Integer.parseInt(cust_id) <= 0)
 		 response.sendRedirect("portal_login.jsp") ;
-		 
-	
      
-	
-	LoginInfo loginInfo = new LoginInfo();
-	loginInfo.setLoggedIn(true);
-	loginInfo.setEmailAddress(getServletContext().getInitParameter("systememail"));
-	SFParamsServiceImpl.fillSFParamsFromWebXML(sFParams, config.getServletContext());
-	SFParamsServiceImpl.paramsFactory(sFParams, loginInfo, config.getServletContext());
-	int id = Integer.parseInt(cust_id),print = 0;
-	
-	
-	
-	
+	int id = Integer.parseInt(cust_id),print = 0;	
 	
 	PmConn pmConn = new PmConn(sFParams);	
 	PmConn pmConn2 = new PmConn(sFParams);	
 	PmCustomer pmCustomer = new PmCustomer(sFParams);
 	BmoCustomer bmoCustomer = new BmoCustomer();
 	bmoCustomer = (BmoCustomer)pmCustomer.get(Integer.parseInt(cust_id));
-	
-	
 	
 	BmoProperty bmoProperty = new BmoProperty();
 	PmProperty pmProperty = new PmProperty(sFParams);
@@ -137,41 +121,36 @@
 	function changeLessor() {
 
 		var lessor = document.getElementById("lessors1");
-<%if (program.equals("prrt")) {%>
-	var pagina = document.getElementById("propertiesrentalForm")
-				.getAttribute("action");
-		document.getElementById("lessorsPrrt").setAttribute("value",
-				lessor.value);
-		document.getElementById("propertiesrentalForm").setAttribute("target",
-				"propertiesRentalIframe");
-		document.getElementById("propertiesrentalForm").submit();
-<%} else if (program.equals("racc")) {%>
-	var pagina = document.getElementById("raccountsForm").getAttribute(
-				"action");
-		document.getElementById("lessorsRacc").setAttribute("value",
-				lessor.value);
-		document.getElementById("raccountsForm").setAttribute("target",
-				"raccountsIframe");
-		document.getElementById("raccountsForm").submit();
-<%} else if (program.equals("prty")) {%>
-	var pagina = document.getElementById("propertiesForm").getAttribute(
-				"action");
-		document.getElementById("lessorsPrty").setAttribute("value",
-				lessor.value);
-		document.getElementById("propertiesForm").setAttribute("target",
-				"propertiesIframe");
-		document.getElementById("propertiesForm").submit();
-<%}%>
+		<%if (program.equals("prrt")) {%>
+			var pagina = document.getElementById("propertiesrentalForm")
+						.getAttribute("action");
+				document.getElementById("lessorsPrrt").setAttribute("value",
+						lessor.value);
+				document.getElementById("propertiesrentalForm").setAttribute("target",
+						"propertiesRentalIframe");
+				document.getElementById("propertiesrentalForm").submit();
+		<%} else if (program.equals("racc")) {%>
+			var pagina = document.getElementById("raccountsForm").getAttribute(
+						"action");
+				document.getElementById("lessorsRacc").setAttribute("value",
+						lessor.value);
+				document.getElementById("raccountsForm").setAttribute("target",
+						"raccountsIframe");
+				document.getElementById("raccountsForm").submit();
+		<%} else if (program.equals("prty")) {%>
+			var pagina = document.getElementById("propertiesForm").getAttribute(
+						"action");
+				document.getElementById("lessorsPrty").setAttribute("value",
+						lessor.value);
+				document.getElementById("propertiesForm").setAttribute("target",
+						"propertiesIframe");
+				document.getElementById("propertiesForm").submit();
+		<%}%>
 	}
 	
 </script>
 
-
 <!doctype html>
-<!-- The DOCTYPE declaration above will set the     -->
-<!-- browser's rendering engine into                -->
-<!-- "Standards Mode". Replacing this declaration   -->
-<!-- with a "Quirks Mode" doctype is not supported. -->
 
 <html>
 <head>
@@ -183,16 +162,9 @@
 <link type="text/css" rel="stylesheet" href="./css/tags.jsp">
 <link type="text/css" rel="stylesheet" href="./css/login.css">
 
-<%-- <% if (isMobile) { %> --%>
-<meta name="viewport"
-	content="width=100%,height=100%, initial-scale=1.0, maximum-scale=1.0,min-height: 600px">
+<meta name="viewport" content="width=100%,height=100%, initial-scale=1.0, maximum-scale=1.0,min-height: 600px">
 		
-<%-- <% } %> --%>
-
-
-<title>::: <%= appTitle %> :::
-</title>	
-	
+<title>::: <%= appTitle %> :::</title>		
 </head>
 <body style="background: #fafafa;Transition:width 4s;"  >		
 <div style="position: absolute; left: 0px; top: 0px; right: 0px; bottom: 0px;height: auto;min-width: 600px;min-width: 1200px">
@@ -206,55 +178,52 @@
 				<li class="menuCust " style="height: 5%;margin-left: 8%;margin-right: 10%;font-family: Helvetica;margin-top: 3%">
 						<%=bmoCustomer.getDisplayName().toString()%>
 				</li>
-
-					<%
-						
-							if (!(program.equals("racc"))) {
+					<%						
+						if (!(program.equals("racc"))) {
 					%>
-					<li class="menuItem"><a style="color: white; font-size: 10pt; font-family:  Helvetica;"
-						href="portal_start.jsp?program=racc&viewHelp=0"><img
-							class="programTitle"
-							src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/racc.png")%>>&nbsp;&nbsp;Cobranza</a></li>
+							<li class="menuItem"><a style="color: white; font-size: 10pt; font-family:  Helvetica;"
+								href="portal_start.jsp?program=racc&viewHelp=0"><img
+									class="programTitle"
+									src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/racc.png")%>>&nbsp;&nbsp;Cobranza</a></li>
 					<%
 						} else {
 					%>
-					<li class="menuItem"><a style="color: white; font-size: 10pt; font-family: Helvetica; text-decoration: underline; font-weight: bold;">
-					<img class="programTitle" src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/racc.png")%>>&nbsp;&nbsp;Cobranza</a></li>
+							<li class="menuItem"><a style="color: white; font-size: 10pt; font-family: Helvetica; text-decoration: underline; font-weight: bold;">
+							<img class="programTitle" src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/racc.png")%>>&nbsp;&nbsp;Cobranza</a></li>
 					<%
 						}
-					if (!(program.equals("prrt"))) {
-						%>
-						<li class="menuItem"><a	style="color: white; font-size: 10pt; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;"
-							href="portal_start.jsp?program=prrt&viewHelp=0"><img
-								class="programTitle"
-								src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/prrt.png")%>>&nbsp;&nbsp;Contratos</a></li>
-						<%
-							} else {
-						%>
-						<li class="menuItem"><a style="color: white; font-size: 10pt; font-family: Helvetica Neue, Helvetica, Arial, sans-serif; text-decoration: underline; font-weight: bold;"><img
-								class="programTitle	"
-								src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/prrt.png")%>>&nbsp;&nbsp;Contratos</a></li>
-						<%
-							}
-							if (!(program.equals("prty"))) {
+						if (!(program.equals("prrt"))) {
 					%>
-					<li class="menuItem"><a style="color: white; font-size: 10pt; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;"
-						href="portal_start.jsp?program=prty&viewHelp=0"><img
-							class="programTitle"
-							src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/prty.png")%>>&nbsp;&nbsp;Inmuebles</a></li>
+							<li class="menuItem"><a	style="color: white; font-size: 10pt; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;"
+								href="portal_start.jsp?program=prrt&viewHelp=0"><img
+									class="programTitle"
+									src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/prrt.png")%>>&nbsp;&nbsp;Contratos</a></li>
 					<%
 						} else {
 					%>
-					<li class="menuItem"><a style="color: white; font-size: 10pt; font-family: Helvetica Neue, Helvetica, Arial, sans-serif; text-decoration: underline; font-weight: bold;"><img
-							class="programTitle"
-							src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/prty.png")%>>&nbsp;&nbsp;Inmuebles</a></li>
+							<li class="menuItem"><a style="color: white; font-size: 10pt; font-family: Helvetica Neue, Helvetica, Arial, sans-serif; text-decoration: underline; font-weight: bold;"><img
+									class="programTitle	"
+									src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/prrt.png")%>>&nbsp;&nbsp;Contratos</a></li>
+					<%
+						}
+						if (!(program.equals("prty"))) {
+					%>
+							<li class="menuItem"><a style="color: white; font-size: 10pt; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;"
+								href="portal_start.jsp?program=prty&viewHelp=0"><img
+									class="programTitle"
+									src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/prty.png")%>>&nbsp;&nbsp;Inmuebles</a></li>
+					<%
+						} else {
+					%>
+							<li class="menuItem"><a style="color: white; font-size: 10pt; font-family: Helvetica Neue, Helvetica, Arial, sans-serif; text-decoration: underline; font-weight: bold;"><img
+									class="programTitle"
+									src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/prty.png")%>>&nbsp;&nbsp;Inmuebles</a></li>
 					<%
 						}
 					%>
 					<li style="height: 55%"></li>
-					<li onclick="logout()" class="menuItem"  ><a style="color: #CC1C2B; font-size: 10pt; font-family: Helvetica 	"><img
-							class="programTitle"
-							src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/logout.png")%>>&nbsp;&nbsp;Salir</a></li>
+					<li onclick="logout()" class="menuItem"  ><a style="color: #CC1C2B; font-size: 10pt; font-family: Helvetica">
+					<img class="programTitle" src=<%=GwtUtil.getProperUrl(sFParams, "portalmobil/img/logout.png")%>>&nbsp;&nbsp;Salir</a></li>
 			</ul>
 		</nav>	
 		<div class="topBar" >

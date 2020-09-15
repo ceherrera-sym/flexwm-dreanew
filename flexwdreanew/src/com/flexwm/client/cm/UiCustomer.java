@@ -17,6 +17,7 @@ import com.symgae.shared.BmUpdateResult;
 import com.symgae.shared.SFException;
 import com.symgae.shared.sf.BmoTitle;
 import com.symgae.shared.sf.BmoUser;
+import com.symgae.shared.sf.BmoLocation;
 import com.symgae.shared.sf.BmoProfileUser;
 import com.flexwm.shared.BmoFlexConfig;
 import com.flexwm.shared.cm.BmoAssignCoordinator;
@@ -37,6 +38,7 @@ import com.flexwm.shared.fi.BmoCFDI;
 import com.flexwm.shared.fi.BmoCurrency;
 import com.flexwm.shared.fi.BmoPayMethod;
 import com.flexwm.shared.op.BmoReqPayType;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -169,9 +171,10 @@ public class UiCustomer extends UiList {
 		CheckBox leadCheckBox = new CheckBox();
 		CheckBox remindPaymentRaccountCheckBox = new CheckBox();
 		UiListBox marketListBox = new UiListBox(getUiParams(), new BmoMarket());
-
 		TextBox oficialIdentifyTexBox = new TextBox();
 		UiListBox nationalityUiListBox = new UiListBox(getUiParams(), new BmoNationality());
+		UiListBox locationIdListBox = new UiListBox(getUiParams());
+		
 		boolean multiCompany = false;
 		private String companyId;
 		private int profileSalesmanRpcAttempt = 0;
@@ -223,6 +226,18 @@ public class UiCustomer extends UiList {
 			bmoCustomer = (BmoCustomer)getBmObject();
 			lessorMasterSuggestBox = new UiSuggestBox(new BmoCustomer());
 			
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+				locationIdListBox = new UiListBox(getUiParams(), new BmoLocation());
+				try {
+					if (newRecord) {
+						bmoCustomer.getLocationId().setValue(getUiParams().getSFParams().getLoginInfo().getBmoUser().getLocationId().toInteger());
+					}
+					setUserListBoxFilters(bmoCustomer.getLocationId().toInteger());
+				} catch (BmException e) {
+					showErrorMessage(this.getClass().getName() + "-populateFields(): ERROR " + e.toString());
+				}	
+			}
+			
 			// Filtrar por vendedores
 			// MultiEmpresa: g100
 			multiCompany = ((BmoFlexConfig)getUiParams().getSFParams().getBmoAppConfig()).getMultiCompany().toBoolean();
@@ -248,6 +263,9 @@ public class UiCustomer extends UiList {
 			int r = 1, c = 0; // Incrementar posicion de lineas
 
 			formFlexTable.addSectionLabel(r, c, generalSection, 2);	r++;
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+				formFlexTable.addField(r, c, locationIdListBox, bmoCustomer.getLocationId()); r++;
+			}
 			formFlexTable.addFieldReadOnly(r, c, codeTextBox, bmoCustomer.getCode());	r++;
 			formFlexTable.addField(r, c, customerTypeListBox, bmoCustomer.getCustomertype());	r++;
 			formFlexTable.addField(r, c, displayNameTextBox, bmoCustomer.getDisplayName());	r++;
@@ -428,7 +446,9 @@ public class UiCustomer extends UiList {
 			bmoCustomer.getOficialIdentify().setValue(oficialIdentifyTexBox.getValue());
 			bmoCustomer.getNationalityId().setValue(nationalityUiListBox.getSelectedId());
 			bmoCustomer.getMarketId().setValue(marketListBox.getSelectedId());
-			
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() )
+				bmoCustomer.getLocationId().setValue(locationIdListBox.getSelectedId());
+
 			return bmoCustomer;
 		}
 
@@ -478,6 +498,13 @@ public class UiCustomer extends UiList {
 			}
 			if (event.getSource() == customerCategoryListBox) {
 				statusEffect();
+			}
+			if (event.getSource() == locationIdListBox) {
+				if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+					BmoLocation bmoLocation = (BmoLocation)locationIdListBox.getSelectedBmObject();
+					GWT.log("Ubicacion seleccionada:" + bmoLocation.getName().toString());
+					populateUsers(bmoLocation.getId());
+				}
 			}
 		}
 		
@@ -544,6 +571,15 @@ public class UiCustomer extends UiList {
 			
 			if (newRecord) {
 				leadCheckBox.setEnabled(true);
+			}
+			
+			// Validar si tiene permiso de propios, en la ubicacion
+			if (((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean()) {
+				if (getSFParams().restrictData(new BmoLocation().getProgramCode())) {
+					locationIdListBox.setEnabled(false);
+				} else {
+					locationIdListBox.setEnabled(true);
+				}
 			}
 		}
 		
@@ -612,6 +648,42 @@ public class UiCustomer extends UiList {
 //				setUserListBoxFilters("" + salesProfileId);
 //			}
 //		}
+		
+		
+		// Actualiza combo de usuarios por UBICACION (para daCredito)
+		private void populateUsers(int locationId) {
+			salesmanSuggestBox.clear();
+			setUserListBoxFilters(locationId);
+		}
+		
+		// Filtrar usuarios por UBICACION (para daCredito)
+		private void setUserListBoxFilters(int locationId) {
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+
+				int salesProfileId = ((BmoFlexConfig)getUiParams().getSFParams().getBmoAppConfig()).getSalesProfileId().toInteger();
+
+				BmoUser bmoUser = new BmoUser();
+				BmoProfileUser bmoProfileUser = new BmoProfileUser();
+				
+				BmFilter filterSalesmen = new BmFilter();
+				filterSalesmen.setInFilter(bmoProfileUser.getKind(), 
+						bmoUser.getIdFieldName(),
+						bmoProfileUser.getUserId().getName(),
+						bmoProfileUser.getProfileId().getName(),
+						"" + salesProfileId);	
+				salesmanSuggestBox.addFilter(filterSalesmen);
+	
+				// Filtrar por vendedores activos
+				BmFilter filterSalesmenActive = new BmFilter();
+				filterSalesmenActive.setValueFilter(bmoUser.getKind(), bmoUser.getStatus(), "" + BmoUser.STATUS_ACTIVE);
+				salesmanSuggestBox.addFilter(filterSalesmenActive);
+				
+				// Filtrar por vendedores de la ubicacion
+				BmFilter filterByLocation= new BmFilter();
+				filterByLocation.setValueFilter(bmoUser.getKind(), bmoUser.getLocationId(), "" + locationId);
+				salesmanSuggestBox.addFilter(filterByLocation);
+			}
+		}
 
 		// Filtrar usuarios por perfil de vendedores 
 		private void setUserListBoxFilters(String salesProfileId, boolean multiCompany) {

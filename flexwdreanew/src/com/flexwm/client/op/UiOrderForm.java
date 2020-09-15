@@ -227,8 +227,8 @@ public class UiOrderForm extends UiForm {
 	private String generalSection = "Datos Generales";
 	private String productsSection = "Navegador Productos";
 	private String itemsSection = "Items";
-		private String equipmentsSection = "Recursos";
-		private String staffSection = "Personal";
+	//	private String equipmentsSection = "Recursos";
+	//	private String staffSection = "Personal";
 	private String propertySection = "Inmueble";
 	private String propertyTaxSection = "Arrendamiento";
 	private String creditSection = "Línea de Crédito";
@@ -605,7 +605,7 @@ public class UiOrderForm extends UiForm {
 
 			// Inmuebles
 			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_PROPERTY)) {
-				formFlexTable.addSectionLabel(31, 0, propertySection, 2);
+				formFlexTable.addSectionLabel(30, 0, propertySection, 2);
 				formFlexTable.addPanel(31, 0, orderPropertyPanel, 2);
 				orderPropertyGrid = new UiOrderPropertyGrid(getUiParams(), orderPropertyPanel, bmoOrder, orderUpdater);
 				orderPropertyGrid.show();
@@ -706,8 +706,8 @@ public class UiOrderForm extends UiForm {
 			formFlexTable.hideSection(generalSection);
 			formFlexTable.hideSection(productsSection);
 			formFlexTable.hideSection(currencySection);
-						formFlexTable.hideSection(equipmentsSection);
-						formFlexTable.hideSection(staffSection);
+			//			formFlexTable.hideSection(equipmentsSection);
+			//			formFlexTable.hideSection(staffSection);
 			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_LEASE)) {
 				formFlexTable.hideSection(propertyTaxSection);
 				formFlexTable.hideSection(extrasSection);

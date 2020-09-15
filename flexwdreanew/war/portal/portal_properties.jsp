@@ -249,8 +249,8 @@
 			    	   					</td>
 			    	   					<td class="textInfo" style="text-align: left;">
 			    	   						
-										 <%if(pmConn.getString("properties", "prty_propertytitle").length() > 0){
-	    									String blobkey = pmConn.getString("prty_propertytitle");
+										 <%if(pmConn.getString("properties", "prty_certifiedWriting").length() > 0){
+	    									String blobkey = pmConn.getString("prty_certifiedWriting");
 	    									String blobKeyParseTitle = HtmlUtil.getFileViewURL(sFParams, blobkey);%>
 	    	
 	    									<a align="center" target='_blank' href="<%=blobKeyParseTitle%>">
@@ -295,7 +295,6 @@
 			    <%} %>
 		</div>
 </div>
-
 	<script>
 		function doPrint() {
 			var img = document.getElementById('printImage');
@@ -308,10 +307,11 @@
 	</script>
 </body>
 </html>
-<%pmConn.close();
-pmConnPropertytax.close();
-pmConnCounter.close();
-pmConnLessors.close();
+<%
+	pmConn.close();
+	pmConnPropertytax.close();
+	pmConnCounter.close();
+	pmConnLessors.close();
 }catch(Exception e){
 	//response.sendRedirect("portal_login.jsp");	
 

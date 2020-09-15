@@ -19,6 +19,14 @@ import com.symgae.server.sf.PmProfile;
 import com.symgae.server.sf.PmUser;
 import com.symgae.server.sf.PmProfileUser;
 import com.flexwm.server.cv.PmActivity;
+import com.flexwm.server.wf.IWFlowAction;
+import com.flexwm.server.wf.IWFlowValidate;
+import com.flexwm.server.wf.PmWFlow;
+import com.flexwm.server.wf.PmWFlowAction;
+import com.flexwm.server.wf.PmWFlowLog;
+import com.flexwm.server.wf.PmWFlowPhase;
+import com.flexwm.server.wf.PmWFlowUser;
+import com.flexwm.server.wf.PmWFlowValidation;
 import com.symgae.server.HtmlUtil;
 import com.symgae.server.PmConn;
 import com.symgae.server.SFSendMail;
@@ -203,7 +211,7 @@ public class PmWFlowStep extends PmObject {
 		// Si el avance es menor a 100, y esta asingada la fecha fin, borrar fecha de fin
 		if (bmoWFlowStep.getProgress().toInteger() < 100 && !bmoWFlowStep.getEnddate().toString().equals(""))
 			bmoWFlowStep.getEnddate().setValue("");
-
+		
 		// Asignar Estatus a la tarea segun fecha de Recordatorio
 		setStatusRemindDate(bmoWFlowStep);
 
@@ -235,7 +243,7 @@ public class PmWFlowStep extends PmObject {
 			bmoWFlowStep.getCommentLog().setValue(commentLog);
 			bmoWFlowStep.getComments().setValue("");
 		}
-
+		
 		super.save(pmConn, bmoWFlowStep, bmUpdateResult);
 
 		// Se calcula todo el flujo si el movimiento es en una tarea de sistema wflow
@@ -270,7 +278,7 @@ public class PmWFlowStep extends PmObject {
 
 		return bmUpdateResult;
 	}
-
+	
 	// Actualiza estatus dependiendo de las fechas
 	public void setStatusRemindDate(BmoWFlowStep bmoWFlowStep) throws SFException {
 		// Estatus segun progreso y fecha de recordatorio
@@ -331,7 +339,7 @@ public class PmWFlowStep extends PmObject {
 				//bmoWFlowStep.getStartdate().setValue(SFServerUtil.nowToString(getSFParams(), getSFParams().getDateTimeFormat()));
 			}
 		}
-
+		
 		// Actualizar estatus dependiendo de las fechas
 		setStatusRemindDate(bmoWFlowStep);
 
@@ -440,7 +448,8 @@ public class PmWFlowStep extends PmObject {
 				mailList = getStepMailList(bmoWFlowStep.getId(), bmoWFlowStep.getWFlowId().toInteger());
 			}
 
-			String subject =  " Tarea Nueva: " 
+			String subject = getSFParams().getAppCode() 
+					+ " Tarea Activada: " 
 					+ bmoWFlowStep.getBmoWFlowPhase().getSequence().toString() 
 					+ "." + bmoWFlowStep.getSequence().toString() 
 					+ " " + bmoWFlowStep.getName().toString() 
@@ -464,20 +473,20 @@ public class PmWFlowStep extends PmObject {
 							+ getSFParams().getAppURL() + "start.jsp?startprogram=" + bmoWFlowStep.getBmoWFlow().getCallerCode().toString() +"&foreignid=" + bmoWFlowStep.getBmoWFlow().getCallerId().toString() + "\">Aqui</a>. "
 							+ "	</p> "
 					);
-
+			
 			// Quitar emails repetidos
 			ArrayList<SFMailAddress> mailListNoRepeat = new ArrayList<SFMailAddress>();
 			for (SFMailAddress event : mailList) {
-				boolean isFound = false;
-				// Revisar si el email existe en noRepeat
-				for (SFMailAddress e : mailListNoRepeat) {
-					if (e.getName().equals(event.getName()) || (e.equals(event))) {
-						isFound = true;        
-						break;
-					}
-				}
-				// Si no encontro ninguno añadirlo a la nueva lista
-				if (!isFound) mailListNoRepeat.add(event);
+			    boolean isFound = false;
+			    // Revisar si el email existe en noRepeat
+			    for (SFMailAddress e : mailListNoRepeat) {
+			        if (e.getName().equals(event.getName()) || (e.equals(event))) {
+			            isFound = true;        
+			            break;
+			        }
+			    }
+			    // Si no encontro ninguno añadirlo a la nueva lista
+			    if (!isFound) mailListNoRepeat.add(event);
 			}
 
 			// Si hay destinatarios, enviar los correos
@@ -492,88 +501,88 @@ public class PmWFlowStep extends PmObject {
 	}
 
 	// Envia los recordatorios via email a los grupos de la tarea
-	//	private void sendMailReminder(BmoWFlowStep bmoWFlowStep) throws SFException {
-	//		ArrayList<SFMailAddress> mailList = new ArrayList<SFMailAddress>();
-	//
-	//		// Valida que en la categoria y la tarea aplique envio de recordatorios
-	//		if (bmoWFlowStep.getBmoWFlow().getBmoWFlowType().getBmoWFlowCategory().getEmailReminders().toBoolean()
-	//				&& bmoWFlowStep.getEmailReminders().toBoolean()) {
-	//
-	//			// Si esta asignado el usuario, le envia el correo
-	//			if (bmoWFlowStep.getUserId().toInteger() > 0) {
-	//				// Si esta activo añadir a la lista
-	//				if (bmoWFlowStep.getBmoUser().getStatus().equals(BmoUser.STATUS_ACTIVE)) {
-	//					mailList.add(new SFMailAddress(bmoWFlowStep.getBmoUser().getEmail().toString(), 
-	//							bmoWFlowStep.getBmoUser().getFirstname().toString() 
-	//							+ " " + bmoWFlowStep.getBmoUser().getFatherlastname().toString()));
-	//				} else
-	//					printDevLog("Usuario inactivo : " + bmoWFlowStep.getBmoUser().getEmail().toString());
-	//			} else {
-	//				// No esta asignado el usuario, Obtiene la lista de correos del grupo de la tarea
-	//				mailList = getStepMailList(bmoWFlowStep.getId(), bmoWFlowStep.getWFlowId().toInteger());
-	//			}
-	//
-	//			// Si hay mas de un destinatario, preparar y enviar correo
-	//			if (mailList.size() > 0 ) {
-	//				String subject = " Tarea: " 
-	//						+ bmoWFlowStep.getBmoWFlowPhase().getSequence().toString() 
-	//						+ "." + bmoWFlowStep.getSequence().toString() 
-	//						+ " " + bmoWFlowStep.getName().toString() 
-	//						+ " (" + bmoWFlowStep.getBmoWFlow().getCode().toString()
-	//						+ " " + bmoWFlowStep.getBmoWFlow().getName().toString() + ")";
-	//
-	//				String msgBody = HtmlUtil.mailBodyFormat(
-	//						getSFParams(), 
-	//						"Recordatorio de Tarea", 
-	//						" 	<p style=\"font-size:12px\"> "
-	//								+ " <b>WFlow:</b> " + bmoWFlowStep.getBmoWFlow().getCode().toString() + " " + bmoWFlowStep.getBmoWFlow().getName().toString()
-	//								+ " <br> "
-	//								+ "	<b>Tarea:</b> " + bmoWFlowStep.getBmoWFlowPhase().getSequence().toString() 
-	//								+ 				"." + bmoWFlowStep.getSequence().toString() 
-	//								+ 				" " + bmoWFlowStep.getName().toString()
-	//								+ "	<br> "
-	//								+ "	<b>Descripcion:</b> " + bmoWFlowStep.getDescription().toString()
-	//								+ "	<br> "
-	//								+ "	</p> "
-	//								+ "	<p align=\"center\" style=\"font-size:12px\"> "
-	//								+ "		Favor de dar Seguimiento a la Tarea <a href=\""
-	//								+ getSFParams().getAppURL() + "start.jsp?startprogram=" + bmoWFlowStep.getBmoWFlow().getCallerCode().toString() +"&foreignid=" + bmoWFlowStep.getBmoWFlow().getCallerId().toString() + "\">Aqui</a>. "
-	//								+ "	</p> "
-	//						);
-	//				
-	//				// Quitar emails repetidos
-	//				ArrayList<SFMailAddress> mailListNoRepeat = new ArrayList<SFMailAddress>();
-	//				for (SFMailAddress event : mailList) {
-	//				    boolean isFound = false;
-	//				    // Revisar si el email existe en noRepeat
-	//				    for (SFMailAddress e : mailListNoRepeat) {
-	//				        if (e.getName().equals(event.getName()) || (e.equals(event))) {
-	//				            isFound = true;        
-	//				            break;
-	//				        }
-	//				    }
-	//				    // Si no encontro ninguno añadirlo a la nueva lista
-	//				    if (!isFound) mailListNoRepeat.add(event);
-	//				}
-	//
-	//				// Si es produccion, envia correo
-	//				if (getSFParams().isProduction()) {
-	//					SFSendMail.send(getSFParams(),
-	//							mailListNoRepeat, 
-	//							getSFParams().getBmoSFConfig().getEmail().toString(), 
-	//							getSFParams().getBmoSFConfig().getAppTitle().toString(), 
-	//							subject, 
-	//							msgBody);
-	//				} else {
-	//					System.out.println(this.getClass().getName() + "-sendMailReminder(): Se envia correo: "
-	//							+ "De: " + getSFParams().getBmoSFConfig().getEmail().toString()
-	//							+ "Asunto: " + subject
-	//							+ "Cuerpo: " + msgBody
-	//							);
-	//				}
-	//			}
-	//		}
-	//	}
+	private void sendMailReminder(BmoWFlowStep bmoWFlowStep) throws SFException {
+		ArrayList<SFMailAddress> mailList = new ArrayList<SFMailAddress>();
+
+		// Valida que en la categoria y la tarea aplique envio de recordatorios
+		if (bmoWFlowStep.getBmoWFlow().getBmoWFlowType().getBmoWFlowCategory().getEmailReminders().toBoolean()
+				&& bmoWFlowStep.getEmailReminders().toBoolean()) {
+
+			// Si esta asignado el usuario, le envia el correo
+			if (bmoWFlowStep.getUserId().toInteger() > 0) {
+				// Si esta activo añadir a la lista
+				if (bmoWFlowStep.getBmoUser().getStatus().equals(BmoUser.STATUS_ACTIVE)) {
+					mailList.add(new SFMailAddress(bmoWFlowStep.getBmoUser().getEmail().toString(), 
+							bmoWFlowStep.getBmoUser().getFirstname().toString() 
+							+ " " + bmoWFlowStep.getBmoUser().getFatherlastname().toString()));
+				} else
+					printDevLog("Usuario inactivo : " + bmoWFlowStep.getBmoUser().getEmail().toString());
+			} else {
+				// No esta asignado el usuario, Obtiene la lista de correos del grupo de la tarea
+				mailList = getStepMailList(bmoWFlowStep.getId(), bmoWFlowStep.getWFlowId().toInteger());
+			}
+
+			// Si hay mas de un destinatario, preparar y enviar correo
+			if (mailList.size() > 0 ) {
+				String subject = " Tarea: " 
+						+ bmoWFlowStep.getBmoWFlowPhase().getSequence().toString() 
+						+ "." + bmoWFlowStep.getSequence().toString() 
+						+ " " + bmoWFlowStep.getName().toString() 
+						+ " (" + bmoWFlowStep.getBmoWFlow().getCode().toString()
+						+ " " + bmoWFlowStep.getBmoWFlow().getName().toString() + ")";
+
+				String msgBody = HtmlUtil.mailBodyFormat(
+						getSFParams(), 
+						"Recordatorio de Tarea", 
+						" 	<p style=\"font-size:12px\"> "
+								+ " <b>WFlow:</b> " + bmoWFlowStep.getBmoWFlow().getCode().toString() + " " + bmoWFlowStep.getBmoWFlow().getName().toString()
+								+ " <br> "
+								+ "	<b>Tarea:</b> " + bmoWFlowStep.getBmoWFlowPhase().getSequence().toString() 
+								+ 				"." + bmoWFlowStep.getSequence().toString() 
+								+ 				" " + bmoWFlowStep.getName().toString()
+								+ "	<br> "
+								+ "	<b>Descripcion:</b> " + bmoWFlowStep.getDescription().toString()
+								+ "	<br> "
+								+ "	</p> "
+								+ "	<p align=\"center\" style=\"font-size:12px\"> "
+								+ "		Favor de dar Seguimiento a la Tarea <a href=\""
+								+ getSFParams().getAppURL() + "start.jsp?startprogram=" + bmoWFlowStep.getBmoWFlow().getCallerCode().toString() +"&foreignid=" + bmoWFlowStep.getBmoWFlow().getCallerId().toString() + "\">Aqui</a>. "
+								+ "	</p> "
+						);
+				
+				// Quitar emails repetidos
+				ArrayList<SFMailAddress> mailListNoRepeat = new ArrayList<SFMailAddress>();
+				for (SFMailAddress event : mailList) {
+				    boolean isFound = false;
+				    // Revisar si el email existe en noRepeat
+				    for (SFMailAddress e : mailListNoRepeat) {
+				        if (e.getName().equals(event.getName()) || (e.equals(event))) {
+				            isFound = true;        
+				            break;
+				        }
+				    }
+				    // Si no encontro ninguno añadirlo a la nueva lista
+				    if (!isFound) mailListNoRepeat.add(event);
+				}
+
+				// Si es produccion, envia correo
+				if (getSFParams().isProduction()) {
+					SFSendMail.send(getSFParams(),
+							mailListNoRepeat, 
+							getSFParams().getBmoSFConfig().getEmail().toString(), 
+							getSFParams().getBmoSFConfig().getAppTitle().toString(), 
+							subject, 
+							msgBody);
+				} else {
+					System.out.println(this.getClass().getName() + "-sendMailReminder(): Se envia correo: "
+							+ "De: " + getSFParams().getBmoSFConfig().getEmail().toString()
+							+ "Asunto: " + subject
+							+ "Cuerpo: " + msgBody
+							);
+				}
+			}
+		}
+	}
 
 	// Envia la notificacion cuando una tarea de tipo Usuario haya sido completada
 	private void sendMailCompletion(PmConn pmConn, BmoWFlowStep bmoWFlowStep) throws SFException {
@@ -640,7 +649,8 @@ public class PmWFlowStep extends PmObject {
 					}
 				}
 
-				String subject = " Tarea Finalizada: " 
+				String subject = getSFParams().getAppCode() 
+						+ " Tarea Finalizada: " 
 						+ bmoWFlowStep.getBmoWFlowPhase().getSequence().toString() 
 						+ "." + bmoWFlowStep.getSequence().toString() 
 						+ " " + bmoWFlowStep.getName().toString() 
@@ -668,18 +678,18 @@ public class PmWFlowStep extends PmObject {
 				// Quitar emails repetidos
 				ArrayList<SFMailAddress> mailListNoRepeat = new ArrayList<SFMailAddress>();
 				for (SFMailAddress event : mailList) {
-					boolean isFound = false;
-					// Revisar si el email existe en noRepeat
-					for (SFMailAddress e : mailListNoRepeat) {
-						if (e.getName().equals(event.getName()) || (e.equals(event))) {
-							isFound = true;        
-							break;
-						}
-					}
-					// Si no encontro ninguno añadirlo a la nueva lista
-					if (!isFound) mailListNoRepeat.add(event);
+				    boolean isFound = false;
+				    // Revisar si el email existe en noRepeat
+				    for (SFMailAddress e : mailListNoRepeat) {
+				        if (e.getName().equals(event.getName()) || (e.equals(event))) {
+				            isFound = true;        
+				            break;
+				        }
+				    }
+				    // Si no encontro ninguno añadirlo a la nueva lista
+				    if (!isFound) mailListNoRepeat.add(event);
 				}
-
+				
 				// Si hay destinatarios, enviar los correos
 				if (mailListNoRepeat.size() > 0) 
 					SFSendMail.send(getSFParams(),
@@ -696,152 +706,36 @@ public class PmWFlowStep extends PmObject {
 	// Preparar y enviar notificaciones de todos los pasos abiertos
 	public void prepareReminders() throws SFException {
 		PmConn pmConn = new PmConn(getSFParams());
-		PmConn pmConn2 = new PmConn(getSFParams());
+		String sql = "SELECT wfsp_wflowstepid, wfsp_wflowid FROM wflowsteps "
+				+ "	LEFT JOIN wflows ON (wfsp_wflowid = wflw_wflowid) "
+				+ " WHERE wfsp_enabled = true "
+				+ " AND wfsp_progress < 100 "
+				+ " AND wfsp_emailreminders = 1 "
+				+ " AND wflw_status = '" + BmoWFlow.STATUS_ACTIVE + "'"
+				+ " AND wfsp_reminddate <= '" + SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()) + "'";
 
-		String sql = "SELECT user_userid from users " + 
-				" WHERE ( user_userid in (select wfsp_userid from wflowsteps LEFT JOIN wflows ON (wfsp_wflowid = wflw_wflowid) " +
-				" WHERE wfsp_enabled = true  AND wfsp_progress < 100  AND wfsp_emailreminders = 1  AND wflw_status = '" + BmoWFlow.STATUS_ACTIVE + "' "
-				+ " AND wfsp_reminddate <= '"+ SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()) +"' )) "
-				+ " OR "
-				+ " (user_userid " + 
-				"In (select pfus_userid from profileusers where pfus_profileid " + 
-				"in (SELECT wfsp_profileid AS profile FROM wflowsteps " + 
-				"LEFT JOIN wflows ON (wfsp_wflowid = wflw_wflowid)  " + 
-				"WHERE wfsp_enabled = true  AND wfsp_progress < 100  " + 
-				"AND wfsp_emailreminders = 1  AND wflw_status = '" + BmoWFlow.STATUS_ACTIVE + "' " + 
-				"AND wfsp_reminddate <= '"+ SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()) + "' AND wfsp_userid  IS NULL )))";
-		printDevLog("Consulta usuarios en Tareas Activas : " + sql);
+		if (!getSFParams().isProduction()) 
+			System.out.println(this.getClass().getName() + "-prepareReminders(): " + sql);
+
 		try {
 			pmConn.open();
-			pmConn2.open();
 			pmConn.doFetch(sql);
 
 			while (pmConn.next()) {
-				ArrayList<SFMailAddress> mailList = new ArrayList<SFMailAddress>();
-				PmUser pmUser = new PmUser(getSFParams());
-				BmoUser bmoUser = (BmoUser)pmUser.get( pmConn.getInt("user_userid"));
-				sql = "SELECT wfsp_wflowstepid from wflowsteps LEFT JOIN wflows ON (wfsp_wflowid = wflw_wflowid)"
-						+ "  WHERE (wfsp_enabled = true  AND wfsp_progress < 100  AND wfsp_emailreminders = 1 "
-						+ " AND wflw_status = '" + BmoWFlow.STATUS_ACTIVE + "' AND wfsp_reminddate <= '"
-						+ SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()) +"' AND wfsp_userid = "
-						+ bmoUser.getId() + ")"
-						+ " OR "
-						+ " ( wfsp_enabled = true  AND wfsp_progress < 100 " + 
-						" AND wfsp_emailreminders = 1  AND wflw_status = '" + BmoWFlow.STATUS_ACTIVE + "' " +
-					    " AND wfsp_reminddate <= '" +  SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()) + "' AND wfsp_userid  IS NULL" + 
-						" AND wfsp_profileid in (select pfus_profileid from profileusers where pfus_userid = " +  bmoUser.getId() + "))";
-				printDevLog("Consulta  Tareas Activas por usuario : " + sql); 
-				pmConn2.doFetch(sql);
-				
-				//Subject de la notificación
-				String subject = " Tareas Activas " + SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat());
-				String msgBody = "";
-				//Para acumular tareas
-				String wflowSteps = "";
+				int wFlowStepId = pmConn.getInt(1);				
+				BmoWFlowStep bmoWFlowStep = (BmoWFlowStep)this.get(wFlowStepId);
 
-				if (bmoUser.getStatus().equals(BmoUser.STATUS_ACTIVE)) {
-					mailList.add(new SFMailAddress(bmoUser.getEmail().toString(), 
-							bmoUser.getFirstname().toString() 
-							+ " " + bmoUser.getFatherlastname().toString()));
-				}
-				while (pmConn2.next()) {
-					BmoWFlowStep nextBmoWFlowStep = (BmoWFlowStep)this.get(pmConn2.getInt("wfsp_wflowstepid"));
-				
-					
-					// Valida que en la categoria y la tarea aplique envio de recordatorios
-					if (nextBmoWFlowStep.getBmoWFlow().getBmoWFlowType().getBmoWFlowCategory().getEmailReminders().toBoolean()
-							&& nextBmoWFlowStep.getEmailReminders().toBoolean()) {
-						// Si esta activo añadir a la lista
+				// Enviar recordatorio por cada paso que lo requiera
+				this.sendMailReminder(bmoWFlowStep);
+			}
 
-
-						// Si hay mas de un destinatario, preparar y enviar correo
-						if (mailList.size() > 0 ) {
-//							if (!wflowSteps.equals(""))wflowSteps +=  "<br><br>";
-							wflowSteps += "<p  style=\"font-size:12px\"> ";
-									if (!wflowSteps.equals(""))wflowSteps +=  "<br><br>";
-							wflowSteps += " <b>WFlow:</b> " + nextBmoWFlowStep.getBmoWFlow().getCode().toString() + " " + nextBmoWFlowStep.getBmoWFlow().getName().toString()
-									+ "	<b>Tarea:</b> " + nextBmoWFlowStep.getBmoWFlowPhase().getSequence().toString() 
-									+ 				"." + nextBmoWFlowStep.getSequence().toString() 
-									+ 				" " + nextBmoWFlowStep.getName().toString()												
-									+ "	<b>Descripcion:</b> " + nextBmoWFlowStep.getDescription().toString()
-									+ "	<b>Favor de dar Seguimiento a la Tarea <a href=\""
-									+ getSFParams().getAppURL() + "start.jsp?startprogram=" + nextBmoWFlowStep.getBmoWFlow().getCallerCode().toString() +"&foreignid=" + nextBmoWFlowStep.getBmoWFlow().getCallerId().toString() + "\">Aqui</a>.<b> "
-									+ "</p>";
-						}
-					}
-				}
-				
-				msgBody =  HtmlUtil.mailBodyFormat(getSFParams(), "Recordatorio de Tareas", wflowSteps);
-
-
-				if (getSFParams().isProduction()) {
-					if (!wflowSteps.equals("")) {
-						try {
-							SFSendMail.send(getSFParams(),
-									mailList, 
-									getSFParams().getBmoSFConfig().getEmail().toString(), 
-									getSFParams().getBmoSFConfig().getAppTitle().toString(), 
-									subject, 
-									msgBody);
-						} catch (Exception e) {
-							throw new SFException(this.getClass().getName() + " - sendMailReminder() - Error al enviar email: " + e.toString());
-						}
-					} else {
-						System.out.println("No hay tareas pendientes");
-					}
-				}else {
-					System.out.println(this.getClass().getName() + "-sendMailReminder(): Se envia correo: "
-							+ "De: " + getSFParams().getBmoSFConfig().getEmail().toString()
-							+ "Asunto: " + subject
-							+ "Cuerpo: " + wflowSteps
-							);
-				}
-			}			
-			
 		} catch (SFPmException e) {
 			throw new SFException("PmWFlowStep-sendReminders() ERROR: " + e.toString());
 		} finally {
 			pmConn.close();
-			pmConn2.close();
 		}
 	}
-//	private void sendRemindNullUser() throws SFException {
-//		PmConn pmConn = new PmConn(getSFParams());
-//		PmConn pmConn2 = new PmConn(getSFParams());
-//		String sql = "SELECT user_userid FROM users WHERE user_userid IN "
-//				+ " (SELECT pfus_userid FROM profileusers where pfus_profileid IN "
-//				+ " (SELECT wfsp_profileid AS profile FROM wflowsteps LEFT JOIN wflows "
-//				+ " ON (wfsp_wflowid = wflw_wflowid)  WHERE wfsp_enabled = true  AND wfsp_progress < 100 "
-//				+ " AND wfsp_emailreminders = 1  AND wflw_status = '" + BmoWFlow.STATUS_ACTIVE + "' AND wfsp_reminddate <= "
-//				+ "'" + SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()) + "' "
-//				+ " AND wfsp_userid  IS NULL )) ";
-//		pmConn.open();
-//		pmConn2.open();
-//		
-//		pmConn.doFetch(sql);
-//		 
-//		while (pmConn.next()) {
-//			System.err.println(">>>>>>>>>>>>>>> " + pmConn.getInt("user_userid") );
-//			sql = " SELECT wfsp_wflowstepid,wfsp_profileid  AS profile FROM wflowsteps " + 
-//					" LEFT JOIN wflows ON (wfsp_wflowid = wflw_wflowid) " + 
-//					" WHERE wfsp_enabled = true  AND wfsp_progress < 100 " + 
-//					" AND wfsp_emailreminders = 1  AND wflw_status = '" + BmoWFlow.STATUS_ACTIVE + "'" +
-//				    " AND wfsp_reminddate <= '" +  SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()) + "' AND wfsp_userid  IS NULL" + 
-//					" AND wfsp_profileid in (select pfus_profileid from profileusers where pfus_userid = " + pmConn.getInt("user_userid") + ")";
-//			pmConn2.doFetch(sql);
-//			
-//			while (pmConn2.next()) {
-//				BmoWFlowStep nextBmoWFlowStep = (BmoWFlowStep)this.get(pmConn2.getInt("wfsp_wflowstepid"));
-//				System.err.println("XXXXXXXXXX " + nextBmoWFlowStep.getBmoWFlow().getName() );
-//				System.err.println("XXXXXXXXXX " + nextBmoWFlowStep.getName());
-//			}
-//			
-//			
-//		}
-//		
-//		pmConn.close();
-//		pmConn2.close();
-//	}
+
 	// Actualizar usuarios de las tareas segun asignacion de colaborador al flujo
 	public void updateWFlowStepUsers(PmConn pmConn, BmoWFlow bmoWFlow, int profileId, int userId, BmUpdateResult bmUpdateResult) throws SFException {
 		PmWFlowUser pmWFlowUser = new PmWFlowUser(getSFParams());
@@ -1009,7 +903,7 @@ public class PmWFlowStep extends PmObject {
 
 		return mailList;
 	}
-
+	
 	// Envia la notificacion cuando una tarea haya sido activada
 	public void sendMailComments(PmConn pmConn, BmoWFlowStep bmoWFlowStep) throws SFException {
 		ArrayList<SFMailAddress> mailList = new ArrayList<SFMailAddress>();
@@ -1020,7 +914,7 @@ public class PmWFlowStep extends PmObject {
 
 			// Obtiene la lista de correos de los usuarios de flujo
 			mailList = getWFlowUsersMailList(bmoWFlowStep.getWFlowId().toInteger());
-
+			
 			String subject = getSFParams().getAppCode() 
 					+ " Comentarios de la Tarea: " 
 					+ bmoWFlowStep.getBmoWFlowPhase().getSequence().toString() 
@@ -1039,27 +933,27 @@ public class PmWFlowStep extends PmObject {
 							+ 				" " + bmoWFlowStep.getName().toString()
 							+ "	<br> "
 							+ "	<b>Comentarios:</b> " + bmoWFlowStep.getComments().toString()
-							//							+ "	<br> "
-							//							+ "	</p> "
-							//							+ "	<p align=\"center\" style=\"font-size:12px\"> "
-							//							+ "		Favor de dar Seguimiento a la Tarea <a href=\""
-							//							+ getSFParams().getAppURL() + "start.jsp?startprogram=" + bmoWFlowStep.getBmoWFlow().getCallerCode().toString() +"&foreignid=" + bmoWFlowStep.getBmoWFlow().getCallerId().toString() + "\">Aqui</a>. "
-							//							+ "	</p> "
+//							+ "	<br> "
+//							+ "	</p> "
+//							+ "	<p align=\"center\" style=\"font-size:12px\"> "
+//							+ "		Favor de dar Seguimiento a la Tarea <a href=\""
+//							+ getSFParams().getAppURL() + "start.jsp?startprogram=" + bmoWFlowStep.getBmoWFlow().getCallerCode().toString() +"&foreignid=" + bmoWFlowStep.getBmoWFlow().getCallerId().toString() + "\">Aqui</a>. "
+//							+ "	</p> "
 					);
-
+			
 			// Quitar emails repetidos
 			ArrayList<SFMailAddress> mailListNoRepeat = new ArrayList<SFMailAddress>();
 			for (SFMailAddress event : mailList) {
-				boolean isFound = false;
-				// Revisar si el email existe en noRepeat
-				for (SFMailAddress e : mailListNoRepeat) {
-					if (e.getEmail().equals(event.getEmail()) || (e.equals(event))) {
-						isFound = true;        
-						break;
-					}
-				}
-				// Si no encontro ninguno añadirlo a la nueva lista
-				if (!isFound) mailListNoRepeat.add(event);
+			    boolean isFound = false;
+			    // Revisar si el email existe en noRepeat
+			    for (SFMailAddress e : mailListNoRepeat) {
+			        if (e.getEmail().equals(event.getEmail()) || (e.equals(event))) {
+			            isFound = true;        
+			            break;
+			        }
+			    }
+			    // Si no encontro ninguno añadirlo a la nueva lista
+			    if (!isFound) mailListNoRepeat.add(event);
 			}
 
 			// Si hay destinatarios, enviar los correos
@@ -1073,7 +967,7 @@ public class PmWFlowStep extends PmObject {
 			}
 		}
 	}
-
+	
 	// Prepara lista de destinatarios del correo, Usuarios de Flujo
 	private ArrayList<SFMailAddress> getWFlowUsersMailList(int wflowId) throws SFException {
 		PmConn pmConn = new PmConn(getSFParams());
@@ -1086,7 +980,7 @@ public class PmWFlowStep extends PmObject {
 				" LEFT JOIN users ON (wflu_userid = user_userid) " +
 				" WHERE user_status = '" + BmoUser.STATUS_ACTIVE + "'" +
 				" AND wflu_wflowid = " + wflowId + "";
-
+		
 		printDevLog("Buscar usuarios de flujo - SQL: " + sql);
 
 		try {
@@ -1100,7 +994,7 @@ public class PmWFlowStep extends PmObject {
 				mailList.add(mail);
 				mailString += pmConn.getString(1) + ", "; 
 			}
-
+			
 			printDevLog(this.getClass().getName() + "-getWFlowUsersMailList(): La lista de correos es: " + mailString);
 		} catch (SFPmException e) {
 			throw new SFException("PmWFlowStep-getWFlowUsersMailList() ERROR: " + e.toString());

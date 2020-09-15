@@ -1,5 +1,6 @@
 package com.flexwm.client.rpt;
 
+import com.flexwm.shared.BmoFlexConfig;
 import com.flexwm.shared.ac.BmoSession;
 import com.flexwm.shared.ar.BmoPropertyRental;
 import com.flexwm.shared.cm.BmoCustomer;
@@ -33,7 +34,7 @@ public class UiCRMReports extends UiDashboard {
 					uiCustomerReport.show();
 				}
 			});
-		//
+		// Reporte de Clientes (para flotis)
 		if (getUiParams().getSFParams().hasRead("RPSC"))
 			addActionLabel(getSFParams().getProgramTitle(new BmoCustomer()), new BmoCustomer().getProgramCode(), new ClickHandler() {
 				@Override
@@ -53,6 +54,7 @@ public class UiCRMReports extends UiDashboard {
 				}
 			});
 
+		// Reporte de oportunidades perdidas
 		if (getUiParams().getSFParams().hasRead("RPOP"))
 			addActionLabel(getSFParams().getProgramTitle( new BmoOpportunity()) + " Perdidas", new BmoOpportunity().getProgramCode(), new ClickHandler() {
 				@Override
@@ -72,7 +74,7 @@ public class UiCRMReports extends UiDashboard {
 				}
 			});
 
-		// Reporte de proyectos
+		// Reporte de proyectos sociales
 		if (getUiParams().getSFParams().hasRead("PRSO"))
 			addActionLabel(getSFParams().getProgramTitle(new BmoProject()) + " Sociales", new BmoProject().getProgramCode(), new ClickHandler() {
 				@Override
@@ -82,6 +84,7 @@ public class UiCRMReports extends UiDashboard {
 				}
 			});
 
+		// reportes de sesiones
 		if (getUiParams().getSFParams().hasRead("PRSE")) {
 			addActionLabel(getSFParams().getProgramTitle(new BmoSession()), new BmoSession().getProgramCode(), new ClickHandler() {
 				@Override
@@ -92,15 +95,35 @@ public class UiCRMReports extends UiDashboard {
 			});	
 		}
 		
-		//Reporte Creditos
+		// Reporte Creditos
 		if (getUiParams().getSFParams().hasRead(new BmoCredit().getProgramCode())) {
-			addActionLabel(getSFParams().getProgramTitle(new BmoCredit()), new BmoCredit().getProgramCode(), new ClickHandler() {
-				@Override
-				public void onClick(ClickEvent event) {
-					UiCreditReport uiCreditReport = new UiCreditReport(getUiParams());
-					uiCreditReport.show();
-				}
-			});	
+			// Reportes de DaCredito
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+				addActionLabel(getSFParams().getProgramTitle(new BmoCustomer()), new BmoCustomer().getProgramCode(), new ClickHandler() {
+					@Override
+					public void onClick(ClickEvent event) {
+						UiCustomerDaCreditoReport uiCustomerDaCreditoReport = new UiCustomerDaCreditoReport(getUiParams());
+						uiCustomerDaCreditoReport.show();
+					}
+				});
+				
+				addActionLabel(getSFParams().getProgramTitle(new BmoCredit()), new BmoCredit().getProgramCode(), new ClickHandler() {
+					@Override
+					public void onClick(ClickEvent event) {
+						UiCreditDaCreditoReport uiCreditDaCreditoReport = new UiCreditDaCreditoReport(getUiParams());
+						uiCreditDaCreditoReport.show();
+					}
+				});
+			} else {
+			// Reporte de COBI (el de clientes es RPCU)
+				addActionLabel(getSFParams().getProgramTitle(new BmoCredit()), new BmoCredit().getProgramCode(), new ClickHandler() {
+					@Override
+					public void onClick(ClickEvent event) {
+						UiCreditReport uiCreditReport = new UiCreditReport(getUiParams());
+						uiCreditReport.show();
+					}
+				});	
+			}
 		}		
 		
 		//Reporte Contratos
@@ -113,8 +136,7 @@ public class UiCRMReports extends UiDashboard {
 				}
 			});	
 		}
-		//Reporte cxc
-		
+		//Reporte cxc (para inadico)
 		if (getUiParams().getSFParams().hasRead("PRCC")) {
 			addActionLabel(getSFParams().getProgramTitle(new BmoRaccount()), new BmoRaccount().getProgramCode(), new ClickHandler() {
 				@Override
@@ -141,7 +163,15 @@ public class UiCRMReports extends UiDashboard {
 		} else if (getUiParams().getSFParams().hasRead("RPSC")) {
 			UiCustomerSessionReport uiCustomerSessionReport = new UiCustomerSessionReport(getUiParams());
 			uiCustomerSessionReport.show();
-		} else { }
+		} else {
+			// Reportes de clientes para DaCredito
+			if (getUiParams().getSFParams().hasRead(new BmoCredit().getProgramCode())) {
+				if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+					UiCustomerDaCreditoReport uiCustomerDaCreditoReport = new UiCustomerDaCreditoReport(getUiParams());
+					uiCustomerDaCreditoReport.show();
+				}
+			}
+		}
 	
 	}
 

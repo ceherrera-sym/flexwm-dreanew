@@ -34,8 +34,10 @@
 
 
 
-<%try{
-	//Fecha hoy
+<%try{%>
+	
+	<%@include file="./inc_params.jsp"%>
+<% //Fecha hoy
 	Calendar date = new GregorianCalendar();
 	String year = Integer.toString(date.get(Calendar.YEAR));
 	String month = Integer.toString(date.get(Calendar.MONTH)+1);
@@ -49,7 +51,6 @@
 	String gwtCss = "gwt_standard.css";
 	String fwmCss = "flexwm.css";
 	boolean isMobile = false;	
-	SFParams sFParams = new SFParams();	
 	String sql = "",sqllessors = "",orLessor = "",filter = "",sql2 = "",customer = "",sql3 = "",sql4= "",duedate1 = "",duedate2 = "";
 	String cust_id = (String)session.getAttribute("Id");
 	int page1 = 1,print = 0;
@@ -117,12 +118,6 @@
 		print = Integer.parseInt(request.getParameter("printRacc"));
 	}
 	String where = "", sqlChart = "";
-	
-	LoginInfo loginInfo = new LoginInfo();
-	loginInfo.setLoggedIn(true);
-	loginInfo.setEmailAddress(getServletContext().getInitParameter("systememail"));
-	SFParamsServiceImpl.fillSFParamsFromWebXML(sFParams, config.getServletContext());
-	SFParamsServiceImpl.paramsFactory(sFParams, loginInfo, config.getServletContext());
 	
 	int id = Integer.parseInt(cust_id);
 	double sumPayments = 0;

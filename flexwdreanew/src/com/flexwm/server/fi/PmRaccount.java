@@ -1274,8 +1274,9 @@ public class PmRaccount extends PmObject {
 			// Obtener la Ultima CxC
 			sql = " SELECT * FROM raccounts "
 					+ " LEFT JOIN raccounttypes on (racc_raccounttypeid = ract_raccounttypeid) "
-					+ " WHERE ract_type = '" + BmoRaccountType.TYPE_WITHDRAW + "'" + " AND racc_orderid = "
-					+ bmoOrder.getId() + " AND racc_total <> " + bmoCredit.getAmount().toDouble()
+					+ " WHERE ract_type = '" + BmoRaccountType.TYPE_WITHDRAW + "'" 
+					+ " AND racc_orderid = " + bmoOrder.getId() 
+					+ " AND racc_total <> " + bmoCredit.getAmount().toDouble()
 					+ " ORDER BY racc_raccountid DESC";
 			pmConn2.doFetch(sql);
 			if (pmConn2.next()) {
@@ -1285,13 +1286,19 @@ public class PmRaccount extends PmObject {
 
 			// Obtener el Plazo
 			PmCreditType pmCreditType = new PmCreditType(getSFParams());
-			BmoCreditType bmoCreditType = (BmoCreditType) pmCreditType.get(pmConn,
-					bmoCredit.getCreditTypeId().toInteger());
+			BmoCreditType bmoCreditType = (BmoCreditType) pmCreditType.get(pmConn, bmoCredit.getCreditTypeId().toInteger());
 
 			// Obtener los dias de pago
+			// Asignar monto de la falla dependiendo del tipo de credito
 			int daysPayout = 0;
-			if (bmoCreditType.getType().equals(BmoCreditType.TYPE_WEEKLY)) {
+			if (bmoCreditType.getType().equals(BmoCreditType.TYPE_DAILY)) {
+				daysPayout = 1;
+				amount = bmoCreditType.getAmountFailure().toDouble();
+			} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_WEEKLY)) {
 				daysPayout = 7;
+				// Si hay un monto, tomar ese valor. Esto es para separar cobi de dacredito, cobi utiliza el total de las cxc
+				if (bmoCreditType.getAmountFailure().toDouble() > 0)
+					amount = bmoCreditType.getAmountFailure().toDouble();
 			} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_TWOWEEKS)) {
 				daysPayout = 15;
 			} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_MONTHLY)) {
@@ -1322,6 +1329,7 @@ public class PmRaccount extends PmObject {
 			bmoNewRaccount.getAutoCreate().setValue(0);
 			bmoNewRaccount.getFailure().setValue(1);
 			bmoNewRaccount.getCurrencyId().setValue(bmoOrder.getCurrencyId().toInteger());
+			bmoNewRaccount.getCurrencyParity().setValue(bmoOrder.getCurrencyParity().toDouble());
 			bmoNewRaccount.getLinked().setValue(0);
 			//bmoNewRaccount.getRelatedRaccountId().setValue(raccountOrignId);
 
@@ -1347,10 +1355,8 @@ public class PmRaccount extends PmObject {
 			BmoRaccountItem bmoRaccItemNew = new BmoRaccountItem();
 			bmoRaccItemNew.getName().setValue(bmoNewRaccount.getInvoiceno().toString());
 			bmoRaccItemNew.getQuantity().setValue("1");
-			bmoRaccItemNew.getAmount()
-			.setValue(SFServerUtil.roundCurrencyDecimals(bmoNewRaccount.getAmount().toDouble()));
-			bmoRaccItemNew.getPrice()
-			.setValue(SFServerUtil.roundCurrencyDecimals(bmoNewRaccount.getAmount().toDouble()));
+			bmoRaccItemNew.getAmount().setValue(SFServerUtil.roundCurrencyDecimals(bmoNewRaccount.getAmount().toDouble()));
+			bmoRaccItemNew.getPrice().setValue(SFServerUtil.roundCurrencyDecimals(bmoNewRaccount.getAmount().toDouble()));
 			bmoRaccItemNew.getRaccountId().setValue(bmoNewRaccount.getId());
 
 			pmRaccItemNew.saveSimple(pmConn, bmoRaccItemNew, bmUpdateResult);
@@ -1428,8 +1434,47 @@ public class PmRaccount extends PmObject {
 			bmoCreditType = (BmoCreditType) pmCreditType.get(pmConn, bmoCredit.getCreditTypeId().toInteger());
 			deadLine = bmoCreditType.getDeadLine().toInteger();
 
-			if (bmoCreditType.getType().equals(BmoCreditType.TYPE_WEEKLY)) {
+			if (bmoCreditType.getType().equals(BmoCreditType.TYPE_DAILY)) {
+				daysPayout = 1;
+				
+				// CALCULAR siguiente dia de pago, debe ser el dia proximo
+				Calendar nowWeek = SFServerUtil.stringToCalendar(getSFParams().getDateFormat(), SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()));
+				datePayout = FlexUtil.calendarToString(getSFParams(), nowWeek);
+				nowWeek.add(Calendar.DAY_OF_WEEK, + 1);
+				int nowDayOfWeek = nowWeek.get(Calendar.DAY_OF_WEEK);
+
+				datePayout = FlexUtil.calendarToString(getSFParams(), nowWeek);
+
+				// Revisar si el dia siguiente es dia cobrable, sino traer el mas proximo
+				datePayout = pmCreditType.getLastPaymentDay(datePayout, nowDayOfWeek, bmoCreditType, false);
+			} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_WEEKLY)) {
 				daysPayout = 7;
+				
+				// CALCULAR(*) EL primer dia de pago debe ser el lunes proximo
+				Calendar nowWeek = SFServerUtil.stringToCalendar(getSFParams().getDateFormat(), SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()));
+				int nowDay = nowWeek.get(Calendar.DAY_OF_WEEK);
+
+				datePayout = FlexUtil.calendarToString(getSFParams(), nowWeek);
+				// Sunday
+				if (nowDay == 1) nowDay = 1;
+				// Monday
+				else if (nowDay == 2) nowDay = 7;
+				// Thusday
+				else if (nowDay == 3) nowDay = 6;
+				// Weendays
+				else if (nowDay == 4) nowDay = 5;
+				// Thurday
+				else if (nowDay == 5) nowDay = 4;
+				// Friday
+				else if (nowDay == 6) nowDay = 3;
+				// Saturday
+				else if (nowDay == 7) nowDay = 2;
+
+				nowWeek.add(Calendar.DAY_OF_WEEK, +nowDay);
+
+				// Calcular la primera fecha de pago
+				datePayout = FlexUtil.calendarToString(getSFParams(), nowWeek);
+				
 			} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_TWOWEEKS)) {
 				daysPayout = 15;
 			} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_MONTHLY)) {
@@ -1438,38 +1483,12 @@ public class PmRaccount extends PmObject {
 				bmUpdateResult.addMsg("El tipo de crédito no cuenta con un tipo definido");
 			}
 
-			// EL primer dia de pago debe ser el lunes proximo
-			Calendar nowWeek = SFServerUtil.stringToCalendar(getSFParams().getDateFormat(), SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()));
-
-			int nowDay = nowWeek.get(Calendar.DAY_OF_WEEK);
-
-			datePayout = FlexUtil.calendarToString(getSFParams(), nowWeek);
-			// Sunday
-			if (nowDay == 1) nowDay = 1;
-			// Monday
-			else if (nowDay == 2) nowDay = 7;
-			// Thusday
-			else if (nowDay == 3) nowDay = 6;
-			// Weendays
-			else if (nowDay == 4) nowDay = 5;
-			// Thurday
-			else if (nowDay == 5) nowDay = 4;
-			// Friday
-			else if (nowDay == 6) nowDay = 3;
-			// Saturday
-			else if (nowDay == 7) nowDay = 2;
-
-			nowWeek.add(Calendar.DAY_OF_WEEK, +nowDay);
-
-			// Calcular la primera fecha de pago
-			datePayout = FlexUtil.calendarToString(getSFParams(), nowWeek);
-
 			printDevLog("date " + datePayout);
 
 			// Dividir el total en CxC
 			payout = bmoOrder.getTotal().toDouble() / deadLine;
 
-			printDevLog(this.getClass().getName() + "ensureOrderCredit(): Se van a generar " + deadLine + " CxC del Credito.");
+			printDevLog(this.getClass().getName() + " - ensureOrderCredit(): Se van a generar " + deadLine + " CxC del Credito.");
 		} if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_LEASE)) {
 			// Obtener el contrato de arrendamiento
 			bmoPropertyRental = (BmoPropertyRental)pmPropertyRental.getBy(bmoOrder.getOriginRenewOrderId().toInteger(), bmoPropertyRental.getOrderId().getName());
@@ -1505,7 +1524,6 @@ public class PmRaccount extends PmObject {
 			// Si existen cxc manualmente, recorrer las fecha de programacion de acuerdo al conteo de estas
 			if (countRaccount > 0)
 				datePayout = SFServerUtil.addMonths(getSFParams().getDateFormat(), datePayout, countRaccount);
-
 		}
 
 		// Buscar si hay usuario en Usuarios de flujo del grupo que esta en conf(Cobranza), y asignarlo a las cxc.
@@ -1536,12 +1554,30 @@ public class PmRaccount extends PmObject {
 
 		int limitRacc = 12;
 		// Genera una CxC por cada pago del plazo
-		for (int x = 0; x < deadLine; x++) {
-
+		int x = 0;
+		while ( x < deadLine ) {	//	for (int x = 0; x < deadLine; x++) {
+//			boolean saveIsPaymentDay = false;
 			if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_CREDIT)) {
-				// Agregar dias a la ultima fecha de la cxc creada
-				if (x > 0)
-					datePayout = SFServerUtil.addDays(getSFParams().getDateFormat(), datePayout, daysPayout);
+				if (bmoCreditType.getType().equals(BmoCreditType.TYPE_DAILY)) {
+					if (x > 0) {
+						// Agregar dias a la ultima fecha de la cxc creada, NO ENTRA LA PRIMERA VEZ, 
+						// ya que la fecha ya esta calculada(*) mas arriba, esto solo repite los DIAS a agregar y valida dia cobrable
+						datePayout = SFServerUtil.addDays(getSFParams().getDateFormat(), datePayout, daysPayout);
+						// Revisar si el dia siguiente es un dia cobrable
+						Calendar nextDate = SFServerUtil.stringToCalendar(getSFParams().getDateFormat(), datePayout);
+						int nowDayOfWeek = nextDate.get(Calendar.DAY_OF_WEEK);
+						
+						// Revisar si el dia siguiente es dia cobrable, sino traer el mas proximo
+						datePayout = pmCreditType.getLastPaymentDay(datePayout, nowDayOfWeek, bmoCreditType, false);
+					}
+				} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_WEEKLY)) {
+					// Agregar dias a la ultima fecha de la cxc creada, NO ENTRA LA PRIMERA VEZ, 
+					// ya que la fecha ya esta calculada(*) mas arriba, esto solo repite los lunes a agregar
+					if (x > 0) {
+						datePayout = SFServerUtil.addDays(getSFParams().getDateFormat(), datePayout, daysPayout);
+					}
+				}
+				
 			} else if (bmoOrder.getBmoOrderType().getType().equals(BmoOrderType.TYPE_LEASE)) {
 				// Solo se pueden crear 12 cxc
 				if (x == limitRacc) break;
@@ -1574,8 +1610,7 @@ public class PmRaccount extends PmObject {
 				bmoNewRaccount.getCollectorUserId().setValue(bmoUser.getId());
 
 			super.saveSimple(pmConn, bmoNewRaccount, bmUpdateResult);
-
-
+			
 			PmCompanyNomenclature pmCompanyNomenclature = new PmCompanyNomenclature(getSFParams());
 			String code = "";
 			// Generar clave personalizada si la hay, si no retorna la de por defecto
@@ -1587,7 +1622,7 @@ public class PmRaccount extends PmObject {
 					);
 			bmoNewRaccount.getCode().setValue(code);
 
-			printDevLog(this.getClass().getName() + "ensureOrderCredit(): Se genero la CxC " + bmoNewRaccount.getCode().toString());
+			printDevLog(this.getClass().getName() + " - ensureOrderCredit(): Se genero la CxC " + bmoNewRaccount.getCode().toString());
 
 			// Crear el item con el monto de la liquidacion
 			PmRaccountItem pmRaccItemNew = new PmRaccountItem(getSFParams());
@@ -1596,7 +1631,7 @@ public class PmRaccount extends PmObject {
 			bmoRaccItemNew.getQuantity().setValue("1");
 			bmoRaccItemNew.getAmount().setValue(SFServerUtil.roundCurrencyDecimals(bmoNewRaccount.getAmount().toDouble()));
 			bmoRaccItemNew.getPrice().setValue(SFServerUtil.roundCurrencyDecimals(bmoNewRaccount.getAmount().toDouble()));
-			bmoRaccItemNew.getRaccountId().setValue(bmoNewRaccount.getId());
+			bmoRaccItemNew.getRaccountId().setValue(bmUpdateResult.getId());
 
 			pmRaccItemNew.saveSimple(pmConn, bmoRaccItemNew, bmUpdateResult);
 
@@ -1652,11 +1687,10 @@ public class PmRaccount extends PmObject {
 				// Actualizar id de claves del programa por empresa
 				pmCompanyNomenclature.updateConsecutiveByCompany(pmConn, bmoNewRaccount.getCompanyId().toInteger(), 
 						bmoNewRaccount.getProgramCode().toString());
-
+				
 				super.save(pmConn, bmoNewRaccount, bmUpdateResult);
 			}
-
-			//				super.save(pmConn, bmoNewRaccount, bmUpdateResult);
+			x++;
 		}
 
 		// Generar bitacora de cxc
@@ -2845,8 +2879,8 @@ public class PmRaccount extends PmObject {
 		return pmConn.next();
 	}
 
-	// Revisa si hay defaults en pagos
-	public void checkFailure(String nowDate) throws SFException {
+	// Revisa si hay defaults en pagos(COBI)
+	public void checkFailure(String nowDate) throws SFException {				
 		PmConn pmConn = new PmConn(getSFParams());
 		PmConn pmConn2 = new PmConn(getSFParams());
 		PmConn pmConn3 = new PmConn(getSFParams());
@@ -2987,6 +3021,352 @@ public class PmRaccount extends PmObject {
 		}
 	}
 
+	
+	// Revisa si hay fallas DIARIAMENTE en los pagos (DaCredito)
+	public void checkFailureDailyDaCredito(String nowDate) throws SFException {
+		printDevLog("checkFailureDailyDaCredito");
+		PmConn pmConn = new PmConn(getSFParams());
+		PmConn pmConn2 = new PmConn(getSFParams());
+		PmConn pmConn3 = new PmConn(getSFParams());
+
+		BmUpdateResult bmUpdateResult = new BmUpdateResult();
+		pmConn.open();
+		pmConn2.open();
+		pmConn3.open();
+
+		try {
+			String sql = "";
+			String datePayout = "";
+
+			BmoRaccount bmoRaccWeek = new BmoRaccount();
+
+			PmOrder pmOrder = new PmOrder(getSFParams());
+			BmoOrder bmoOrder = new BmoOrder();
+			PmCreditType pmCreditType = new PmCreditType(getSFParams());
+			BmoCreditType bmoCreditType = new BmoCreditType();
+			bmoCreditType = (BmoCreditType)pmCreditType.getBy(pmConn, "" + BmoCreditType.TYPE_DAILY, bmoCreditType.getType().getName());
+			
+			// Obtener dia de ayer
+			Calendar payWeek = SFServerUtil.stringToCalendar(getSFParams().getDateFormat(), SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()));
+			payWeek.add(Calendar.DAY_OF_WEEK, -1);
+			int dayOfWeek = payWeek.get(Calendar.DAY_OF_WEEK);
+			datePayout = FlexUtil.calendarToString(getSFParams(), payWeek);
+
+			// Revisar si ayer es dia de pago, sino traer el que le sigue
+			datePayout = pmCreditType.getLastPaymentDay(datePayout, dayOfWeek, bmoCreditType, true);
+
+			if (!nowDate.equals(""))
+				datePayout = nowDate;
+
+			// Lista de las cuentas por cobrar del dia anterior
+			sql = " SELECT DISTINCT(racc_orderid), racc_orderid , racc_raccountid, racc_total, cred_creditid, crty_type FROM raccounts "
+					+ " LEFT JOIN raccounttypes ON (racc_raccounttypeid = ract_raccounttypeid) "
+					+ " LEFT JOIN orders ON (racc_orderid = orde_orderid) " 
+					+ " LEFT JOIN credits ON (cred_orderid= orde_orderid) " 
+					+ " LEFT JOIN credittypes ON (crty_credittypeid = cred_credittypeid) " 
+					+ " WHERE racc_duedate = '" + datePayout + "' " 
+					+ " AND crty_type = '" + BmoCreditType.TYPE_DAILY + "'"
+					+ " AND orde_status = '" + BmoOrder.STATUS_AUTHORIZED + "'" 
+					+ " AND racc_status = '" + BmoRaccount.STATUS_AUTHORIZED + "'" 
+					+ " AND ract_type = '" + BmoRaccountType.TYPE_WITHDRAW + "'"
+					+ " AND racc_failure = 0 ";
+			//+ " GROUP BY racc_orderid ";
+			
+			printDevLog("checkFailureDaily_sql:"+sql);
+			pmConn2.doFetch(sql);
+			while (pmConn2.next()) {
+				bmoRaccWeek = (BmoRaccount) this.get(pmConn, pmConn2.getInt("racc_raccountid"));
+				bmoOrder = (BmoOrder) pmOrder.get(pmConn, pmConn2.getInt("racc_orderid"));
+
+				if (!bmoRaccWeek.getPaymentStatus().equals(BmoRaccount.PAYMENTSTATUS_TOTAL)) {
+					// Generar Penalidad si no existe
+					if (!hasPenalty(pmConn, bmoOrder, bmUpdateResult)) {
+						createPenalty(pmConn, bmoOrder, pmConn2.getInt("racc_raccountid"), bmUpdateResult);
+					} else {
+						BmoCredit bmoCredit = new BmoCredit();
+						PmCredit pmCredit = new PmCredit(getSFParams());
+						bmoCredit = (BmoCredit) pmCredit.get(pmConn, pmConn2.getInt("cred_creditid"));
+							
+						int failureId = 0;
+						// Obtener la CxC de penalización
+						sql = " SELECT racc_raccountid FROM raccounts " + " WHERE racc_failure = 1 " + " AND racc_orderid = " + bmoOrder.getId();
+						pmConn3.doFetch(sql);
+						if (pmConn3.next()) {
+							failureId = pmConn3.getInt("racc_raccountid");
+						}
+						
+						// Contar las fallas del credito
+						int items = -1;
+						sql = " SELECT COUNT(*) AS items FROM raccountlinks  WHERE ralk_raccountid = " + failureId;
+						pmConn3.doFetch(sql);
+						if (pmConn3.next()) {
+							items = pmConn3.getInt("items");
+						}
+						
+						printDevLog("CXC ligadas con fallas:"+items);
+						// Se inicia desde 0 porque apenas se estan generando las fallas
+						if (items == 0 || items == 1) {
+							printDevLog("1era o 2da falla, genera la liga y cambia estatus a penalidad");
+							bmoCredit.getPaymentStatus().setValue(BmoCredit.PAYMENTSTATUS_PENALTY);
+							pmCredit.saveSimple(pmConn, bmoCredit, bmUpdateResult);
+							
+							// Ligar la Penalizacion ya creada a la CxC que fallo 
+							updatePenaltyFromNewFail(pmConn, bmoOrder, pmConn2.getInt("racc_raccountid"), bmUpdateResult);
+							
+							// Obtener la cxc automatica para su modificacion, SOLO MONTOS
+							if (!bmUpdateResult.hasErrors()) {
+								PmRaccount pmRaccountFailure = new PmRaccount(getSFParams());
+								BmoRaccount bmoRaccountFailure = new BmoRaccount();
+								bmoRaccountFailure = (BmoRaccount)pmRaccountFailure.get(pmConn, failureId);
+		
+								BmoRaccountItem bmoRaccFailureItem = new BmoRaccountItem();
+								PmRaccountItem pmRaccFailureItem = new PmRaccountItem(getSFParams());
+								bmoRaccFailureItem = (BmoRaccountItem) pmRaccFailureItem.getBy(pmConn, bmoRaccountFailure.getId(), bmoRaccFailureItem.getRaccountId().getName());
+								bmoRaccFailureItem.getPrice().setValue (bmoRaccountFailure.getAmount().toDouble() + bmoCredit.getBmoCreditType().getAmountFailure().toDouble());
+								bmoRaccFailureItem.getAmount().setValue (bmoRaccountFailure.getAmount().toDouble() + bmoCredit.getBmoCreditType().getAmountFailure().toDouble());
+								pmRaccFailureItem.saveSimple(pmConn, bmoRaccFailureItem, bmUpdateResult);
+		
+								bmoRaccountFailure.getAmount().setValue(SFServerUtil.roundCurrencyDecimals(bmoRaccFailureItem.getAmount().toDouble()));
+								bmoRaccountFailure.getTotal().setValue(SFServerUtil.roundCurrencyDecimals(bmoRaccFailureItem.getAmount().toDouble()));
+		
+								pmRaccountFailure.updateWithdrawBalance(pmConn, bmoRaccountFailure, bmUpdateResult);
+							}
+						} else if (items == 2) {
+							printDevLog("por generar la 3era, genera la liga y cambia estatus a penalidad");
+							bmoCredit.getPaymentStatus().setValue(BmoCredit.PAYMENTSTATUS_INPROBLEM);
+							pmCredit.saveSimple(pmConn, bmoCredit, bmUpdateResult);
+							
+							// Ligar la Penalizacion ya creada a la CxC que fallo 
+							updatePenaltyFromNewFail(pmConn, bmoOrder, pmConn2.getInt("racc_raccountid"), bmUpdateResult);
+							
+							// Obtener la cxc automatica para su modificacion, SOLO MONTOS
+							if (!bmUpdateResult.hasErrors()) {
+								PmRaccount pmRaccountFailure = new PmRaccount(getSFParams());
+								BmoRaccount bmoRaccountFailure = new BmoRaccount();
+								bmoRaccountFailure = (BmoRaccount)pmRaccountFailure.get(pmConn, failureId);
+		
+								BmoRaccountItem bmoRaccFailureItem = new BmoRaccountItem();
+								PmRaccountItem pmRaccFailureItem = new PmRaccountItem(getSFParams());
+								bmoRaccFailureItem = (BmoRaccountItem) pmRaccFailureItem.getBy(pmConn, bmoRaccountFailure.getId(), bmoRaccFailureItem.getRaccountId().getName());
+								bmoRaccFailureItem.getPrice().setValue (bmoRaccountFailure.getAmount().toDouble() + bmoCredit.getBmoCreditType().getAmountFailure().toDouble());
+								bmoRaccFailureItem.getAmount().setValue (bmoRaccountFailure.getAmount().toDouble() + bmoCredit.getBmoCreditType().getAmountFailure().toDouble());
+								pmRaccFailureItem.saveSimple(pmConn, bmoRaccFailureItem, bmUpdateResult);
+		
+								bmoRaccountFailure.getAmount().setValue(SFServerUtil.roundCurrencyDecimals(bmoRaccFailureItem.getAmount().toDouble()));
+								bmoRaccountFailure.getTotal().setValue(SFServerUtil.roundCurrencyDecimals(bmoRaccFailureItem.getAmount().toDouble()));
+		
+								pmRaccountFailure.updateWithdrawBalance(pmConn, bmoRaccountFailure, bmUpdateResult);
+							}
+						} else if (items >= 3) { 
+							printDevLog("sobrepasa las 3 fallas, solo forza el estatus de en problemas al credito");
+							// Si pasa de 3, solo colocar estatus de en problemas
+							bmoCredit.getPaymentStatus().setValue(BmoCredit.PAYMENTSTATUS_INPROBLEM);
+							pmCredit.saveSimple(pmConn, bmoCredit, bmUpdateResult);
+						}
+					}
+				} else {
+					BmoCredit bmoCredit = new BmoCredit();
+					PmCredit pmCredit = new PmCredit(getSFParams());
+					bmoCredit = (BmoCredit) pmCredit.getBy(pmConn, bmoOrder.getId(), bmoCredit.getOrderId().getName());
+
+					if (bmoCredit.getPaymentStatus().equals(BmoCredit.PAYMENTSTATUS_REVISION)) {
+						bmoCredit.getPaymentStatus().setValue(BmoCredit.PAYMENTSTATUS_NORMAL);
+						pmCredit.saveSimple(pmConn, bmoCredit, bmUpdateResult);
+					}
+					
+				}
+			}
+		} catch (SFException e) {
+			throw new SFException(this.getClass().getName() + "checkFailure(): " + e.toString());
+		} finally {
+			pmConn.close();
+			pmConn2.close();
+			pmConn3.close();
+		}
+	}
+	
+	// Revisa si hay fallas SEMANALMENTE en los pagos(DaCredito)
+	public void checkFailureWeeklyDaCredito(String nowDate) throws SFException {
+		
+		printDevLog("checkFailureWeeklyDaCredito");
+		PmConn pmConn = new PmConn(getSFParams());
+		PmConn pmConn2 = new PmConn(getSFParams());
+		PmConn pmConn3 = new PmConn(getSFParams());
+
+		BmUpdateResult bmUpdateResult = new BmUpdateResult();
+		pmConn.open();
+		pmConn2.open();
+		pmConn3.open();
+
+		try {
+			String sql = "";
+			String datePayout = "";
+
+			BmoRaccount bmoRaccWeek = new BmoRaccount();
+
+			PmOrder pmOrder = new PmOrder(getSFParams());
+			BmoOrder bmoOrder = new BmoOrder();
+			
+			// Obtener el Lunes de esta semana
+			Calendar payWeek = SFServerUtil.stringToCalendar(getSFParams().getDateFormat(),	SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()));
+			// Obtener el día de la semana
+			int nowDay = payWeek.get(Calendar.DAY_OF_WEEK);
+			// restarle dias de acuerdo al dia de la semana para que siempre te de el lunes de la semana pasada
+			if (nowDay == 1)
+				nowDay = 6;
+			// Monday
+			else if (nowDay == 2)
+				nowDay = 0;
+			// Thusday
+			else if (nowDay == 3)
+				nowDay = 1;
+			// Weendays
+			else if (nowDay == 4)
+				nowDay = 2;
+			// Thurday
+			else if (nowDay == 5)
+				nowDay = 3;
+			// Friday
+			else if (nowDay == 6)
+				nowDay = 4;
+			// Saturday
+			else if (nowDay == 7)
+				nowDay = 5;
+
+			payWeek.add(Calendar.DAY_OF_WEEK, -nowDay);
+
+			if (nowDate.equals(""))
+				datePayout = FlexUtil.calendarToString(getSFParams(), payWeek);
+			else
+				datePayout = nowDate;
+
+			// Lista de las cuentas por cobrar del dia anterior
+			sql = " SELECT DISTINCT(racc_orderid), racc_orderid , racc_raccountid, racc_total, cred_creditid, crty_type FROM raccounts "
+					+ " LEFT JOIN raccounttypes ON (racc_raccounttypeid = ract_raccounttypeid) "
+					+ " LEFT JOIN orders ON (racc_orderid = orde_orderid) " 
+					+ " LEFT JOIN credits ON (cred_orderid= orde_orderid) " 
+					+ " LEFT JOIN credittypes ON (crty_credittypeid = cred_credittypeid) " 
+					+ " WHERE racc_duedate = '" + datePayout + "' " 
+					+ " AND crty_type = '" + BmoCreditType.TYPE_WEEKLY + "'"
+					+ " AND orde_status = '" + BmoOrder.STATUS_AUTHORIZED + "'" 
+					+ " AND racc_status = '" + BmoRaccount.STATUS_AUTHORIZED + "'" 
+					+ " AND ract_type = '" + BmoRaccountType.TYPE_WITHDRAW + "'"
+					+ " AND racc_failure = 0 ";
+			//+ " GROUP BY racc_orderid ";
+			
+			printDevLog("checkFailureWeekly_sql:"+sql);
+			pmConn2.doFetch(sql);
+			while (pmConn2.next()) {
+				bmoRaccWeek = (BmoRaccount) this.get(pmConn, pmConn2.getInt("racc_raccountid"));
+				bmoOrder = (BmoOrder) pmOrder.get(pmConn, pmConn2.getInt("racc_orderid"));
+
+				if (!bmoRaccWeek.getPaymentStatus().equals(BmoRaccount.PAYMENTSTATUS_TOTAL)) {
+					// Generar Penalidad si no existe
+					if (!hasPenalty(pmConn, bmoOrder, bmUpdateResult)) {
+						createPenalty(pmConn, bmoOrder, pmConn2.getInt("racc_raccountid"), bmUpdateResult);
+					} else {
+						BmoCredit bmoCredit = new BmoCredit();
+						PmCredit pmCredit = new PmCredit(getSFParams());
+						bmoCredit = (BmoCredit) pmCredit.get(pmConn, pmConn2.getInt("cred_creditid"));
+						
+						int failureId = 0;
+						// Obtener la CxC de penalización
+						sql = " SELECT racc_raccountid FROM raccounts " + " WHERE racc_failure = 1 " + " AND racc_orderid = " + bmoOrder.getId();
+						pmConn3.doFetch(sql);
+						if (pmConn3.next()) {
+							failureId = pmConn3.getInt("racc_raccountid");
+						}
+						
+						// Contar las fallas del credito
+						int items = -1;
+						sql = " SELECT COUNT(*) AS items FROM raccountlinks  WHERE ralk_raccountid = " + failureId;
+						pmConn3.doFetch(sql);
+						if (pmConn3.next()) {
+							items = pmConn3.getInt("items");
+						}
+						
+						printDevLog("CXC ligadas con fallas:"+items);
+						// Se inicia desde 0 porque apenas se estan generando las fallas
+						if (items == 0 || items == 1) {
+							printDevLog("1era o 2da falla, genera la liga y cambia estatus a penalidad");
+							bmoCredit.getPaymentStatus().setValue(BmoCredit.PAYMENTSTATUS_PENALTY);
+							pmCredit.saveSimple(pmConn, bmoCredit, bmUpdateResult);
+							
+							// Ligar la Penalizacion ya creada a la CxC que fallo 
+							updatePenaltyFromNewFail(pmConn, bmoOrder, pmConn2.getInt("racc_raccountid"), bmUpdateResult);
+							
+							// Obtener la cxc automatica para su modificacion, SOLO MONTOS
+							if (!bmUpdateResult.hasErrors()) {
+								PmRaccount pmRaccountFailure = new PmRaccount(getSFParams());
+								BmoRaccount bmoRaccountFailure = new BmoRaccount();
+								bmoRaccountFailure = (BmoRaccount)pmRaccountFailure.get(pmConn, failureId);
+		
+								BmoRaccountItem bmoRaccFailureItem = new BmoRaccountItem();
+								PmRaccountItem pmRaccFailureItem = new PmRaccountItem(getSFParams());
+								bmoRaccFailureItem = (BmoRaccountItem) pmRaccFailureItem.getBy(pmConn, bmoRaccountFailure.getId(), bmoRaccFailureItem.getRaccountId().getName());
+								bmoRaccFailureItem.getPrice().setValue (bmoRaccountFailure.getAmount().toDouble() + bmoCredit.getBmoCreditType().getAmountFailure().toDouble());
+								bmoRaccFailureItem.getAmount().setValue (bmoRaccountFailure.getAmount().toDouble() + bmoCredit.getBmoCreditType().getAmountFailure().toDouble());
+								pmRaccFailureItem.saveSimple(pmConn, bmoRaccFailureItem, bmUpdateResult);
+		
+								bmoRaccountFailure.getAmount().setValue(SFServerUtil.roundCurrencyDecimals(bmoRaccFailureItem.getAmount().toDouble()));
+								bmoRaccountFailure.getTotal().setValue(SFServerUtil.roundCurrencyDecimals(bmoRaccFailureItem.getAmount().toDouble()));
+		
+								pmRaccountFailure.updateWithdrawBalance(pmConn, bmoRaccountFailure, bmUpdateResult);
+							}
+						} else if (items == 2) {
+							printDevLog("por generar la 3era, genera la liga y cambia estatus a penalidad");
+							bmoCredit.getPaymentStatus().setValue(BmoCredit.PAYMENTSTATUS_INPROBLEM);
+							pmCredit.saveSimple(pmConn, bmoCredit, bmUpdateResult);
+							
+							// Ligar la Penalizacion ya creada a la CxC que fallo 
+							updatePenaltyFromNewFail(pmConn, bmoOrder, pmConn2.getInt("racc_raccountid"), bmUpdateResult);
+							
+							// Obtener la cxc automatica para su modificacion, SOLO MONTOS
+							if (!bmUpdateResult.hasErrors()) {
+								PmRaccount pmRaccountFailure = new PmRaccount(getSFParams());
+								BmoRaccount bmoRaccountFailure = new BmoRaccount();
+								bmoRaccountFailure = (BmoRaccount)pmRaccountFailure.get(pmConn, failureId);
+		
+								BmoRaccountItem bmoRaccFailureItem = new BmoRaccountItem();
+								PmRaccountItem pmRaccFailureItem = new PmRaccountItem(getSFParams());
+								bmoRaccFailureItem = (BmoRaccountItem) pmRaccFailureItem.getBy(pmConn, bmoRaccountFailure.getId(), bmoRaccFailureItem.getRaccountId().getName());
+								bmoRaccFailureItem.getPrice().setValue (bmoRaccountFailure.getAmount().toDouble() + bmoCredit.getBmoCreditType().getAmountFailure().toDouble());
+								bmoRaccFailureItem.getAmount().setValue (bmoRaccountFailure.getAmount().toDouble() + bmoCredit.getBmoCreditType().getAmountFailure().toDouble());
+								pmRaccFailureItem.saveSimple(pmConn, bmoRaccFailureItem, bmUpdateResult);
+		
+								bmoRaccountFailure.getAmount().setValue(SFServerUtil.roundCurrencyDecimals(bmoRaccFailureItem.getAmount().toDouble()));
+								bmoRaccountFailure.getTotal().setValue(SFServerUtil.roundCurrencyDecimals(bmoRaccFailureItem.getAmount().toDouble()));
+		
+								pmRaccountFailure.updateWithdrawBalance(pmConn, bmoRaccountFailure, bmUpdateResult);
+							}
+						} else if (items >= 3) { 
+							printDevLog("sobrepasa las 3 fallas, solo forza el estatus de en problemas al credito");
+							// Si pasa de 3, solo colocar estatus de en problemas
+							bmoCredit.getPaymentStatus().setValue(BmoCredit.PAYMENTSTATUS_INPROBLEM);
+							pmCredit.saveSimple(pmConn, bmoCredit, bmUpdateResult);
+						}
+					}
+				} else {
+					BmoCredit bmoCredit = new BmoCredit();
+					PmCredit pmCredit = new PmCredit(getSFParams());
+					bmoCredit = (BmoCredit) pmCredit.getBy(pmConn, bmoOrder.getId(), bmoCredit.getOrderId().getName());
+
+					if (bmoCredit.getPaymentStatus().equals(BmoCredit.PAYMENTSTATUS_REVISION)) {
+						bmoCredit.getPaymentStatus().setValue(BmoCredit.PAYMENTSTATUS_NORMAL);
+						pmCredit.saveSimple(pmConn, bmoCredit, bmUpdateResult);
+					}
+					
+				}
+			}
+		} catch (SFException e) {
+			throw new SFException(this.getClass().getName() + "checkFailure(): " + e.toString());
+		} finally {
+			pmConn.close();
+			pmConn2.close();
+			pmConn3.close();
+		}
+	}
+
 	// Crear la falla dentro de la penalización
 	public void updatePenaltyFromNewFail(PmConn pmConn, BmoOrder bmoOrder, int raccountOrignId,
 			BmUpdateResult bmUpdateResult) throws SFException {
@@ -3101,36 +3481,42 @@ public class PmRaccount extends PmObject {
 
 		String sql = "";
 
-		// Obtener el Plazo
-		PmCreditType pmCreditType = new PmCreditType(getSFParams());
-		BmoCreditType bmoCreditType = (BmoCreditType) pmCreditType.get(bmoCredit.getCreditTypeId().toInteger());
-
-		// Obtener los dias de pago
-		int daysPayout = 0;
-		if (bmoCreditType.getType().equals(BmoCreditType.TYPE_WEEKLY)) {
-			daysPayout = 7;
-		} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_TWOWEEKS)) {
-			daysPayout = 15;
-		} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_MONTHLY)) {
-			daysPayout = 30;
-		} else {
-			bmUpdateResult.addMsg("El tipo de crédito no cuenta con un tipo definido");
-		}
-
 		PmRaccount pmRaccount = new PmRaccount(getSFParams());
 		BmoRaccount bmoRaccount = new BmoRaccount();
 		try {
 
 			pmConn.disableAutoCommit();
+			
+			// Obtener el Plazo
+			PmCreditType pmCreditType = new PmCreditType(getSFParams());
+			BmoCreditType bmoCreditType = (BmoCreditType) pmCreditType.get(bmoCredit.getCreditTypeId().toInteger());
 
-			// EL primer dia de pago debe ser el lunes proximo
-			Calendar nowWeek = SFServerUtil.stringToCalendar(getSFParams().getDateFormat(),
-					bmoCredit.getStartDate().toString());
-			nowWeek.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
-			nowWeek.add(Calendar.WEEK_OF_YEAR, 0);
+			// Obtener los dias de pago
+			int daysPayout = 0;
+			if (bmoCreditType.getType().equals(BmoCreditType.TYPE_DAILY)) {
+				daysPayout = 1;
+			} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_WEEKLY)) {
+				daysPayout = 7;
+			} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_TWOWEEKS)) {
+				daysPayout = 15;
+			} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_MONTHLY)) {
+				daysPayout = 30;
+			} else {
+				bmUpdateResult.addMsg("El Tipo de crédito no cuenta con un tipo definido.");
+			}
 
-			// Calcular la primera fecha de pago
-			String datePayout = FlexUtil.calendarToString(getSFParams(), nowWeek);
+			String datePayout = "";
+			if (bmoCreditType.getType().equals(BmoCreditType.TYPE_DAILY)) {
+				datePayout = bmoCredit.getStartDate().toString();
+			} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_WEEKLY)) {
+				// EL primer dia de pago debe ser el lunes proximo
+				Calendar nowWeek = SFServerUtil.stringToCalendar(getSFParams().getDateFormat(),
+						bmoCredit.getStartDate().toString());
+				nowWeek.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+				nowWeek.add(Calendar.WEEK_OF_YEAR, 0);
+				// Calcular la primera fecha de pago
+				datePayout = FlexUtil.calendarToString(getSFParams(), nowWeek);
+			}
 
 			sql = " SELECT * FROM raccounts "
 					+ " LEFT JOIN raccounttypes ON (racc_raccounttypeid = ract_raccounttypeid) "
@@ -3142,7 +3528,19 @@ public class PmRaccount extends PmObject {
 
 				if (bmoRaccount.getTotal().toDouble() != bmoCredit.getAmount().toDouble()) {
 
-					datePayout = SFServerUtil.addDays(getSFParams().getDateFormat(), datePayout, daysPayout);
+					if (bmoCreditType.getType().equals(BmoCreditType.TYPE_DAILY)) {
+						// Agregar dias a la ultima fecha de la cxc creada, NO ENTRA LA PRIMERA VEZ, 
+						// ya que la fecha ya esta calculada(*) mas arriba, esto solo repite los DIAS a agregar y valida dia cobrable
+						datePayout = SFServerUtil.addDays(getSFParams().getDateFormat(), datePayout, daysPayout);
+						// Revisar si el dia siguiente es un dia cobrable
+						Calendar nextDate = SFServerUtil.stringToCalendar(getSFParams().getDateFormat(), datePayout);
+						int nowDayOfWeek = nextDate.get(Calendar.DAY_OF_WEEK);
+						
+						// Revisar si el dia siguiente es dia cobrable, sino traer el mas proximo
+						datePayout = pmCreditType.getLastPaymentDay(datePayout, nowDayOfWeek, bmoCreditType, false);
+					} else if (bmoCreditType.getType().equals(BmoCreditType.TYPE_WEEKLY)) {
+						datePayout = SFServerUtil.addDays(getSFParams().getDateFormat(), datePayout, daysPayout);
+					} 
 
 					bmoRaccount.getReceiveDate().setValue(datePayout);
 					bmoRaccount.getDueDate().setValue(datePayout);
@@ -3165,16 +3563,20 @@ public class PmRaccount extends PmObject {
 					pmRaccount.saveSimple(pmConn, bmoRaccount, bmUpdateResult);
 
 					// Actualizar el movimiento de banco
-					sql = " UPDATE bankmovements SET bkmv_duedate = '" + bmoCredit.getStartDate().toString() + "'"
-							+ " WHERE bkmv_bankmovementid = " + bankmovementId;
-					pmConn.doUpdate(sql);
-
+					if (bankmovementId > 0) {
+						sql = " UPDATE bankmovements SET bkmv_duedate = '" + bmoCredit.getStartDate().toString() + "'"
+								+ " WHERE bkmv_bankmovementid = " + bankmovementId;
+						pmConn.doUpdate(sql);
+					}
+					
 					// Actualizar la CxC de Abono
-					sql = " UPDATE raccounts SET racc_receivedate = '" + bmoCredit.getStartDate().toString() + "'"
-							+ ", racc_duedate = '" + bmoCredit.getStartDate().toString() + "'"
-							+ " WHERE racc_raccountid = " + raccWithdrawId;
-					pmConn.doUpdate(sql);
-
+					if (raccWithdrawId > 0 ) {
+						sql = " UPDATE raccounts SET racc_receivedate = '" + bmoCredit.getStartDate().toString() + "'"
+								+ ", racc_duedate = '" + bmoCredit.getStartDate().toString() + "'"
+								+ " WHERE racc_raccountid = " + raccWithdrawId;
+						pmConn.doUpdate(sql);
+					}
+					
 					// Actualizar el Envio de pedido
 					sql = " UPDATE orderdeliveries SET odly_deliverydate = '" + bmoCredit.getStartDate().toString()
 							+ "'" + " WHERE odly_orderid = " + bmoCredit.getOrderId().toInteger();

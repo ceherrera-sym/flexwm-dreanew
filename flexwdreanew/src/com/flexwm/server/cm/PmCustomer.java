@@ -55,6 +55,7 @@ import com.symgae.shared.SFMailAddress;
 import com.symgae.shared.SFParams;
 import com.symgae.shared.SFPmException;
 import com.symgae.shared.sf.BmoCompany;
+import com.symgae.shared.sf.BmoLocation;
 import com.symgae.shared.sf.BmoUser;
 
 
@@ -109,7 +110,7 @@ public class PmCustomer extends PmObject {
 	@Override
 	public String getDisclosureFilters() {
 		String filters = "";	
-
+		int locationUserId = getSFParams().getLoginInfo().getBmoUser().getLocationId().toInteger();
 
 		if (getSFParams().restrictData(bmoCustomer.getProgramCode())) {
 			int loggedUserId = getSFParams().getLoginInfo().getUserId();
@@ -187,6 +188,13 @@ public class PmCustomer extends PmObject {
 					+ "			WHERE cucp_customerid = cust_customerid)"
 					+ "		)"
 					+ ")";
+		}
+		
+		// Filtro de Ubicaciones
+		if (((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean()
+				&& getSFParams().restrictData(new BmoLocation().getProgramCode())) {
+			if (filters.length() > 0) filters += " AND ";
+			filters += " cust_locationid = " + locationUserId;
 		}
 
 		return filters;

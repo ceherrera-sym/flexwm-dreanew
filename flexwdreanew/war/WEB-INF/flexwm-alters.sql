@@ -315,7 +315,7 @@ ALTER TABLE modules DROP COLUMN modu_componentid;
 ALTER TABLE modules ADD COLUMN modu_sfcomponentid INT;
 ALTER TABLE modules ADD FOREIGN KEY (modu_sfcomponentid) REFERENCES sfcomponents(sfcm_sfcomponentid);
 
-bmoQuoteGroup
+
 CREATE TABLE sfcomponentaccess (
 	sfca_sfcomponentaccessid INT NOT NULL AUTO_INCREMENT, 
 	sfca_read INT, 
@@ -6009,6 +6009,26 @@ ALTER TABLE venues add venu_blueprint VARCHAR(400) ;
  ALTER TABLE venues CHANGE COLUMN venu_street venu_street VARCHAR(80)  ;
  ALTER TABLE venues CHANGE COLUMN venu_name venu_name VARCHAR(50)  ;
 
+-- 20/ago/2020
+ALTER TABLE flexconfig ADD COLUMN flxc_creditbylocation INT;
+ALTER TABLE credittypes ADD COLUMN crty_locationid INT;
+ALTER TABLE credittypes ADD FOREIGN KEY (crty_locationid) REFERENCES locations(loct_locationid);
+
+ALTER TABLE customers ADD COLUMN cust_locationid INT;
+ALTER TABLE customers ADD FOREIGN KEY (cust_locationid) REFERENCES locations(loct_locationid);
+
+ALTER TABLE credits ADD COLUMN cred_locationid INT;
+ALTER TABLE credits ADD FOREIGN KEY (cred_locationid) REFERENCES locations(loct_locationid);
+
+-- SOLO cobi: APLICAR consulta para quitar documentos requeridos 
+UPDATE wflowdocuments 
+LEFT JOIN wflows ON (wflw_wflowid = wfdo_wflowid)
+LEFT JOIN orders ON (orde_wflowid = wflw_wflowid)
+LEFT JOIN credits ON (cred_orderid = orde_orderid)
+SET wfdo_required = 0 
+WHERE orde_status = 'R' AND cred_status = 'R';
+
+-- ALTERS DREANEW
  -- 8 julio 2020
 ALTER TABLE wflowcategories ADD wfca_daysremindexpired INT(5);
 
@@ -6190,3 +6210,4 @@ UPDATE projects LEFT JOIN orders ON (orde_orderid = proj_orderid) SET proj_total
 	ALTER TABLE requisitions ADD reqi_showonoutformat INT(5);
 	ALTER TABLE requisitiontypes ADD rqtp_outformat INT(8);
 	
+

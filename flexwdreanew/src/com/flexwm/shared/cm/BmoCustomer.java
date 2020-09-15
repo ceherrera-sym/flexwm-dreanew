@@ -32,7 +32,7 @@ public class BmoCustomer extends BmObject implements Serializable {
 	mobile, email, consultingServiceId, regionId, rating, accountOwnerId, salesmanId, referralId, tags, 
 	curp, nss, parentId, income, recommendedBy, industryId, creditLimit, reqPayTypeId, customercategory, rateTypeId, 
 	rate, user, passw, passwconf,lessorMasterId ,cfdiid, paymethodid, payConditionId, developmentRate, lead,
-	nationalityId,oficialIdentify, maritalStatusId, marketId;
+	nationalityId,oficialIdentify, maritalStatusId, marketId, locationId;
 
 	private BmoUser bmoUser = new BmoUser();
 	private BmoTerritory bmoTerritory = new BmoTerritory();
@@ -164,6 +164,7 @@ public class BmoCustomer extends BmObject implements Serializable {
 		oficialIdentify = setField("oficialidentify", "", "Identificacion Oficial", 255, Types.VARCHAR, true,BmFieldType.STRING, false);
 		maritalStatusId = setField("maritalstatusid", "", "Estado Civil", 10, Types.INTEGER, true, BmFieldType.ID, false);
 		marketId = setField("marketid", "", "Mercado Predet.", 8, Types.INTEGER, true, BmFieldType.ID, false);
+		locationId = setField("locationid", "", "Ubicación", 10, Types.INTEGER, true, BmFieldType.ID, false);
 	}
 
 
@@ -688,4 +689,11 @@ public class BmoCustomer extends BmObject implements Serializable {
 		this.marketId = marketId;
 	}
 
+	public BmField getLocationId() {
+		return locationId;
+	}
+
+	public void setLocationId(BmField locationId) {
+		this.locationId = locationId;
+	}
 }

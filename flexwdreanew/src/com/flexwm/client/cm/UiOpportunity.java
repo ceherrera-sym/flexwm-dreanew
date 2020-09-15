@@ -538,8 +538,7 @@ public class UiOpportunity extends UiList {
 			}
 
 			statusEffect();
-		}
-		
+		}		
 
 		@Override
 		public void postShow() {
@@ -801,7 +800,6 @@ public class UiOpportunity extends UiList {
 			} else if (uiSuggestBox == venueSuggestBox) {
 				// Activar campo si esta marcado el Salon como casa particular
 				BmoVenue bmoVenue = (BmoVenue)venueSuggestBox.getSelectedBmObject();
-				
 				if (bmoVenue != null) {
 					if (bmoVenue.getHomeAddress().toBoolean() && bmoVenue.getId() > 0) {
 						formFlexTable.showField(bmoOpportunity.getCustomField4());

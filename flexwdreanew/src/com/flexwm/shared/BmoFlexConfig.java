@@ -32,7 +32,7 @@ public class BmoFlexConfig extends BmObject implements Serializable {
 	emailCustomerBirthday, authorizedBankMov, requestAuthReqi, requestAuthReqiAmount, collectProfileId, renewProducts,statusAuthorized,
 	statusCancelled,companyInCustomer,statusReconciled,statusRevision, requiredPeriodFiscal,oppoStatusRevision, oppoStatusGanada, oppoStatusPerdida, oppoStatusExpirada, oppoStatusHold,
 	ordeStatusRevision, ordeStatusAuthorized, ordeStatusFinished, ordeStatusCancelled, dayBeforeRemindRaccount, remaindRaccountInCustomer, enableEmailReminderComments, dayBeforeRemindRaccountTwo,
-	showOrderInCustomer, sendEmailAuthorizedMB, emailFailCron, showOwnCustomer, duplicateAddress, duplicateAddressNumber, multiCompany, mobilOrMailCust;
+	showOrderInCustomer, sendEmailAuthorizedMB, emailFailCron, showOwnCustomer, duplicateAddress, duplicateAddressNumber, multiCompany, mobilOrMailCust, creditByLocation;
 
 	// Tipo de cliente default
 	public static char TYPE_PERSON = 'P';
@@ -131,6 +131,9 @@ public class BmoFlexConfig extends BmObject implements Serializable {
 		statusReconciled = setField("statusreconciled", "1", "Conciliado?", 8, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 		statusRevision = setField("statusrevision", "1", "En Revisión?", 8, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
 		requiredPeriodFiscal = setField("requiredperiodfiscal", "0", "Requiere Periodo Operativo?", 8, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+		
+		// tipo creditos
+		creditByLocation = setField("creditbylocation", "", "Créditos x Ubicación", 20, Types.INTEGER, true, BmFieldType.ID, false);
 
 		// ------ Control Presupuestal ------
 		enableWorkBudgetItem = setField("enableworkbudgetitem", "", "Control Presupuestal?", 5, Types.INTEGER, false, BmFieldType.BOOLEAN, false);
@@ -701,5 +704,13 @@ public class BmoFlexConfig extends BmObject implements Serializable {
 
 	public void setMobilOrMailCust(BmField mobilOrMailCust) {
 		this.mobilOrMailCust = mobilOrMailCust;
+	}
+
+	public BmField getCreditByLocation() {
+		return creditByLocation;
+	}
+
+	public void setCreditByLocation(BmField creditByLocation) {
+		this.creditByLocation = creditByLocation;
 	}
 }

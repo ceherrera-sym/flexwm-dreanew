@@ -162,7 +162,7 @@ permissionPrint = "oncopy='return false' oncut='return false' onpaste='return fa
 		
 		<li>
 			<span style="text-decoration: underline;"><b>DATOS DE IDENTIFICACI&Oacute;N DEL CLIENTE:</b></span><br><br>
-			Atendiendo a lo dispuesto en el Articulo 18 Fraccion I, II, II, de la LFPIORPI:<br><br>
+			Atendiendo a lo dispuesto en el Art&iacute;culo 18 Fracci&oacute;n I, II, III, de la LFPIORPI:<br><br>
 			<ul>
 				<li>
 					Identificaci&oacute;n de clientes y usuarios bas&aacute;ndose en credenciales o documentaci&oacute;n oficial.

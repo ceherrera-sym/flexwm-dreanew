@@ -406,7 +406,7 @@
 			<%
 				BmoOrderStaff bmoOrderStaff = new BmoOrderStaff();
 				BmFilter filterOrderStaff = new BmFilter();
-				filterOrderStaff.setValueFilter(bmoOrderStaff.getKind(), bmoOrderStaff.getOrderId(), bmoOrder.getId());
+				filterOrderStaff.setValueFilter(bmoOrderStaff.getKind(), bmoOrderStaff.getOrderId(), -1);
 				Iterator<BmObject> listOrderStaff = new PmOrderStaff(sFParams).list(filterOrderStaff).iterator();
 				int iOStaff = 1;
 				while (listOrderStaff.hasNext()) {
@@ -523,7 +523,7 @@
 			<%
 				BmoOrderEquipment bmoOrderEquipment = new BmoOrderEquipment();
 				BmFilter filterOrderEquipment = new BmFilter();
-				filterOrderEquipment.setValueFilter(bmoOrderEquipment.getKind(), bmoOrderEquipment.getOrderId(),bmoOrder.getId());
+				filterOrderEquipment.setValueFilter(bmoOrderEquipment.getKind(), bmoOrderEquipment.getOrderId(),-1);
 				Iterator<BmObject> listOrderEquipment = new PmOrderEquipment(sFParams).list(filterOrderEquipment).iterator();
 				int iOEquipment = 1;
 				while (listOrderEquipment.hasNext()) {

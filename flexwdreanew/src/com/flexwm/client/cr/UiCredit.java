@@ -28,9 +28,11 @@ import com.flexwm.shared.op.BmoOrderType;
 import com.flexwm.shared.cm.BmoCustomer;
 import com.flexwm.shared.cm.BmoRegion;
 import com.symgae.shared.sf.BmoCompany;
+import com.symgae.shared.sf.BmoLocation;
 import com.symgae.shared.sf.BmoUser;
 import com.symgae.shared.sf.BmoProfileUser;
 import com.flexwm.shared.wf.BmoWFlowType;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -103,7 +105,20 @@ public class UiCredit extends UiList {
 
 		if (isMaster()) {
 			if (!isMobile()) {
-				addFilterSuggestBox(new UiSuggestBox(new BmoRegion()), new BmoRegion(), bmoCredit.getBmoCustomer().getRegionId());
+				if (((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+//						try {
+//							bmoCredit.getLocationId().setValue(getUiParams().getSFParams().getLoginInfo().getBmoUser().getLocationId().toInteger());
+//						} catch (BmException e) {
+//							showErrorMessage(this.getClass().getName() + "-postShow(): ERROR " + e.toString());
+//						}	
+						
+					UiListBox locationFilterListBox = new UiListBox(getUiParams(), new BmoLocation());
+					if (getSFParams().isAllData(new BmoLocation().getProgramCode())) {
+						addFilterListBox(locationFilterListBox, bmoCredit.getBmoLocation());
+						locationFilterListBox.setEnabled(true);
+					}
+				}else
+					addFilterSuggestBox(new UiSuggestBox(new BmoRegion()), new BmoRegion(), bmoCredit.getBmoCustomer().getRegionId());
 				addDateRangeFilterListBox(bmoCredit.getStartDate());
 				addStaticFilterListBox(new UiListBox(getUiParams(), bmoCredit.getStatus()), bmoCredit, bmoCredit.getStatus());
 				addStaticFilterListBox(new UiListBox(getUiParams(), bmoCredit.getPaymentStatus()), bmoCredit, bmoCredit.getPaymentStatus());
@@ -153,6 +168,7 @@ public class UiCredit extends UiList {
 		UiListBox companyListBox = new UiListBox(getUiParams(), new BmoCompany());
 		UiListBox currencyListBox = new UiListBox(getUiParams(), new BmoCurrency());
 		TextBox currencyParityTextBox = new TextBox();
+		UiListBox locationIdListBox = new UiListBox(getUiParams());
 
 		//Renovacion
 		private Button renewCreditButton = new Button("ACEPTAR");
@@ -200,12 +216,12 @@ public class UiCredit extends UiList {
 			BmoUser bmoUser = new BmoUser();
 			BmoProfileUser bmoProfileUser = new BmoProfileUser();
 			BmFilter filterSalesmen = new BmFilter();
-			int salesGroupId = ((BmoFlexConfig)getUiParams().getSFParams().getBmoAppConfig()).getSalesProfileId().toInteger();
+			int salesProfileId = ((BmoFlexConfig)getUiParams().getSFParams().getBmoAppConfig()).getSalesProfileId().toInteger();
 			filterSalesmen.setInFilter(bmoProfileUser.getKind(), 
 					bmoUser.getIdFieldName(),
 					bmoProfileUser.getUserId().getName(),
 					bmoProfileUser.getProfileId().getName(),
-					"" + salesGroupId);	
+					"" + salesProfileId);
 			userSuggestBox.addFilter(filterSalesmen);
 
 			// Filtrar por vendedores activos
@@ -221,7 +237,9 @@ public class UiCredit extends UiList {
 					renewCreditAction();
 				}
 			});	
-
+			
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() )
+				locationIdListBox = new UiListBox(getUiParams(), new BmoLocation());
 
 			renewCreditCloseDialogButton.setStyleName("formCloseButton");
 			renewCreditCloseDialogButton.addClickHandler(new ClickHandler() {
@@ -293,40 +311,52 @@ public class UiCredit extends UiList {
 					// Busca Empresa seleccionada por default
 					if (getUiParams().getSFParams().getSelectedCompanyId() > 0)
 						bmoCredit.getCompanyId().setValue(getUiParams().getSFParams().getSelectedCompanyId());
-
+					
+					if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+						bmoCredit.getLocationId().setValue(getUiParams().getSFParams().getLoginInfo().getBmoUser().getLocationId().toInteger());
+					}
 				} catch (BmException e) {
 					showErrorMessage(this.getClass().getName() + "-populateFields(): ERROR " + e.toString());
 				}			
 			}
-
+			
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+				// Asignar filtros
+				setCreditTypeListBoxFilters(bmoCredit.getLocationId().toInteger());
+				setCustomersListBoxFilters(bmoCredit.getLocationId().toInteger());
+				setGuaranteeListBoxFilters(bmoCredit.getLocationId().toInteger());
+				setUserListBoxFilters(bmoCredit.getLocationId().toInteger());
+			}
 			UiCustomerForm uiCustomerForm = new UiCustomer(getUiParams()).getUiCustomerForm();
 
 			formFlexTable.addSectionLabel(1, 0, generalSection, 2);
-			formFlexTable.addFieldReadOnly(2, 0, codeTextBox, bmoCredit.getCode());
-			formFlexTable.addField(3, 0, orderTypeListBox, bmoCredit.getOrderTypeId());
-			formFlexTable.addField(4, 0, wFlowTypeListBox, bmoCredit.getWFlowTypeId());
-			formFlexTable.addField(5, 0, creditTypeListBox, bmoCredit.getCreditTypeId());
-			formFlexTable.addField(6, 0, customerSuggestBox, bmoCredit.getCustomerId(), uiCustomerForm, new BmoCustomer());
-			formFlexTable.addField(7, 0, userSuggestBox, bmoCredit.getSalesUserId());
-			formFlexTable.addField(8, 0, startDateBox, bmoCredit.getStartDate());
-			formFlexTable.addField(9, 0, commentsTextArea, bmoCredit.getComments());
-			formFlexTable.addField(10, 0, bondTextBox, bmoCredit.getBond());
-			formFlexTable.addField(11, 0, amountTextBox, bmoCredit.getAmount());
-			formFlexTable.addLabelField(12, 0, bmoCredit.getBmoCreditType().getGuarantees());
-			formFlexTable.addField(13, 0, guaranteeOneSuggestBox, bmoCredit.getGuaranteeOneId(), uiCustomerForm, new BmoCustomer());
-			formFlexTable.addField(14, 0, guaranteeTwoSuggestBox, bmoCredit.getGuaranteeTwoId(), uiCustomerForm, new BmoCustomer());
-			formFlexTable.addField(15, 0, collectorUserSuggestBox, bmoCredit.getCollectorUserId());
-			formFlexTable.addField(16, 0, currencyListBox, bmoCredit.getCurrencyId());	
-			formFlexTable.addField(17, 0, currencyParityTextBox, bmoCredit.getCurrencyParity());
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() )
+				formFlexTable.addField(2, 0, locationIdListBox, bmoCredit.getLocationId());
+			formFlexTable.addFieldReadOnly(3, 0, codeTextBox, bmoCredit.getCode());
+			formFlexTable.addField(4, 0, orderTypeListBox, bmoCredit.getOrderTypeId());
+			formFlexTable.addField(5, 0, wFlowTypeListBox, bmoCredit.getWFlowTypeId());
+			formFlexTable.addField(6, 0, creditTypeListBox, bmoCredit.getCreditTypeId());
+			formFlexTable.addField(7, 0, customerSuggestBox, bmoCredit.getCustomerId(), uiCustomerForm, new BmoCustomer());
+			formFlexTable.addField(8, 0, userSuggestBox, bmoCredit.getSalesUserId());
+			formFlexTable.addField(9, 0, startDateBox, bmoCredit.getStartDate());
+			formFlexTable.addField(10, 0, commentsTextArea, bmoCredit.getComments());
+			formFlexTable.addField(11, 0, bondTextBox, bmoCredit.getBond());
+			formFlexTable.addField(12, 0, amountTextBox, bmoCredit.getAmount());
+			formFlexTable.addLabelField(13, 0, bmoCredit.getBmoCreditType().getGuarantees());
+			formFlexTable.addField(14, 0, guaranteeOneSuggestBox, bmoCredit.getGuaranteeOneId(), uiCustomerForm, new BmoCustomer());
+			formFlexTable.addField(15, 0, guaranteeTwoSuggestBox, bmoCredit.getGuaranteeTwoId(), uiCustomerForm, new BmoCustomer());
+			formFlexTable.addField(16, 0, collectorUserSuggestBox, bmoCredit.getCollectorUserId());
+			formFlexTable.addField(17, 0, currencyListBox, bmoCredit.getCurrencyId());	
+			formFlexTable.addField(18, 0, currencyParityTextBox, bmoCredit.getCurrencyParity());
+			formFlexTable.addField(19, 0, companyListBox, bmoCredit.getCompanyId());
 			populateParityFromCurrency(currencyListBox.getSelectedId());
-			formFlexTable.addField(18, 0, companyListBox, bmoCredit.getCompanyId());
-			formFlexTable.addField(19, 0, tagBox, bmoCredit.getTags());
-			formFlexTable.addField(20, 0, statusListBox, bmoCredit.getStatus());
+			formFlexTable.addField(20, 0, tagBox, bmoCredit.getTags());
+			formFlexTable.addField(21, 0, statusListBox, bmoCredit.getStatus());
 
 			if (!newRecord) {
 
 				if (bmoCredit.getStatus().equals(BmoCredit.STATUS_FINISHED))
-					formFlexTable.addButtonCell(21, 0, renewCreditDialogButton);
+					formFlexTable.addButtonCell(22, 0, renewCreditDialogButton);
 
 				formFlexTable.hideField(guaranteeOneSuggestBox);
 				formFlexTable.hideField(guaranteeTwoSuggestBox);
@@ -357,6 +387,8 @@ public class UiCredit extends UiList {
 			if (event.getSource() == statusListBox) {
 				update("Desea cambiar el estatus del crédito?");		
 			} else if (event.getSource() == creditTypeListBox) {
+				clearTypeCredit(); // Limpiar
+				
 				BmoCreditType bmoCreditType = (BmoCreditType)creditTypeListBox.getSelectedBmObject();
 				if (!(bmoCredit.getCurrencyParity().toDouble() > 0))
 					getParityFromCurrency(currencyListBox.getSelectedId());
@@ -367,8 +399,19 @@ public class UiCredit extends UiList {
 				} else if (event.getSource() == currencyListBox) {
 					getParityFromCurrency(currencyListBox.getSelectedId());
 				} else {
-					// Limpiar
-					clearTypeCredit();
+					clearTypeCredit(); // Limpiar
+				}
+			} else if (event.getSource() == locationIdListBox) {
+				if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+					clearTypeCredit(); // Limpiar
+					formFlexTable.hideField(bmoCredit.getBmoCreditType().getGuarantees());
+					BmoLocation bmoLocation = (BmoLocation)locationIdListBox.getSelectedBmObject();
+					GWT.log("Ubicacion seleccionada:" + bmoLocation.getName().toString());
+
+					populateCreditType(bmoLocation.getId());
+					populateCustomers(bmoLocation.getId());
+					populateGuarantee(bmoLocation.getId());
+					populateUsers(bmoLocation.getId());
 				}
 			}
 		}
@@ -379,18 +422,24 @@ public class UiCredit extends UiList {
 			if (uiSuggestBox == customerSuggestBox) {
 				// Asignar promotor del cliente
 				BmoCustomer bmoCustomer = (BmoCustomer)customerSuggestBox.getSelectedBmObject();
-				try {
-					if(newRecord)
-					bmoCredit.getSalesUserId().setValue(bmoCustomer.getSalesmanId().toInteger());
-					else
-						if(bmoCustomer.getId()>0) {
-							changeCustomers();
-						}
-				
-				} catch (BmException e) {
-					showErrorMessage(this.getClass().getName() + "-formSuggestionSelectionChange(): ERROR " + e.toString());
+				if (bmoCustomer != null) {
+					try {
+						if (newRecord) {
+							bmoCredit.getSalesUserId().setValue(bmoCustomer.getSalesmanId().toInteger());
+							userSuggestBox.setSelectedId("" + bmoCustomer.getSalesmanId().toInteger());
+							userSuggestBox.setSelectedBmObject(bmoCustomer.getBmoUser());
+							userSuggestBox.setText(((BmoUser)userSuggestBox.getSelectedBmObject()).getFirstname().toString() + 
+												" : " + ((BmoUser)userSuggestBox.getSelectedBmObject()).getFatherlastname().toString());
+						} else
+							if (bmoCustomer.getId() > 0) {
+								changeCustomers();
+							}
+	
+					} catch (BmException e) {
+						showErrorMessage(this.getClass().getName() + "-formSuggestionSelectionChange() - customerSuggestBox: ERROR " + e.toString());
+					}
 				}
-				populateUser(bmoCustomer.getSalesmanId().toInteger(), bmoCustomer.getBmoUser().getCode().toString());
+//				populateUser(bmoCustomer.getSalesmanId().toInteger(), bmoCustomer.getBmoUser().getCode().toString());
 			}
 			if (uiSuggestBox == userSuggestBox) {
 				if (!newRecord) {
@@ -400,28 +449,116 @@ public class UiCredit extends UiList {
 				}
 			}
 		}
-
-//		 Actualiza combo de almacenes
-		private void populateUser(int userId, String userCode) {
-			userSuggestBox.clear();
-			userSuggestBox.setSelectedId(userId);
-			userSuggestBox.setText("" + userCode);
-		}
-
-//		private void populateCustomer (int customerId, String customerCode){
-//			customerSuggestBox.clear();
-//			customerSuggestBox.setSelectedId(customerId);
-//			customerSuggestBox.setText("" + customerCode);
-//		}
-//		
+		
 		private void clearTypeCredit() {
 			// Limpiar/ocultar monto, avales
 			amountTextBox.setText("");
-			guaranteeOneSuggestBox.clear();
-			guaranteeTwoSuggestBox.clear();
+			guaranteeOneSuggestBox.reset();
+			guaranteeTwoSuggestBox.reset();
 			formFlexTable.hideField(bmoCredit.getBmoCreditType().getGuarantees());
 			formFlexTable.hideField(bmoCredit.getGuaranteeOneId());
 			formFlexTable.hideField(bmoCredit.getGuaranteeTwoId());
+		}
+
+		// Actualiza combo de tipos de credito por UBICACION
+		private void populateCreditType(int locationId) {
+			creditTypeListBox.clear();
+			creditTypeListBox.clearFilters();
+			setCreditTypeListBoxFilters(locationId);
+			creditTypeListBox.populate(bmoCredit.getCreditTypeId());
+		}
+
+		// Asigna filtros al listado de tipos de credito por UBICACION
+		private void setCreditTypeListBoxFilters(int locationId) {
+			BmoCreditType bmoCreditType = new BmoCreditType();
+
+			if (locationId > 0) {
+				BmFilter bmFilterByLocation = new BmFilter();
+				bmFilterByLocation.setValueFilter(bmoCreditType.getKind(), bmoCreditType.getLocationId(), locationId);
+				creditTypeListBox.addBmFilter(bmFilterByLocation);
+			} else {
+				BmFilter bmFilter = new BmFilter();
+				bmFilter.setValueFilter(bmoCreditType.getKind(), bmoCreditType.getIdField(), "-1");
+				creditTypeListBox.addBmFilter(bmFilter);
+			}
+		}
+		
+		// Actualiza combo de tipos de credito por UBICACION
+		private void populateCustomers(int locationId) {
+			customerSuggestBox.clear();
+			setCustomersListBoxFilters(locationId);
+		}
+
+		// Asigna filtros al listado de tipos de credito por UBICACION
+		private void setCustomersListBoxFilters(int locationId) {
+			BmoCustomer bmoCustomer = new BmoCustomer();
+			if (locationId > 0) {
+				BmFilter bmFilterByLocation = new BmFilter();
+				bmFilterByLocation.setValueFilter(bmoCustomer.getKind(), bmoCustomer.getLocationId(), locationId);
+				customerSuggestBox.addFilter(bmFilterByLocation);
+			} else {
+				BmFilter bmFilter = new BmFilter();
+				bmFilter.setValueFilter(bmoCustomer.getKind(), bmoCustomer.getLocationId(), "-1");
+				customerSuggestBox.addFilter(bmFilter);
+			}
+		}
+		
+		// Actualiza aval 1 por UBICACION
+		private void populateGuarantee(int locationId) {
+			guaranteeOneSuggestBox.clear();
+			guaranteeTwoSuggestBox.clear();
+			setGuaranteeListBoxFilters(locationId);
+		}
+
+		// Asigna filtros al listado de aval 1 por UBICACION
+		private void setGuaranteeListBoxFilters(int locationId) {
+			BmoCustomer bmoCustomer = new BmoCustomer();
+			if (locationId > 0) {
+				BmFilter bmFilterByLocation = new BmFilter();
+				bmFilterByLocation.setValueFilter(bmoCustomer.getKind(), bmoCustomer.getLocationId(), locationId);
+				guaranteeOneSuggestBox.addFilter(bmFilterByLocation);
+				guaranteeTwoSuggestBox.addFilter(bmFilterByLocation);
+			} else {
+				BmFilter bmFilter = new BmFilter();
+				bmFilter.setValueFilter(bmoCustomer.getKind(), bmoCustomer.getLocationId(), "-1");
+				guaranteeOneSuggestBox.addFilter(bmFilter);
+				guaranteeTwoSuggestBox.addFilter(bmFilter);
+			}
+		}
+		
+		
+		// Actualiza combo de usuarios por UBICACION
+		private void populateUsers(int locationId) {
+			userSuggestBox.clear();
+			setUserListBoxFilters(locationId);
+		}
+		
+		// Filtrar usuarios por perfil de vendedores 
+		private void setUserListBoxFilters(int locationId) {
+			int salesProfileId = ((BmoFlexConfig)getUiParams().getSFParams().getBmoAppConfig()).getSalesProfileId().toInteger();
+
+			BmoUser bmoUser = new BmoUser();
+			BmoProfileUser bmoProfileUser = new BmoProfileUser();
+			
+			BmFilter filterSalesmen = new BmFilter();
+			filterSalesmen.setInFilter(bmoProfileUser.getKind(), 
+					bmoUser.getIdFieldName(),
+					bmoProfileUser.getUserId().getName(),
+					bmoProfileUser.getProfileId().getName(),
+					"" + salesProfileId);	
+			userSuggestBox.addFilter(filterSalesmen);
+
+			// Filtrar por vendedores activos
+			BmFilter filterSalesmenActive = new BmFilter();
+			filterSalesmenActive.setValueFilter(bmoUser.getKind(), bmoUser.getStatus(), "" + BmoUser.STATUS_ACTIVE);
+			userSuggestBox.addFilter(filterSalesmenActive);
+			
+			// Filtrar por vendedores de la ubicacion
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+				BmFilter filterByLocation= new BmFilter();
+				filterByLocation.setValueFilter(bmoUser.getKind(), bmoUser.getLocationId(), "" + locationId);
+				userSuggestBox.addFilter(filterByLocation);
+			}
 		}
 
 		@Override
@@ -445,7 +582,8 @@ public class UiCredit extends UiList {
 			bmoCredit.getCompanyId().setValue(companyListBox.getSelectedId());
 			bmoCredit.getCurrencyId().setValue(currencyListBox.getSelectedId());
 			bmoCredit.getCurrencyParity().setValue(currencyParityTextBox.getText());
-
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) 
+				bmoCredit.getLocationId().setValue(locationIdListBox.getSelectedId());
 			return bmoCredit;
 		}
 
@@ -455,7 +593,7 @@ public class UiCredit extends UiList {
 			amountTextBox.setText("" + bmoCreditType.getCreditLimit().toDouble());
 
 			// mostrar numero de avales
-			formFlexTable.addLabelField(12, 0, bmoCreditType.getGuarantees());
+			formFlexTable.addLabelField(13, 0, bmoCreditType.getGuarantees());
 
 			// ocultar/mostrar avales
 			if (newRecord) {
@@ -498,6 +636,7 @@ public class UiCredit extends UiList {
 			startDateBox.setEnabled(false);
 			amountTextBox.setEnabled(false);
 			customerSuggestBox.setEnabled(false);
+			locationIdListBox.setEnabled(false);
 
 			if (getSFParams().hasSpecialAccess(BmoCredit.ACCESS_CHANGECUSTOMER)) {
 				customerSuggestBox.setEnabled(true);
@@ -534,7 +673,7 @@ public class UiCredit extends UiList {
 				if (getSFParams().hasSpecialAccess(BmoCredit.ACCESS_CHANGEUSER)) {
 					userSuggestBox.setEnabled(true);
 				}
-				
+
 				if (getSFParams().hasSpecialAccess(BmoCredit.ACCESS_CHANGESTATUS)) 
 					statusListBox.setEnabled(true);
 			}
@@ -543,12 +682,26 @@ public class UiCredit extends UiList {
 				currencyParityTextBox.setEnabled(true);
 			else	
 				currencyParityTextBox.setEnabled(false);
+			
+			// Validar si tiene permiso de propios, en la ubicacion
+			if (((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean()) {
+				if (getSFParams().restrictData(new BmoLocation().getProgramCode())) {
+					locationIdListBox.setEnabled(false);
+				} else {
+					locationIdListBox.setEnabled(true);
+				}
+			}
+
+			// Si hay seleccion default de empresa, deshabilitar combo
+			if (getUiParams().getSFParams().getSelectedCompanyId() > 0)
+				companyListBox.setEnabled(false);	
 		}
 
 		@Override
 		public void close() {
-			UiCredit uiCreditList = new UiCredit(getUiParams());
-			uiCreditList.show();
+			if (deleted) new UiCredit(getUiParams()).show();
+//			UiCredit uiCreditList = new UiCredit(getUiParams());
+//			uiCreditList.show();
 		}
 
 		@Override
@@ -610,7 +763,7 @@ public class UiCredit extends UiList {
 						} catch (BmException e) {						
 							showSystemMessage("Existen Errores al buscar el lunes de la semana " + result.errorsToString());
 						}			
-						formFlexTable.addField(8, 0, startDateBox, bmoCredit.getStartDate());
+						formFlexTable.addField(9, 0, startDateBox, bmoCredit.getStartDate());
 					}
 				}
 			};
@@ -751,8 +904,8 @@ public class UiCredit extends UiList {
 				showErrorMessage(this.getClass().getName() + "-changeDateCredit() ERROR: " + e.toString());
 			}
 		}
-		
-		
+
+
 		//lel customer change
 		public void changeCustomers() {
 			String values = bmoCredit.getId() + "|" + customerSuggestBox.getSelectedId();
@@ -784,8 +937,8 @@ public class UiCredit extends UiList {
 				showErrorMessage(this.getClass().getName() + "-changeCustomers() ERROR: " + e.toString());
 			}
 		}
-		
-		
+
+
 		//Obtener la paridad de la moneda
 		public void populateParityFromCurrency(String currencyId) {			
 			getParityFromCurrency(currencyId);

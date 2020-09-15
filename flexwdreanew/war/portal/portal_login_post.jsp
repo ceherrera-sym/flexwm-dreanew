@@ -29,6 +29,9 @@
 		loginInfo.setEmailAddress(getServletContext().getInitParameter("systememail"));
 		SFParamsServiceImpl.fillSFParamsFromWebXML(sFParams, config.getServletContext());
 		SFParamsServiceImpl.paramsFactory(sFParams, loginInfo, config.getServletContext());	
+		//Asigna parametros de sesion
+		session.setAttribute("sfparamPortal", sFParams);
+		session.setAttribute("loginInf", loginInfo);
 		
 		String sql = "";
 		String user = request.getParameter("user");
@@ -43,26 +46,21 @@
         pmConn.open();
         
         pmConn.doFetch(sql);
-    if(pmConn.next()){
-    	
-        	
-        	 
-        	  if(pmConn.getString("cust_customercategory").equals("E")){
-        		  session.setAttribute("Id", pmConn.getString("cust_customerid"));
-        		 
-        		  response.sendRedirect("portal_start.jsp?program=racc") ;//+ "?Id=" + pmConn.getString("cust_customerid"));
-        		  
-        	  }else{
-        		  
-        		  response.sendRedirect("portal_login.jsp?user=" + user + "&msg=1");
-        	  }
-        	 
-     }else {
-        	 response.sendRedirect("portal_login.jsp?msg=2");
-         }
-		
-		pmConn.close();
-			
+    //Si encuantra un usuario comienza las validaciones
+	    if(pmConn.next()){          	 
+	    	if(pmConn.getString("cust_customercategory").equals("E")){
+	        	session.setAttribute("Id", pmConn.getString("cust_customerid"));       		 
+	        	response.sendRedirect("portal_start.jsp?program=racc") ;
+	        		  
+	       	}else{    
+	       		//Direcciona a login con numero de ensaje
+	        	response.sendRedirect("portal_login.jsp?user=" + user + "&msg=1");
+	        }
+	        	 
+	    } else {
+    		response.sendRedirect("portal_login.jsp?msg=2");
+   	 	}		
+		pmConn.close();			
 		
 	} catch (Exception e) {
 %>
@@ -70,6 +68,6 @@
 			<br>
 			Vuelve a ingresar haciendo click <a href="portal_login.jsp">aqui</a>.
 			
-  <%}%>
+<%	} %>
 
 

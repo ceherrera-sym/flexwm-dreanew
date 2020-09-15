@@ -33,8 +33,8 @@
    	String sql = "", where = "";
    	String startDate = "", endDate = "", startDateGroup = "";
    	String creditStatus = "", orderStatus = "";
-   	String filters = "",creditTypeId = "";
-   	int  customerId = 0, salesmanId = 0, regionId = 0; 	
+   	String filters = "",creditTypeId = "", amountStart = "", amountEnd = "";
+   	int  customerId = 0, salesmanId = 0, locationId = 0; 	
    	int programId = 0; 
    	
     BmoCredit bmoCredit = new BmoCredit();
@@ -49,9 +49,10 @@
    	if (request.getParameter("cred_startdate") != null) startDate = request.getParameter("cred_startdate");
    	if (request.getParameter("cred_enddate") != null) endDate = request.getParameter("cred_enddate");   		
    	if (request.getParameter("cred_status") != null) creditStatus = request.getParameter("cred_status");
-   	if (request.getParameter("cust_regionid") != null) regionId = Integer.parseInt(request.getParameter("cust_regionid"));
+   	if (request.getParameter("cred_locationid") != null) locationId = Integer.parseInt(request.getParameter("cred_locationid"));
    	if (request.getParameter("orde_status") != null) orderStatus = request.getParameter("orde_status");
-   	
+   	if (request.getParameter("cred_amountstart") != null) amountStart = request.getParameter("cred_amountstart");
+   	if (request.getParameter("cred_amountend") != null) amountEnd = request.getParameter("cred_amountend");
    	//Filtros   	
 //    	if (creditTypeId > 0) {
 //         where += " AND cred_credittypeid = " + creditTypeId;
@@ -82,9 +83,35 @@
         filters += "<i>Usuario: </i>" + request.getParameter("salesUserIdLabel") + ", ";
     }
     
-    if (regionId > 0) {
- 		where += " AND cust_regionid = " + regionId;
-		filters += "<i>Zona: </i>" + request.getParameter("cust_regionidLabel") + ", ";
+    if (locationId > 0) {
+ 		where += " AND cred_locationid = " + locationId;
+		filters += "<i>Ubicaci&oacute;n: </i>" + request.getParameter("cred_locationidLabel") + ", ";
+	}
+    
+    if (!amountStart.equals("") || !amountEnd.equals("")) {
+		double amountStartTmp = 0, amountEndTmp = 0;
+
+		try {
+			amountStartTmp = Double.parseDouble(amountStart);
+		} catch (Exception e) {
+			amountStartTmp = -1;
+		}
+		
+		try {
+			amountEndTmp = Double.parseDouble(amountEnd);
+		} catch (Exception e) {
+			amountEndTmp = -1;
+		}
+		
+		if (amountStartTmp > 0 ) {
+			where += " AND cred_amount >= " + amountStartTmp;
+	        filters += "<i>R. Monto Inicial: >= </i>" + amountStartTmp + ", ";
+		}
+		
+		if (amountEndTmp > 0) {
+			where += " AND cred_amount <= " + amountEndTmp + "";
+	        filters += "<i>R. Monto Final: <= </i>" + amountEndTmp + ", ";
+		} 
 	}
    	
     if (!startDate.equals("")) {

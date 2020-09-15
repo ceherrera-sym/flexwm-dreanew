@@ -29,11 +29,15 @@ import com.symgae.shared.BmSearchField;
 public class BmoCreditType extends BmObject implements Serializable{
 	private static final long serialVersionUID = 1L;
 
-	private BmField name, description, deadLine, type, interest, creditLimit, guarantees, failure;
+	private BmField name, description, deadLine, type, interest, creditLimit, guarantees, failure, locationId, amountFailure,
+	paymentDayMonday, paymentDayTuesday, paymentDayWednesday, paymentDayThursday, paymentDayFriday, paymentDaySaturday, paymentDaySunday;
 
+	public static final char TYPE_DAILY= 'D';
 	public static final char TYPE_WEEKLY = 'W';
 	public static final char TYPE_TWOWEEKS = 'T';
 	public static final char TYPE_MONTHLY = 'M';
+	
+	public static String ACCESS_CHANGEAMOUNTFAILURE= "TCREDCHAF";
 
 	public BmoCreditType(){
 		super("com.flexwm.server.cr.PmCreditType", "credittypes", "credittypeid", "CRTY", "Tipo de Crédito");
@@ -42,18 +46,33 @@ public class BmoCreditType extends BmObject implements Serializable{
 		name = setField("name", "", "Nombre", 30, Types.VARCHAR, false, BmFieldType.STRING, false);
 		description = setField("description", "", "Descripción", 255, Types.VARCHAR, true, BmFieldType.STRING, false);
 
-		deadLine = setField("deadline", "", "Plazo", 11, Types.INTEGER, true, BmFieldType.NUMBER, false);		
+		deadLine = setField("deadline", "", "Plazo", 11, Types.INTEGER, false, BmFieldType.NUMBER, false);		
 		interest = setField("interest", "", "Interes", 20, Types.DOUBLE, false, BmFieldType.NUMBER, false);
-		creditLimit = setField("creditlimit", "", "Limite Crédito", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
+		creditLimit = setField("creditlimit", "", "Limite Crédito", 20, Types.DOUBLE, false, BmFieldType.CURRENCY, false);
 		guarantees = setField("guarantees", "", "No.Avales", 11, Types.INTEGER, true, BmFieldType.NUMBER, false);
 		failure = setField("failure", "", "No.Fallos", 11, Types.INTEGER, true, BmFieldType.NUMBER, false);
 
 		type = setField("type", "", "Tipo", 1, Types.CHAR, false, BmFieldType.OPTIONS, false);
 		type.setOptionList(new ArrayList<BmFieldOption>(Arrays.asList(
-				new BmFieldOption(TYPE_WEEKLY, "Semanal", "./icons/term_type_weekly.png"),
-				new BmFieldOption(TYPE_TWOWEEKS, "Quincenal", "./icons/term_type_twoweeks.png"),
-				new BmFieldOption(TYPE_MONTHLY, "Mensual", "./icons/term_type_monthly.png")				
+				new BmFieldOption(TYPE_DAILY, "Diario", "./icons/day.png"),
+				new BmFieldOption(TYPE_WEEKLY, "Semanal", "./icons/week.png")
+//				new BmFieldOption(TYPE_TWOWEEKS, "Quincenal", "./icons/week2.png"),
+//				new BmFieldOption(TYPE_MONTHLY, "Mensual", "./icons/month.png")				
 				)));		
+		
+		amountFailure = setField("amountFailure", "", "Monto Falla", 20, Types.DOUBLE, true, BmFieldType.CURRENCY, false);
+		locationId = setField("locationid", "", "Ubicación", 20, Types.INTEGER, true, BmFieldType.ID, false);
+		
+		// Esta funcionalidad esta desarrollada para SOLO TIPO DIARIO (para daCredito), ya que cobi no usa creditos diarios
+		// deberia estar en todos los tipos, pero por urgencia solo es tipo diario
+		paymentDayMonday = setField("paymentdaymonday", "1", "Lunes", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+		paymentDayTuesday = setField("paymentdaytuesday", "1", "Martes", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+		paymentDayWednesday = setField("paymentdaywednesday", "1", "Miércoles", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+		paymentDayThursday = setField("paymentdaythursday", "1", "Jueves", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+		paymentDayFriday = setField("paymentdayFriday", "1", "Viernes", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+		paymentDaySaturday = setField("paymentdaysaturday", "", "Sábado", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+		paymentDaySunday = setField("paymentdaysunday", "", "Domingo", 5, Types.INTEGER, true, BmFieldType.BOOLEAN, false);
+
 	}
 
 	@Override
@@ -73,6 +92,16 @@ public class BmoCreditType extends BmObject implements Serializable{
 				new BmSearchField(getName()),
 				new BmSearchField(getDescription())));
 	}
+	
+	@Override
+	public ArrayList<BmField> getListBoxFieldList() {
+		return new ArrayList<BmField>(Arrays.asList(
+				getName(),
+				getDeadLine(),
+				getInterest(),
+				getType()
+				));
+	}	
 
 	@Override
 	public ArrayList<BmOrder> getOrderFields() {
@@ -142,4 +171,77 @@ public class BmoCreditType extends BmObject implements Serializable{
 	public void setFailure(BmField failure) {
 		this.failure = failure;
 	}
+
+	public BmField getLocationId() {
+		return locationId;
+	}
+
+	public void setLocationId(BmField locationId) {
+		this.locationId = locationId;
+	}
+
+	public BmField getAmountFailure() {
+		return amountFailure;
+	}
+
+	public void setAmountFailure(BmField amountFailure) {
+		this.amountFailure = amountFailure;
+	}
+
+	public BmField getPaymentDayMonday() {
+		return paymentDayMonday;
+	}
+
+	public void setPaymentDayMonday(BmField paymentDayMonday) {
+		this.paymentDayMonday = paymentDayMonday;
+	}
+
+	public BmField getPaymentDayTuesday() {
+		return paymentDayTuesday;
+	}
+
+	public void setPaymentDayTuesday(BmField paymentDayTuesday) {
+		this.paymentDayTuesday = paymentDayTuesday;
+	}
+
+	public BmField getPaymentDayWednesday() {
+		return paymentDayWednesday;
+	}
+
+	public void setPaymentDayWednesday(BmField paymentDayWednesday) {
+		this.paymentDayWednesday = paymentDayWednesday;
+	}
+
+	public BmField getPaymentDayThursday() {
+		return paymentDayThursday;
+	}
+
+	public void setPaymentDayThursday(BmField paymentDayThursday) {
+		this.paymentDayThursday = paymentDayThursday;
+	}
+
+	public BmField getPaymentDayFriday() {
+		return paymentDayFriday;
+	}
+
+	public void setPaymentDayFriday(BmField paymentDayFriday) {
+		this.paymentDayFriday = paymentDayFriday;
+	}
+
+	public BmField getPaymentDaySaturday() {
+		return paymentDaySaturday;
+	}
+
+	public void setPaymentDaySaturday(BmField paymentDaySaturday) {
+		this.paymentDaySaturday = paymentDaySaturday;
+	}
+
+	public BmField getPaymentDaySunday() {
+		return paymentDaySunday;
+	}
+
+	public void setPaymentDaySunday(BmField paymentDaySunday) {
+		this.paymentDaySunday = paymentDaySunday;
+	}
+
 }

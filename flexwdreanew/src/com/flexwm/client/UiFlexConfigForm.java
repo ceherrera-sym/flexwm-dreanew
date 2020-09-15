@@ -143,6 +143,7 @@ public class UiFlexConfigForm extends UiForm {
 	CheckBox duplicateAddressCheckBox = new CheckBox();
 	TextBox duplicateAddressNumberTextBox = new TextBox();
 	CheckBox multiCompanyCheckBox = new CheckBox();
+	CheckBox creditByLocationCheckBox = new CheckBox();
 
 	protected ValueChangeHandler<Boolean> booleanChangeHandler;
 
@@ -226,9 +227,8 @@ public class UiFlexConfigForm extends UiForm {
 		formFlexTable.addField(i, 0, showOwmCustomerCheckBox, bmoFlexConfig.getShowOwnCustomer());	i++;
 		formFlexTable.addField(i, 0, duplicateAddressCheckBox, bmoFlexConfig.getDuplicateAddress());	i++;
 		formFlexTable.addField(i, 0, duplicateAddressNumberTextBox, bmoFlexConfig.getDuplicateAddressNumber());	i++;
+		formFlexTable.addField(i, 0, creditByLocationCheckBox, bmoFlexConfig.getCreditByLocation()); i++; // para tipo de pedido credito
 		
-		
-
 		//	ESTATUS DE OPORTUNIDADES	
 		FlowPanel oppocheckBoxPanel = new FlowPanel();
 		oppocheckBoxPanel.setWidth("100%");
@@ -397,6 +397,7 @@ public class UiFlexConfigForm extends UiForm {
 		bmoFlexConfig.getDuplicateAddressNumber().setValue(duplicateAddressNumberTextBox.getText());
 		bmoFlexConfig.getMultiCompany().setValue(multiCompanyCheckBox.getValue());
 		bmoFlexConfig.getMobilOrMailCust().setValue(mobilOrMailCustCheckBox.getValue());
+		bmoFlexConfig.getCreditByLocation().setValue(creditByLocationCheckBox.getValue());
 
 		return bmoFlexConfig;
 	}

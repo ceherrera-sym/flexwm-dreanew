@@ -11,6 +11,7 @@
 package com.flexwm.client.wf;
 
 import java.util.ArrayList;
+
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -32,9 +33,11 @@ import com.symgae.shared.BmObject;
 import com.symgae.shared.BmUpdateResult;
 import com.symgae.shared.GwtUtil;
 import com.symgae.shared.SFException;
+import com.symgae.shared.sf.BmoLocation;
 import com.symgae.shared.sf.BmoProfile;
 import com.symgae.shared.sf.BmoUser;
 import com.symgae.shared.sf.BmoProfileUser;
+import com.flexwm.shared.BmoFlexConfig;
 import com.flexwm.shared.fi.BmoCommission;
 import com.flexwm.shared.wf.BmoWFlow;
 import com.flexwm.shared.wf.BmoWFlowCategoryProfile;
@@ -104,6 +107,7 @@ public class UiWFlowUserLock extends UiList {
 		UiTextBox percetageCommisionTextBox = new UiTextBox();
 		UiListBox profileListBox = new UiListBox(getUiParams(), new BmoProfile());
 		CheckBox commissionCheckBox = new CheckBox();
+		UiListBox locationIdListBox = new UiListBox(getUiParams());
 
 		public UiWFlowUserForm(UiParams uiParams, int id) {
 			super(uiParams, new BmoWFlowUser(), id);
@@ -132,20 +136,31 @@ public class UiWFlowUserLock extends UiList {
 					);
 			profileListBox.addFilter(filterGroups);
 			
-			formFlexTable.addField(1, 0, profileListBox, bmoWFlowUser.getProfileId());
-			formFlexTable.addField(3, 0, autoDateCheckBox, bmoWFlowUser.getAutoDate());	
-			formFlexTable.addField(4, 0, lockStartDateTimeBox, bmoWFlowUser.getLockStart());
-			formFlexTable.addField(5, 0, lockEndDateTimeBox, bmoWFlowUser.getLockEnd());
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+				try {
+					bmoWFlowUser.getLocationId().setValue(getUiParams().getSFParams().getLoginInfo().getBmoUser().getLocationId().toInteger());
+				} catch (BmException e) {
+					showErrorMessage(this.getClass().getName() + "-populateFields() ERROR: " + e.toString());
+				}
+				locationIdListBox = new UiListBox(getUiParams(), new BmoLocation());
+				formFlexTable.addField(1, 0, locationIdListBox, bmoWFlowUser.getLocationId());
+			}
+			formFlexTable.addField(2, 0, profileListBox, bmoWFlowUser.getProfileId());
+			formFlexTable.addField(4, 0, autoDateCheckBox, bmoWFlowUser.getAutoDate());	
+			formFlexTable.addField(5, 0, lockStartDateTimeBox, bmoWFlowUser.getLockStart());
+			formFlexTable.addField(6, 0, lockEndDateTimeBox, bmoWFlowUser.getLockEnd());
 			
-			formFlexTable.addField(6, 0, lockCheckBox, bmoWFlowUser.getLockStatus());	
-			formFlexTable.addField(7, 0, assignStepsCheckBox, bmoWFlowUser.getAssignSteps());	
-			formFlexTable.addField(8, 0, commissionCheckBox, bmoWFlowUser.getCommission());
+			formFlexTable.addField(7, 0, lockCheckBox, bmoWFlowUser.getLockStatus());	
+			formFlexTable.addField(8, 0, assignStepsCheckBox, bmoWFlowUser.getAssignSteps());	
+			formFlexTable.addField(9, 0, commissionCheckBox, bmoWFlowUser.getCommission());
 
 			if (!newRecord && bmoWFlowUser.getLockStatus().toString().equals("" + BmoWFlowUser.LOCKSTATUS_LOCKED)) 
 				lockCheckBox.setValue(true);
 
 			statusEffect();
-			showUserList();
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+				showUserList(bmoWFlowUser.getLocationId().toInteger());
+			} else  showUserList(-1);
 		}
 		
 //		@Override
@@ -165,6 +180,8 @@ public class UiWFlowUserLock extends UiList {
 			bmoWFlowUser.getAutoDate().setValue(autoDateCheckBox.getValue());
 			bmoWFlowUser.getAssignSteps().setValue(assignStepsCheckBox.getValue());
 			bmoWFlowUser.getCommission().setValue(commissionCheckBox.getValue());
+			if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) 
+				bmoWFlowUser.getLocationId().setValue(locationIdListBox.getSelectedId());
 
 			if (lockCheckBox.getValue()) 
 				bmoWFlowUser.getLockStatus().setValue(BmoWFlowUser.LOCKSTATUS_LOCKED);
@@ -191,19 +208,39 @@ public class UiWFlowUserLock extends UiList {
 				lockStartDateTimeBox.setEnabled(true);
 				lockEndDateTimeBox.setEnabled(true);
 			}
+			
+			// Validar si tiene permiso de propios, en la ubicacion
+			if (((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean()) {
+				if (getSFParams().restrictData(new BmoLocation().getProgramCode())) {
+					locationIdListBox.setEnabled(false);
+				} else {
+					locationIdListBox.setEnabled(true);
+				}
+			}
 		}
 
 		@Override
 		public void formListChange(ChangeEvent event) {
 			if (event.getSource() == profileListBox) {
-				showUserList();
+				if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+					if (!locationIdListBox.getSelectedId().equalsIgnoreCase(""))
+						showUserList(Integer.parseInt(locationIdListBox.getSelectedId()));
+				} else {
+					showUserList(-1);
+				}
 				//Habilitar la comision
 				getCommisionGroup("" + profileListBox.getSelectedId());
 				statusEffect();
-			} 	
+			} else if (event.getSource() == locationIdListBox) {
+				if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+					BmoLocation bmoLocation = (BmoLocation)locationIdListBox.getSelectedBmObject();
+//					GWT.log("Ubicacion seleccionada:" + bmoLocation.getName().toString());
+					showUserList(bmoLocation.getId());
+				}
+			}
 		}
 
-		private void showUserList() {
+		private void showUserList(int locationId) {
 			BmoUser bmoUser = new BmoUser();		
 			if (!profileListBox.getSelectedId().equals("0")) {
 				// Actualizar lista de usuarios del grupo
@@ -223,12 +260,21 @@ public class UiWFlowUserLock extends UiList {
 				ArrayList<BmFilter> filters = new ArrayList<BmFilter>();
 				filters.add(userByGroup);
 				filters.add(activeUser);
+				
+				
+				if ( ((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean() ) {
+					if (locationId > 0) {
+						BmFilter byLocation = new BmFilter();
+						byLocation.setValueFilter(bmoUser.getKind(), bmoUser.getLocationId(), locationId);
+						filters.add(byLocation);
+					}
+				}
 
 				userListBox = new UiListBox(getUiParams(), bmoUser, filters);	
 
-				formFlexTable.addField(2, 0, userListBox, bmoWFlowUser.getUserId());
+				formFlexTable.addField(3, 0, userListBox, bmoWFlowUser.getUserId());
 			} else {
-				formFlexTable.addFieldEmpty(2, 0);
+				formFlexTable.addFieldEmpty(3, 0);
 			}
 		}
 
@@ -243,36 +289,39 @@ public class UiWFlowUserLock extends UiList {
 		//Si el grupo maneja comision
 		public void getCommisionGroup(String profileId) {
 			BmoCommission bmoCommission = new BmoCommission();
-			AsyncCallback<BmUpdateResult> callback = new AsyncCallback<BmUpdateResult>() {
-				public void onFailure(Throwable caught) {
+
+			if (getSFParams().hasRead(bmoCommission.getProgramCode())) {
+				AsyncCallback<BmUpdateResult> callback = new AsyncCallback<BmUpdateResult>() {
+					public void onFailure(Throwable caught) {
+						stopLoading();
+						showErrorMessage(this.getClass().getName() + "-getCommisionGroup() ERROR: " + caught.toString());
+					}
+	
+					public void onSuccess(BmUpdateResult result) {
+						stopLoading();
+						double percentage = Double.parseDouble(result.getMsg());				
+						try {
+							if (percentage > 0) {
+								bmoWFlowUser.getCommission().setValue(true);						
+							} else {
+								bmoWFlowUser.getCommission().setValue(false);
+							}
+	
+							formFlexTable.addField(9, 0, commissionCheckBox, bmoWFlowUser.getCommission());
+	
+						} catch (BmException e) {
+							showErrorMessage("Error al asignar la comisión: " + e.toString());
+						}	
+					}
+				};
+	
+				try {	
+					startLoading();
+					getUiParams().getBmObjectServiceAsync().action(bmoCommission.getPmClass(), bmoCommission, BmoCommission.ACTION_GETCOMMISSION,  profileId, callback);
+				} catch (SFException e) {
 					stopLoading();
-					showErrorMessage(this.getClass().getName() + "-getCommisionGroup() ERROR: " + caught.toString());
+					showErrorMessage(this.getClass().getName() + "-getCommisionGroup() ERROR: " + e.toString());
 				}
-
-				public void onSuccess(BmUpdateResult result) {
-					stopLoading();
-					double percentage = Double.parseDouble(result.getMsg());				
-					try {
-						if (percentage > 0) {
-							bmoWFlowUser.getCommission().setValue(true);						
-						} else {
-							bmoWFlowUser.getCommission().setValue(false);
-						}
-
-						formFlexTable.addField(8, 0, commissionCheckBox, bmoWFlowUser.getCommission());
-
-					} catch (BmException e) {
-						showErrorMessage("Error al asignar la comisión: " + e.toString());
-					}	
-				}
-			};
-
-			try {	
-				startLoading();
-				getUiParams().getBmObjectServiceAsync().action(bmoCommission.getPmClass(), bmoCommission, BmoCommission.ACTION_GETCOMMISSION,  profileId, callback);
-			} catch (SFException e) {
-				stopLoading();
-				showErrorMessage(this.getClass().getName() + "-getCommisionGroup() ERROR: " + e.toString());
 			}
 		} 
 

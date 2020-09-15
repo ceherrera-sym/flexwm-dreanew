@@ -107,6 +107,7 @@ public class UiPropertySalesReportG100 extends UiReport{
 			reportTypeListBox.addItem("Reporte Admin. Comercial", "/rpt/co/prsa_propertysales_admincom_reportG.jsp");
 			reportTypeListBox.addItem("Reporte Fechas Fase Finalizada", "/rpt/co/prsa_phasedate_report.jsp");
 			reportTypeListBox.addItem("Reporte de Ventas por Inmueble", "/rpt/co/prsa_propertySales_prty_report.jsp");
+			reportTypeListBox.addItem("Reporte de Cobranza Ventas por Inmueble", "/rpt/co/prsa_raccounts_g100_report.jsp");
 
 			propertyTypeListBox = new UiListBox(getUiParams(), new BmoPropertyType());
 			temporalDevelopmentBlockListBox = new UiListBox(getUiParams());

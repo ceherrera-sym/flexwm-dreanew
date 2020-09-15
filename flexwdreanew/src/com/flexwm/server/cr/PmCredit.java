@@ -24,6 +24,7 @@ import com.flexwm.server.op.PmOrder;
 import com.flexwm.server.wf.PmWFlow;
 import com.flexwm.server.wf.PmWFlowLog;
 import com.flexwm.server.wf.PmWFlowType;
+import com.flexwm.shared.BmoFlexConfig;
 import com.flexwm.shared.cm.BmoCustomer;
 import com.flexwm.shared.cr.BmoCredit;
 import com.flexwm.shared.cr.BmoCreditGuarantee;
@@ -44,8 +45,11 @@ import com.symgae.shared.SFException;
 import com.symgae.shared.SFParams;
 import com.symgae.shared.SFPmException;
 import com.symgae.shared.sf.BmoCompany;
-
+import com.symgae.shared.sf.BmoLocation;
 import com.symgae.shared.sf.BmoUser;
+
+import sun.print.PSPrinterJob.PluginPrinter;
+
 import com.flexwm.shared.wf.BmoWFlow;
 import com.flexwm.shared.wf.BmoWFlowLog;
 import com.flexwm.shared.wf.BmoWFlowType;
@@ -112,7 +116,8 @@ public class PmCredit extends PmObject {
 	public String getDisclosureFilters() {
 		String filters = "";
 		int loggedUserId = getSFParams().getLoginInfo().getUserId();
-		
+		int locationUserId = getSFParams().getLoginInfo().getBmoUser().getLocationId().toInteger();
+
 		if (getSFParams().restrictData(bmoCredit.getProgramCode())) {
 
 			// Filtro por asignacion de venta propiedads
@@ -160,6 +165,13 @@ public class PmCredit extends PmObject {
 					" ) ";
 		}
 		
+		// Filtro de cxc de empresas del usuario
+		if (((BmoFlexConfig)getSFParams().getBmoAppConfig()).getCreditByLocation().toBoolean()
+				&& getSFParams().restrictData(new BmoLocation().getProgramCode())) {
+			if (filters.length() > 0) filters += " AND ";
+			filters += " cred_locationid = " + locationUserId;
+		}
+		
 		// Filtro de pedidos de empresas del usuario
 		if (getSFParams().restrictData(new BmoCompany().getProgramCode())) {
 			if (filters.length() > 0) filters += " AND ";
@@ -196,11 +208,11 @@ public class PmCredit extends PmObject {
 			
 				bmoCredit.getCurrencyParity().setValue(bmoCurrency.getParity().toDouble());
 			}
-			
+
 			super.save(pmConn, bmoCredit, bmUpdateResult);
 			bmoCredit.setId(bmUpdateResult.getId());
 			bmoCredit.getCode().setValue(bmoCredit.getCodeFormat());
-			
+
 			//Validar que no tenga fallos
 			
 			//Validar que no rebase los limites de credito
@@ -216,13 +228,11 @@ public class PmCredit extends PmObject {
 				bmUpdateResult.addError(bmoCredit.getCustomerId().getName(), "El cliente cuenta con un crédito activo");
 			} 
 			
-				
-			
 			PmCreditType pmCreditType = new PmCreditType(getSFParams());
 			BmoCreditType bmoCreditType = (BmoCreditType)pmCreditType.get(pmConn, bmoCredit.getCreditTypeId().toInteger());
 
 			PmCreditGuarantee pmCreditGuarantee = new PmCreditGuarantee(getSFParams());
-			
+
 			if (bmoCreditType.getGuarantees().toInteger() > 0) {
 				//Si es una renovación obtener los avales
 				if (bmoCredit.getParentId().toInteger() > 0) {
@@ -244,7 +254,7 @@ public class PmCredit extends PmObject {
 					}
 				}	
 			}	
-			
+
 			//Validar los avales
 			if (bmoCreditType.getGuarantees().toInteger() > 1) {			
 				if (!(bmoCredit.getGuaranteeTwoId().toInteger() > 0)) {
@@ -253,7 +263,7 @@ public class PmCredit extends PmObject {
 					pmCreditGuarantee.createGuarantee(pmConn, bmoCredit, bmoCredit.getGuaranteeTwoId().toInteger(), bmUpdateResult);
 				}
 			}			
-			
+
 			//Validar que el monto sea mayor a cero
 			if (bmoCredit.getAmount().toDouble() <= 0) {
 				bmUpdateResult.addError(bmoCredit.getAmount().getName(), "El monto debe ser mayor a cero");
@@ -263,13 +273,12 @@ public class PmCredit extends PmObject {
 			
 			//Revisar el Limite de Credito del supervisor			
 			//checkCreditLimit(pmConn, bmoCredit, bmUpdateResult);
-			
-			
-		} else {			
+		} else {		
+
 			PmCredit pmCreditPrevious = new PmCredit(getSFParams());
 			bmoCreditPrevious = (BmoCredit)pmCreditPrevious.get(pmConn, bmoCredit.getId());
 		}
-		
+
 		// Asigna fecha de venta si no esta asignada
 		if (bmoCredit.getStartDate().equals(""))
 			bmoCredit.getStartDate().setValue(SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()));
@@ -282,22 +291,40 @@ public class PmCredit extends PmObject {
 		PmCustomer pmCustomer = new PmCustomer(getSFParams());
 		BmoCustomer bmoCustomer = (BmoCustomer)pmCustomer.get(pmConn, bmoCredit.getCustomerId().toInteger());
 		pmCustomer.updateStatus(pmConn, bmoCustomer, bmUpdateResult);
-		
+
 		// Asigna vendedor, desde el cliente si no viene de alguna oportunidad
 		if (newRecord) {
 			if(!(bmoCredit.getSalesUserId().toInteger() > 0))
 				bmoCredit.getSalesUserId().setValue(bmoCustomer.getSalesmanId().toInteger());				
 		} 
+
+		PmCreditType pmCreditType = new PmCreditType(getSFParams());
+		BmoCreditType bmoCreditType = (BmoCreditType)pmCreditType.get(pmConn, bmoCredit.getCreditTypeId().toInteger());
+		if ((bmoCredit.getCustomerId().toInteger() == bmoCredit.getGuaranteeOneId().toInteger()) || (bmoCredit.getCustomerId().toInteger() == bmoCredit.getGuaranteeTwoId().toInteger()) )
+			bmUpdateResult.addError(bmoCredit.getGuaranteeOneId().getName(), "El Cliente no puede ser aval de su propio Credito.");
 		
+		if (bmoCreditType.getGuarantees().toInteger() == 1) {
+			if (bmoCredit.getGuaranteeOneId().toInteger() > 0) {
+				if (!validateSalesManNotEquals(pmConn, bmoCredit.getCustomerId().toInteger(), 
+						bmoCredit.getGuaranteeOneId().toInteger()))
+					bmUpdateResult.addError(bmoCredit.getGuaranteeOneId().getName(), "El aval tiene un Promotor diferente al Cliente.");
+			}
+		} else if (bmoCreditType.getGuarantees().toInteger() == 2) {
+			if (bmoCredit.getGuaranteeOneId().toInteger() > 0 && bmoCredit.getGuaranteeTwoId().toInteger() > 0) {
+				if (!validateSalesManNotEquals(pmConn, bmoCredit.getCustomerId().toInteger(), 
+						bmoCredit.getGuaranteeOneId().toInteger(), bmoCredit.getGuaranteeTwoId().toInteger()))
+					bmUpdateResult.addError(bmoCredit.getGuaranteeOneId().getName(), "Uno de los avales tiene un Promotor diferente al Cliente.");
+			}
+		}
+
 		if (!bmUpdateResult.hasErrors()) {
 			
 			PmOrder pmOrder = new PmOrder(getSFParams());
 			BmoOrder bmoOrder = new BmoOrder();
-			
-			
+
 			// Modificar pedido si ya existe
 			if (bmoCredit.getOrderId().toInteger() > 0) {				
-				
+
 				// Actualiza info del pedido, porque es existente				
 				bmoOrder = (BmoOrder)pmOrder.get(pmConn, bmoCredit.getOrderId().toInteger());
 				
@@ -323,18 +350,12 @@ public class PmCredit extends PmObject {
 				bmoOrder.getCurrencyId().setValue(bmoCredit.getCurrencyId().toInteger());
 				bmoOrder.getCurrencyParity().setValue(bmoCredit.getCurrencyParity().toDouble());
 				
-				
-				
-
-				
-				
-				
 				pmOrder.save(pmConn, bmoOrder, bmUpdateResult);
 				
-			} else {				
+			} else {	
+
 				// No existe, se crea
 				createOrderFromCredit(pmConn, pmOrder, bmoOrder, bmoCredit, bmUpdateResult);
-				
 			}
 			
 			// Asignar el id del pedido
@@ -342,33 +363,15 @@ public class PmCredit extends PmObject {
 			
 			// Asignar el wflowid del pedido
 			bmoCredit.getWFlowId().setValue(bmoOrder.getWFlowId().toInteger());
-			
+
 			//El ejecutivo esta asignado
 			/*if (!hasUserInWflowuser(pmConn, bmoOrder.getWFlowId().toInteger(), bmoOrder.getOrderTypeId().toInteger(), bmUpdateResult)) {
 				//Asignar el ejecutivo
 				updateUserInWflowuser(pmConn, bmoOrder.getWFlowId().toInteger(), bmoOrder.getOrderTypeId().toInteger(), bmUpdateResult);
 			}*/
-			PmCreditType pmCreditType = new PmCreditType(getSFParams());
-			BmoCreditType bmoCreditType = (BmoCreditType)pmCreditType.get(pmConn, bmoCredit.getCreditTypeId().toInteger());
-			// Almacena venta para vincular pedido
-			if((bmoCredit.getCustomerId().toInteger() == bmoCredit.getGuaranteeOneId().toInteger()) || (bmoCredit.getCustomerId().toInteger() == bmoCredit.getGuaranteeTwoId().toInteger()) )
-				bmUpdateResult.addMsg("El Cliente no puede ser aval de su propio Credito");
 			
-			if(bmoCreditType.getGuarantees().toInteger() == 1) {
-				if(bmoCredit.getGuaranteeOneId().toInteger() > 0) {
-					if(!validateSalesManNotEquals(pmConn, bmoCredit.getCustomerId().toInteger(), 
-							bmoCredit.getGuaranteeOneId().toInteger()))
-						bmUpdateResult.addMsg("<b>El aval tiene un Promotor diferente al cliente</b>");
-				}
-			}else if (bmoCreditType.getGuarantees().toInteger() == 2) {
-				if(bmoCredit.getGuaranteeOneId().toInteger() > 0 && bmoCredit.getGuaranteeTwoId().toInteger() > 0) {
-					if(!validateSalesManNotEquals(pmConn, bmoCredit.getCustomerId().toInteger(), 
-							bmoCredit.getGuaranteeOneId().toInteger(), bmoCredit.getGuaranteeTwoId().toInteger()))
-						bmUpdateResult.addMsg("<b>El aval tiene un Promotor diferente al cliente</b>");
-				}
-			}
 			super.save(pmConn, bmoCredit, bmUpdateResult);
-			
+
 		}
 		
 		//Finalizar el crédito
@@ -377,7 +380,7 @@ public class PmCredit extends PmObject {
 		}*/
 		
 		PmOrderCredit pmOrderCredit = new PmOrderCredit(getSFParams());
-		
+
 		if (newRecord) {
 			pmOrderCredit.create(pmConn, bmoCredit, bmUpdateResult);
 		} else {			
@@ -397,6 +400,13 @@ public class PmCredit extends PmObject {
 				if (bmoCredit.getStatus().toChar() == BmoCredit.STATUS_AUTHORIZED) {
 					if (!getSFParams().hasSpecialAccess(BmoCredit.ACCESS_CHANGESTATUSAUTHORIZED)) {
 						bmUpdateResult.addError(bmoCredit.getStatus().getName(), "No cuenta con permisos para Autorizar el Crédito");
+					} else {
+						BmoWFlow bmoWFlow = new BmoWFlow();
+						PmWFlow pmWFlow = new PmWFlow(getSFParams());
+						bmoWFlow = (BmoWFlow)pmWFlow.get(pmConn, bmoCredit.getWFlowId().toInteger());
+						// Revisar flujo
+						if (!bmoWFlow.getHasDocuments().toBoolean())
+							bmUpdateResult.addError(bmoCredit.getCode().getName(), "Los Documentos no están Completos.");
 					}
 				} 
 				// Si no cuenta con permisos para finalizar NO deja avanzar
@@ -419,7 +429,7 @@ public class PmCredit extends PmObject {
 					pmOrder.updateBalance(pmConn, bmoOrder, bmUpdateResult);
 					printDevLog("Se cambio el tipo de credito " + bmoCreditPrevious.getCode());
 				}
-				
+
 				// Generar bitacora
 				String status = "En Revisión";
 				/*if (bmoCredit.getStatus().equals(BmoCredit.STATUS_PREAUTHORIZED))
@@ -439,7 +449,7 @@ public class PmCredit extends PmObject {
 			// Guarda la sesion
 			super.save(pmConn, bmoCredit, bmUpdateResult);
 		
-			
+
 		}
 
 		return bmUpdateResult;

@@ -47,9 +47,10 @@
 		sFParams.setAppURL(appUrl);
 		
 		sFParams.setProdJndi(null);
-
+		//Asignar parametros de sesion 
 		session.setAttribute("sfparamPortal", sFParams);
 		session.setAttribute("loginInf", loginInfo);
+		
 		String sql = "";
 		String user = request.getParameter("user");
 		String passw = request.getParameter("passw");

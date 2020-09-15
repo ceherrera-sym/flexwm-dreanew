@@ -22,6 +22,8 @@ GRANT SHOW VIEW ON `flexwm-visual`.`Pedidos` TO `flexwm-visual-report`@`%`;
 show full tables where table_type = 'VIEW'; 
 
 -- Borrar vistas
+DROP VIEW `Oportunidades_Revision/Perdidas`;
+DROP VIEW `Pedidos`;
 DROP VIEW `Pipeline_Comercial`;
 
 -- Funcion para obtener el ultimo tipo de cambo

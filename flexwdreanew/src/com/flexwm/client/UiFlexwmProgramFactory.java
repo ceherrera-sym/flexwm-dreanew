@@ -157,7 +157,9 @@ import com.flexwm.client.rpt.UiADRPReports;
 import com.flexwm.client.rpt.UiBankMovementReport;
 import com.flexwm.client.rpt.UiCORPReports;
 import com.flexwm.client.rpt.UiCRMReports;
+import com.flexwm.client.rpt.UiCreditDaCreditoReport;
 import com.flexwm.client.rpt.UiCreditReport;
+import com.flexwm.client.rpt.UiCustomerDaCreditoReport;
 import com.flexwm.client.rpt.UiGERPReports;
 import com.flexwm.client.rpt.UiOPRPReports;
 import com.flexwm.client.rpt.UiSYSTReports;
@@ -2815,11 +2817,40 @@ public class UiFlexwmProgramFactory extends UiProgramFactory {
 				}
 			});
 		}
+		// Reportes de creditos(cobi)
 		else if (programCode.equals("RPCR")) {
 			GWT.runAsync(new RunAsyncCallback() {
 				@Override 
 				public void onSuccess() {
 					new UiCreditReport(getUiParams()); 
+				}
+
+				@Override
+				public void onFailure(Throwable reason) {
+					errorMessage(reason);
+				}
+			});	    
+		}
+		// Reportes daCredito de clientes
+		else if (programCode.equals("RPCC")) {
+			GWT.runAsync(new RunAsyncCallback() {
+				@Override 
+				public void onSuccess() {
+					new UiCustomerDaCreditoReport(getUiParams()); 
+				}
+
+				@Override
+				public void onFailure(Throwable reason) {
+					errorMessage(reason);
+				}
+			});	    
+		}
+		// Reportes daCredito de creditos
+		else if (programCode.equals("RPCD")) {
+			GWT.runAsync(new RunAsyncCallback() {
+				@Override 
+				public void onSuccess() {
+					new UiCreditDaCreditoReport(getUiParams()); 
 				}
 
 				@Override

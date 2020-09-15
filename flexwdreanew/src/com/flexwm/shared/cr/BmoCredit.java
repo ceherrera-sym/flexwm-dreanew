@@ -22,6 +22,7 @@ import com.symgae.shared.BmFieldType;
 import com.symgae.shared.BmObject;
 import com.symgae.shared.BmOrder;
 import com.symgae.shared.BmSearchField;
+import com.symgae.shared.sf.BmoLocation;
 import com.flexwm.shared.wf.BmoWFlow;
 import com.flexwm.shared.wf.BmoWFlowType;
 
@@ -31,13 +32,14 @@ public class BmoCredit extends BmObject implements Serializable {
 	private BmField status, code, comments, startDate, endDate, tags,
 	customerId, wFlowTypeId, wFlowId, salesUserId, creditTypeId, 
 	orderTypeId, orderId, amount, progress, bond, collectorUserId, paymentStatus, guaranteeOneId, guaranteeTwoId,
-	parentId, companyId, currencyId, currencyParity;
+	parentId, companyId, currencyId, currencyParity, locationId;
 
 	private BmoCustomer bmoCustomer = new BmoCustomer();
 	private BmoWFlowType bmoWFlowType = new BmoWFlowType();
 	private BmoWFlow bmoWFlow = new BmoWFlow();
 	private BmoOrder bmoOrder = new BmoOrder();	
 	private BmoCreditType bmoCreditType = new BmoCreditType();
+	private BmoLocation bmoLocation= new BmoLocation();
 
 	public static char STATUS_REVISION = 'R';
 	//public static char STATUS_PREAUTHORIZED = 'P';
@@ -123,6 +125,7 @@ public class BmoCredit extends BmObject implements Serializable {
 		companyId = setField("companyid", "", "Empresa", 20, Types.INTEGER, false, BmFieldType.ID, false);
 		currencyId = setField("currencyid", "", "Moneda", 20, Types.INTEGER, false, BmFieldType.ID, false);
 		currencyParity = setField("currencyparity", "", "Tipo de Cambio", 20, Types.DOUBLE, false, BmFieldType.CURRENCY, false);
+		locationId = setField("locationid", "", "Ubicación", 10, Types.INTEGER, true, BmFieldType.ID, false);
 	}
 
 	@Override
@@ -419,4 +422,21 @@ public class BmoCredit extends BmObject implements Serializable {
 	public void setCurrencyParity(BmField currencyParity) {
 		this.currencyParity = currencyParity;
 	}
+	
+	public BmField getLocationId() {
+		return locationId;
+	}
+
+	public void setLocationId(BmField locationId) {
+		this.locationId = locationId;
+	}
+
+	public BmoLocation getBmoLocation() {
+		return bmoLocation;
+	}
+
+	public void setBmoLocation(BmoLocation bmoLocation) {
+		this.bmoLocation = bmoLocation;
+	}
+	
 }

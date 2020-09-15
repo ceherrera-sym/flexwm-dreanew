@@ -27,8 +27,8 @@ import com.symgae.shared.sf.BmoUser;
 public class BmoWFlowUser extends BmObject implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private BmField required, autoDate, lockStatus, lockStart, lockEnd, assignSteps, 
-		commission, hours, billable, rate,
-		profileId, userId, wflowId, userGEventId, publicGEventId, areaGEventId;
+		commission, hours, billable, rate, profileId, userId, wflowId, 
+		userGEventId, publicGEventId, areaGEventId, locationId;
 	
 	BmoProfile bmoProfile = new BmoProfile();
 	BmoUser bmoUser = new BmoUser();
@@ -68,6 +68,8 @@ public class BmoWFlowUser extends BmObject implements Serializable {
 		profileId = setField("profileid", "", "Perfil", 20, Types.INTEGER, false, BmFieldType.ID, false);
 		userId = setField("userid", "", "Colaborador", 20, Types.INTEGER, true, BmFieldType.ID, false);
 		wflowId = setField("wflowid", "", "Flujo", 20, Types.INTEGER, false, BmFieldType.ID, false);
+		// Credito x Ubicacion(solo para dacredito)
+		locationId = setField("locationid", "", "Ubicación", 10, Types.INTEGER, true, BmFieldType.ID, false);
 	}
 	
 	
@@ -266,5 +268,13 @@ public class BmoWFlowUser extends BmObject implements Serializable {
 
 	public void setBmoWFlow(BmoWFlow bmoWFlow) {
 		this.bmoWFlow = bmoWFlow;
+	}
+	
+	public BmField getLocationId() {
+		return locationId;
+	}
+
+	public void setLocationId(BmField locationId) {
+		this.locationId = locationId;
 	}
 }

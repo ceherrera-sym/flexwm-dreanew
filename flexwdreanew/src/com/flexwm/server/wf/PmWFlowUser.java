@@ -19,7 +19,11 @@ import com.symgae.server.sf.PmProfile;
 import com.symgae.server.sf.PmUser;
 import com.symgae.server.sf.PmProfileUser;
 import com.flexwm.server.PmFlexConfig;
+import com.flexwm.server.wf.PmWFlow;
+import com.flexwm.server.wf.PmWFlowLog;
+import com.flexwm.server.wf.PmWFlowStep;
 import com.flexwm.server.wf.PmWFlowUser;
+import com.flexwm.server.wf.PmWFlowUserSelect;
 import com.symgae.server.PmConn;
 import com.symgae.shared.BmFilter;
 import com.symgae.shared.BmObject;
@@ -91,11 +95,11 @@ public class PmWFlowUser extends PmObject {
 	public BmUpdateResult save(PmConn pmConn, BmObject bmObject, BmUpdateResult bmUpdateResult) throws SFException {
 		bmoWFlowUser = (BmoWFlowUser)bmObject;	
 		
-		BmoWFlowUser bmoWFlowUserPrevious = new BmoWFlowUser();
+		BmoWFlowUser bmoWFlowUserPrev = new BmoWFlowUser();
 		PmWFlowUser pmFlowUser = new PmWFlowUser(getSFParams());
-		// leer valor anterior para cambio de bitacora
+		
 		if (bmoWFlowUser.getId() > 0)
-			bmoWFlowUserPrevious = (BmoWFlowUser)pmFlowUser.get(pmConn, bmoWFlowUser.getId());
+			bmoWFlowUserPrev = (BmoWFlowUser)pmFlowUser.get(pmConn, bmoWFlowUser.getId());
 		
 		//Validar que no se pueda repetir el perfil en una flujo 
 		if(!(bmoWFlowUser.getId()>0)) {
@@ -193,8 +197,9 @@ public class PmWFlowUser extends PmObject {
 			if (pmWFlowUserBlockDate.userInBlockedDates(pmConn, bmoWFlowUser.getUserId().toInteger(), bmoWFlow.getStartDate().toString(), bmoWFlow.getEndDate().toString(), bmUpdateResult)) {
 				bmUpdateResult.addError(bmoWFlowUser.getLockStart().getName(), "El Usuario tiene bloqueo manual en esas Fechas.");
 			}
-			// Generar bitacora	si esta cambiando el usuario		
-			if (bmoWFlowUserPrevious.getUserId().toInteger() != bmoWFlowUser.getUserId().toInteger()) {
+			
+			// Generar bitacora			
+			if (bmoWFlowUserPrev.getUserId().toInteger() != bmoWFlowUser.getUserId().toInteger()) {
 				PmWFlowLog pmWFlowLog = new PmWFlowLog(getSFParams());
 				pmWFlowLog.addLog(pmConn, bmUpdateResult, bmoWFlow.getId(), BmoWFlowLog.TYPE_WFLOW,
 						"Se Agrega/Modifica asignación del Colaborador: " + bmoWFlowUser.getBmoUser().getEmail());

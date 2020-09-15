@@ -1901,7 +1901,7 @@ public class PmOrder extends PmObject {
 	// Genera nuevos pedidos dependiendo si hay renovaciones de pedidos pendientes
 	public void batchOrderRenew() throws SFException {
 		BmUpdateResult bmUpdateResult = new BmUpdateResult();
-		
+
 		PmConn pmConn2 = new PmConn(getSFParams());
 		pmConn2.open();
 		PmConn pmConn3 = new PmConn(getSFParams());
@@ -1912,46 +1912,44 @@ public class PmOrder extends PmObject {
 					SFServerUtil.nowToString(getSFParams(), getSFParams().getDateFormat()),
 					((BmoFlexConfig) getSFParams().getBmoAppConfig()).getOrderRenewDays().toInteger());
 
-			String sql = "SELECT user_userid FROM users "
-					+ " WHERE user_userid IN ( SELECT orde_userid FROM orders "
-					+ " WHERE orde_status <> '" + BmoOrder.STATUS_CANCELLED + "'  AND orde_status <> '" + BmoOrder.STATUS_REVISION + "'  AND orde_willrenew = 1 "
-					+ " AND orde_lockend <= '" + checkDate + "'  " + 
-					" AND orde_orderid NOT IN (SELECT orde_reneworderid FROM orders WHERE orde_reneworderid IS NOT NULL))";
+			String sql = " SELECT orde_orderid FROM orders " 
+					+ " WHERE orde_status <> '" + BmoOrder.STATUS_CANCELLED	+ "' " 
+					+ " AND orde_status <> '" + BmoOrder.STATUS_REVISION + "' " 
+					+ " AND orde_willrenew = 1 "
+					+ " AND orde_lockend <= '" + checkDate + "' " 
+					+ " AND orde_orderid NOT IN "
+					+ "		(SELECT orde_reneworderid FROM orders WHERE orde_reneworderid IS NOT NULL);";
 
 			pmConn2.doFetch(sql);
 
-			System.err.println("Consulta de Pedidos a Renovar: " + sql);
-			 while (pmConn2.next()) {
-				 sql = "SELECT orde_orderid FROM orders  " + 
-				 		"WHERE orde_status <> '\" + BmoOrder.STATUS_CANCELLED + \"'  AND orde_status <> '" + BmoOrder.STATUS_CANCELLED + "'  AND orde_willrenew = 1 " + 
-				 		"AND orde_lockend <= '" + checkDate + "'  " + 
-				 		"AND orde_orderid NOT IN (SELECT orde_reneworderid FROM orders" + 
-				 		"WHERE orde_reneworderid IS NOT NULL) AND orde_userid = " + pmConn2.getInt("user_userid");
-			 }
+			printDevLog("Consulta de Pedidos a Renovar: " + sql);
+			//				PmConn pmConn = null; // = new PmConn(getSFParams());
+			//				pmConn.open();
+			//				pmConn.disableAutoCommit();
 			// Revisa cada pedido que no tenga pedido ligado
-//			while (pmConn2.next()) {
-//				PmConn pmConn = new PmConn(getSFParams());
-//				pmConn.open();
-//				pmConn.disableAutoCommit();
-//				
-//				bmoOrder = (BmoOrder) this.get(pmConn, pmConn2.getInt("orde_orderid"));
-//
-//				System.err.println("Por Renovar Pedido: " + bmoOrder.getCode().toString());
-//
-//				// Genera pedidos de renovacion
-//				this.createRenewOrderProducts(pmConn, bmoOrder, bmUpdateResult);
-//				
-//				if (!bmUpdateResult.hasErrors()) {
-//					// Añadir cambios
-//					pmConn.commit();
-//				} else {
-//					// Regresar cambios
-//					pmConn.rollback();
-//					throw new SFException(this.getClass().getName() + " - " + bmUpdateResult.errorsToString() + " : " + bmoOrder.getCode().toString());
-//				}
-//				
-//				pmConn.close();
-//			}
+			while (pmConn2.next()) {
+				PmConn pmConn = new PmConn(getSFParams());
+				pmConn.open();
+				pmConn.disableAutoCommit();
+
+				bmoOrder = (BmoOrder) this.get(pmConn, pmConn2.getInt("orde_orderid"));
+
+				printDevLog("Por Renovar Pedido: " + bmoOrder.getCode().toString());
+
+				// Genera pedidos de renovacion
+				this.createRenewOrderProducts(pmConn, bmoOrder, bmUpdateResult);
+
+				if (!bmUpdateResult.hasErrors()) {
+					// Añadir cambios
+					pmConn.commit();
+				} else {
+					// Regresar cambios
+					pmConn.rollback();
+					throw new SFException(this.getClass().getName() + " - " + bmUpdateResult.errorsToString() + " : " + bmoOrder.getCode().toString());
+				}
+
+				pmConn.close();
+			}
 
 			BmFilter filterByAuthorized = new BmFilter();
 			filterByAuthorized.setValueFilter(bmoOrder.getKind(), bmoOrder.getStatus(),

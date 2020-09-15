@@ -74,13 +74,11 @@ public class UiProduct extends UiList {
 
 		addFilterListBox(new UiListBox(getUiParams(), new BmoProductFamily()), bmoProduct.getBmoProductFamily());
 		addFilterListBox(new UiListBox(getUiParams(), new BmoProductGroup()), bmoProduct.getBmoProductGroup());
-		
 		if (isMaster()) {
 			addStaticFilterListBox(new UiListBox(getUiParams(), bmoProduct.getTrack()), bmoProduct, bmoProduct.getTrack());
 			if (!isMobile()) 
-				addStaticFilterListBox(new UiListBox(getUiParams(), bmoProduct.getType()),bmoProduct, bmoProduct.getType());
+				addStaticFilterListBox(new UiListBox(getUiParams(), bmoProduct.getType()), bmoProduct, bmoProduct.getType());
 		}
-
 	}
 
 	public void showBatch() {
